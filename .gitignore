@@ -1,0 +1,9 @@
+*.sdf
+v14
+/*.opendb
+Debug
+Release
+*.aps
+*.ipch
+*.user
+*.suo

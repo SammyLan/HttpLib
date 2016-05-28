@@ -1,0 +1,37 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ImportGroup Label="PropertySheets" />
+  <PropertyGroup Label="UserMacros">
+    <LIB3_DIR>F:\MyWorkspace\MyTools\build3rd_git\externals\</LIB3_DIR>
+    <BOOST_DIR>$(LIB3_DIR)boost-1_61</BOOST_DIR>
+    <LIB3_INC>$(LIB3_DIR)Include;$(BOOST_DIR)</LIB3_INC>
+    <LIB3_LIB>$(LIB3_DIR)Lib;$(LIB3_DIR)Lib$(Configuration)</LIB3_LIB>
+  </PropertyGroup>
+  <PropertyGroup>
+    <IncludePath>$(LIB3_INC);$(SolutionDir);$(IncludePath)</IncludePath>
+    <LibraryPath>$(LIB3_LIB);$(LibraryPath)</LibraryPath>
+  </PropertyGroup>
+  <ItemDefinitionGroup>
+    <ClCompile>
+      <PreprocessorDefinitions>CURL_STATICLIB;_CRT_SECURE_NO_WARNINGS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+    </ClCompile>
+  </ItemDefinitionGroup>
+  <ItemGroup>
+    <BuildMacro Include="LIB3_DIR">
+      <Value>$(LIB3_DIR)</Value>
+      <EnvironmentVariable>true</EnvironmentVariable>
+    </BuildMacro>
+    <BuildMacro Include="BOOST_DIR">
+      <Value>$(BOOST_DIR)</Value>
+      <EnvironmentVariable>true</EnvironmentVariable>
+    </BuildMacro>
+    <BuildMacro Include="LIB3_INC">
+      <Value>$(LIB3_INC)</Value>
+      <EnvironmentVariable>true</EnvironmentVariable>
+    </BuildMacro>
+    <BuildMacro Include="LIB3_LIB">
+      <Value>$(LIB3_LIB)</Value>
+      <EnvironmentVariable>true</EnvironmentVariable>
+    </BuildMacro>
+  </ItemGroup>
+</Project>
