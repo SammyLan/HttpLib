@@ -1,9 +1,10 @@
 *.sdf
 v14
-/*.opendb
+*.opendb
 Debug
 Release
 *.aps
 *.ipch
 *.user
 *.suo
+*.opensdf

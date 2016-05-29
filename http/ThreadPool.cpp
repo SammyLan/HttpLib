@@ -1,17 +1,14 @@
 #include "stdafx.h"
 #include "ThreadPool.h"
+#include <functional>
 
-static void ThreadProc(ThreadPool * pThis)
-{
-	pThis->io_service().run();
-}
 
 ThreadPool::ThreadPool(size_t threads)
 	:work_(io_service_)
 {
 	for (size_t i = 0; i < threads; i++)
 	{
-		threadPool_.push_back(ThreadPtr(new std::thread(&ThreadProc, this)));		
+		threadPool_.push_back(std::make_shared<std::thread>(std::bind<size_t (io_serviceT::*)()>(&io_serviceT::run, &io_service_)));
 	}
 }
 

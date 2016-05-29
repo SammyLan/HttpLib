@@ -18,18 +18,16 @@ class CHttpSession
 public:
 	CHttpSession(boost::asio::io_service & io_service);
 	~CHttpSession();
-	CURLMcode AddHandle(CHttpRequest * pHandle);
-	CURLMcode RemoveHandle(CHttpRequest * pHandle);
-	CURLM * Handle();
+	CURLMcode addHandle(CHttpRequest * pHandle);
+	CURLMcode removeHandle(CHttpRequest * pHandle);
+	CURLM * handle();
 	static curl_socket_t opensocket(void *clientp, curlsocktype purpose, struct curl_sockaddr *address);
 	static int close_socket(void *clientp, curl_socket_t item);
 private:
 	static int sock_cb(CURL *e, curl_socket_t s, int what, CHttpSession *pThis, void *sockp);
 	static int multi_timer_cb(CURLM *multi, long timeout_ms, CHttpSession *pThis);
 	static void timer_cb(const boost::system::error_code & error, CHttpSession *pThis);
-	static void event_cb(CHttpSession *pThis, boost::asio::ip::tcp::socket *tcp_socket,
-		int action);
-	
+	static void event_cb(CHttpSession *pThis, boost::asio::ip::tcp::socket *tcp_socket,int action);	
 private:
 	void remsock(int *f);
 	void addsock(curl_socket_t s, CURL *easy, int action);

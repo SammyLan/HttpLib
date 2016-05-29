@@ -51,8 +51,9 @@ END_MESSAGE_MAP()
 
 CHTTPLibDlg::CHTTPLibDlg(CWnd* pParent /*=NULL*/)
 	: CDialogEx(IDD_HTTPLIB_DIALOG, pParent)
-	, threadPool_(1)
-	,m_hSession(threadPool_.io_service())
+	, nwThreadPool_(1)
+	, ioThreadPool_(1)
+	,hSession_(nwThreadPool_.io_service())
 {
 	m_hIcon = AfxGetApp()->LoadIcon(IDR_MAINFRAME);
 }
@@ -160,6 +161,7 @@ HCURSOR CHTTPLibDlg::OnQueryDragIcon()
 void CHTTPLibDlg::OnBnClickedOk()
 {
 	// TODO: 在此添加控件通知处理程序代码
-	auto pRequest = new CHttpRequest(&m_hSession);
-	pRequest->Get("http://www.qq.com/");
+	auto pRequest = new CHttpRequest(&hSession_);
+	pRequest->get("http://www.qq.com/");
+	nwThreadPool_.postTask(std::bind(&CHttpRequest::get, pRequest, "http://www.baidu.com/"));
 }

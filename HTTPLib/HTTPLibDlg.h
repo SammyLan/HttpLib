@@ -36,6 +36,7 @@ protected:
 public:
 	afx_msg void OnBnClickedOk();
 private:
-	ThreadPool threadPool_;
-	CHttpSession m_hSession;
+	ThreadPool nwThreadPool_;
+	ThreadPool ioThreadPool_;
+	CHttpSession hSession_;
 };

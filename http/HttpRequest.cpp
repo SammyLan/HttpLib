@@ -36,22 +36,22 @@ CHttpRequest::~CHttpRequest()
 {
 }
 
-CURL * CHttpRequest::Handle()
+CURL * CHttpRequest::handle()
 {
 	return easy;
 }
 
-bool CHttpRequest::Close()
+bool CHttpRequest::close()
 {
 	return true;
 }
 
-void CHttpRequest::OnDone(CURLcode res)
+void CHttpRequest::onDone(CURLcode res)
 {
 	char *eff_url;
 	curl_easy_getinfo(easy, CURLINFO_EFFECTIVE_URL, &eff_url);
 	fprintf(MSG_OUT, "\nDONE: %s => (%d) %s", eff_url, res, error);
-	pSession_->RemoveHandle(this);
+	pSession_->removeHandle(this);
 	curl_easy_cleanup(easy);	
 	//TODO::delete
 	delete this;
@@ -86,9 +86,9 @@ int CHttpRequest::prog_cb(CHttpRequest *pThis, double dltotal, double dlnow, dou
 	return 0;
 }
 
-void CHttpRequest::Get(std::string const & url)
+void CHttpRequest::get(std::string const & url)
 {
 	url_ = url;
 	curl_easy_setopt(this->easy, CURLOPT_URL, this->url_.c_str());
-	auto rc = pSession_->AddHandle(this);
+	auto rc = pSession_->addHandle(this);
 }

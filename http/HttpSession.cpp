@@ -88,20 +88,20 @@ CHttpSession::~CHttpSession()
 }
 
 
-CURLMcode CHttpSession::AddHandle(CHttpRequest * pHandle)
+CURLMcode CHttpSession::addHandle(CHttpRequest * pHandle)
 {
 	fprintf(MSG_OUT,"\nAdding easy %p to multi %p (%s)", pHandle->easy, hMulti_, pHandle->url_.c_str());
-	auto rc = curl_multi_add_handle(hMulti_, pHandle->Handle());
+	auto rc = curl_multi_add_handle(hMulti_, pHandle->handle());
 	NSCURL::mcode_or_die("new_conn: curl_multi_add_handle", rc);
 	return rc;
 }
 
-CURLMcode CHttpSession::RemoveHandle(CHttpRequest * pHandle)
+CURLMcode CHttpSession::removeHandle(CHttpRequest * pHandle)
 {
-	return curl_multi_remove_handle(hMulti_, pHandle->Handle());
+	return curl_multi_remove_handle(hMulti_, pHandle->handle());
 }
 
-CURLM * CHttpSession::Handle()
+CURLM * CHttpSession::handle()
 {
 	return hMulti_;
 }
@@ -258,7 +258,7 @@ void CHttpSession::check_multi_info()
 			auto easy = msg->easy_handle;
 			auto res = msg->data.result;
 			curl_easy_getinfo(easy, CURLINFO_PRIVATE, &conn);
-			conn->OnDone(res);
+			conn->onDone(res);
 		}
 	}
 }
