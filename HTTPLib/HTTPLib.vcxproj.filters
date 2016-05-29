@@ -32,6 +32,9 @@
     <Filter Include="base\FileSign\lib">
       <UniqueIdentifier>{ca8d7a0c-c8eb-46bd-aca0-4824b46299d9}</UniqueIdentifier>
     </Filter>
+    <Filter Include="base\File">
+      <UniqueIdentifier>{b54fff46-6789-4743-8b3c-918e7f324962}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="targetver.h">
@@ -85,13 +88,13 @@
     <ClInclude Include="..\SDK\FileSign\lib\crc32.h">
       <Filter>base\FileSign\lib</Filter>
     </ClInclude>
-    <ClInclude Include="..\SDK\FileSign\lib\md5.h">
-      <Filter>base\FileSign\lib</Filter>
-    </ClInclude>
-    <ClInclude Include="..\SDK\FileSign\lib\md5_loc.h">
-      <Filter>base\FileSign\lib</Filter>
-    </ClInclude>
     <ClInclude Include="..\SDK\FileSign\UtilConvert.h">
+      <Filter>base\FileSign</Filter>
+    </ClInclude>
+    <ClInclude Include="..\SDK\File\AsyncFile.h">
+      <Filter>base\File</Filter>
+    </ClInclude>
+    <ClInclude Include="..\SDK\FileSign\FileSignTask.h">
       <Filter>base\FileSign</Filter>
     </ClInclude>
   </ItemGroup>
@@ -132,10 +135,13 @@
     <ClCompile Include="..\SDK\external\sha1\sha1.cpp">
       <Filter>Lib3rd\sha1</Filter>
     </ClCompile>
-    <ClCompile Include="..\SDK\FileSign\lib\md5.c">
-      <Filter>base\FileSign\lib</Filter>
-    </ClCompile>
     <ClCompile Include="..\SDK\FileSign\UtilConvert.cpp">
+      <Filter>base\FileSign</Filter>
+    </ClCompile>
+    <ClCompile Include="..\SDK\File\AsyncFile.cpp">
+      <Filter>base\File</Filter>
+    </ClCompile>
+    <ClCompile Include="..\SDK\FileSign\FileSignTask.cpp">
       <Filter>base\FileSign</Filter>
     </ClCompile>
   </ItemGroup>

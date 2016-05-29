@@ -12,6 +12,7 @@ public:
 public:
 	ThreadPool(size_t threads);
 	~ThreadPool();
+	void stop();
 
 	template<typename Task>	void postTask(Task && task);
 

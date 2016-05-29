@@ -194,10 +194,10 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\SDK\external\sha1\sha1.h" />
+    <ClInclude Include="..\SDK\FileSign\FileSignTask.h" />
     <ClInclude Include="..\SDK\FileSign\lib\crc32.h" />
-    <ClInclude Include="..\SDK\FileSign\lib\md5.h" />
-    <ClInclude Include="..\SDK\FileSign\lib\md5_loc.h" />
     <ClInclude Include="..\SDK\FileSign\UtilConvert.h" />
+    <ClInclude Include="..\SDK\File\AsyncFile.h" />
     <ClInclude Include="..\SDK\http\HttpRequest.h" />
     <ClInclude Include="..\SDK\http\HttpSession.h" />
     <ClInclude Include="..\SDK\http\ThreadPool.h" />
@@ -219,11 +219,9 @@
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">NotUsing</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">NotUsing</PrecompiledHeader>
     </ClCompile>
-    <ClCompile Include="..\SDK\FileSign\lib\md5.c">
-      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">NotUsing</PrecompiledHeader>
-      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">NotUsing</PrecompiledHeader>
-    </ClCompile>
+    <ClCompile Include="..\SDK\FileSign\FileSignTask.cpp" />
     <ClCompile Include="..\SDK\FileSign\UtilConvert.cpp" />
+    <ClCompile Include="..\SDK\File\AsyncFile.cpp" />
     <ClCompile Include="..\SDK\http\HttpRequest.cpp" />
     <ClCompile Include="..\SDK\http\HttpSession.cpp" />
     <ClCompile Include="..\SDK\http\ThreadPool.cpp" />

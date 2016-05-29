@@ -15,8 +15,12 @@ ThreadPool::ThreadPool(size_t threads)
 
 ThreadPool::~ThreadPool()
 {
+	stop();
+}
+void ThreadPool::stop()
+{
 	io_service_.stop();
-	for (auto & thread: threadPool_)
+	for (auto & thread : threadPool_)
 	{
 		thread->join();
 	}

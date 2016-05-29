@@ -58,6 +58,11 @@ CHTTPLibDlg::CHTTPLibDlg(CWnd* pParent /*=NULL*/)
 	m_hIcon = AfxGetApp()->LoadIcon(IDR_MAINFRAME);
 }
 
+CHTTPLibDlg::~CHTTPLibDlg()
+{
+	nwThreadPool_.stop();
+	ioThreadPool_.stop();
+}
 void CHTTPLibDlg::DoDataExchange(CDataExchange* pDX)
 {
 	CDialogEx::DoDataExchange(pDX);
@@ -161,6 +166,9 @@ HCURSOR CHTTPLibDlg::OnQueryDragIcon()
 void CHTTPLibDlg::OnBnClickedOk()
 {
 	// TODO: 在此添加控件通知处理程序代码
+	m_pFileSignTask = make_shared<CFileSignTask>(0,_T("D:\\连续剧\\超女\\[迅雷下载www.2tu.cc]美人制造15.1280高清.mp4"),nullptr);
+	m_pFileSignTask->BeginTask(ioThreadPool_.io_service());
+	return;
 	auto pRequest = new CHttpRequest(&hSession_);
 	nwThreadPool_.postTask(std::bind(&CHttpRequest::get, pRequest, "http://www.baidu.com/"));
 }

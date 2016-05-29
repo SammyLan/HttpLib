@@ -6,6 +6,7 @@
 #include "http\HttpSession.h"
 #include "http\HttpRequest.h"
 #include "http\ThreadPool.h"
+#include "FileSign\FileSignTask.h"
 
 // CHTTPLibDlg 对话框
 class CHTTPLibDlg : public CDialogEx
@@ -13,7 +14,7 @@ class CHTTPLibDlg : public CDialogEx
 // 构造
 public:
 	CHTTPLibDlg(CWnd* pParent = NULL);	// 标准构造函数
-
+	~CHTTPLibDlg();
 // 对话框数据
 #ifdef AFX_DESIGN_TIME
 	enum { IDD = IDD_HTTPLIB_DIALOG };
@@ -39,4 +40,5 @@ private:
 	ThreadPool nwThreadPool_;
 	ThreadPool ioThreadPool_;
 	CHttpSession hSession_;
+	CFileSignTaskPtr m_pFileSignTask;
 };
