@@ -196,6 +196,12 @@
     <ClInclude Include="..\SDK\http\HttpRequest.h" />
     <ClInclude Include="..\SDK\http\HttpSession.h" />
     <ClInclude Include="..\SDK\http\ThreadPool.h" />
+    <ClInclude Include="..\SDK\Include\WYTypeDef.h" />
+    <ClInclude Include="..\SDK\Include\WYUtil.h" />
+    <ClInclude Include="..\SDK\Log\Log.h" />
+    <ClInclude Include="..\SDK\Log\LogPrivate.h" />
+    <ClInclude Include="..\SDK\Log\TXPerfLogTime.h" />
+    <ClInclude Include="..\SDK\Log\UtilCoreConvert.h" />
     <ClInclude Include="HTTPLib.h" />
     <ClInclude Include="HTTPLibDlg.h" />
     <ClInclude Include="Resource.h" />
@@ -206,6 +212,10 @@
     <ClCompile Include="..\SDK\http\HttpRequest.cpp" />
     <ClCompile Include="..\SDK\http\HttpSession.cpp" />
     <ClCompile Include="..\SDK\http\ThreadPool.cpp" />
+    <ClCompile Include="..\SDK\Include\WYUtil.cpp" />
+    <ClCompile Include="..\SDK\Log\Log.cpp" />
+    <ClCompile Include="..\SDK\Log\TXPerfLogTime.cpp" />
+    <ClCompile Include="..\SDK\Log\UtilCoreConvert.cpp" />
     <ClCompile Include="HTTPLib.cpp" />
     <ClCompile Include="HTTPLibDlg.cpp" />
     <ClCompile Include="stdafx.cpp">

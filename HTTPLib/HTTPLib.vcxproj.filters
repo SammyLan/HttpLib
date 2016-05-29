@@ -5,8 +5,17 @@
       <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
       <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
     </Filter>
-    <Filter Include="http">
+    <Filter Include="base">
+      <UniqueIdentifier>{1ec29f73-b33c-46e3-9d00-535d594ee3f7}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="base\http">
       <UniqueIdentifier>{99222c6f-73d6-4d74-ae9c-516be4f1b3f0}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="base\Log">
+      <UniqueIdentifier>{4447b1a0-e770-4598-af2a-67a1c0932202}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="base\Include">
+      <UniqueIdentifier>{414f472c-d77e-4f36-9e42-2af416647fe3}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
@@ -26,13 +35,31 @@
       <Filter>Build</Filter>
     </ClInclude>
     <ClInclude Include="..\SDK\http\HttpRequest.h">
-      <Filter>http</Filter>
+      <Filter>base\http</Filter>
     </ClInclude>
     <ClInclude Include="..\SDK\http\HttpSession.h">
-      <Filter>http</Filter>
+      <Filter>base\http</Filter>
     </ClInclude>
     <ClInclude Include="..\SDK\http\ThreadPool.h">
-      <Filter>http</Filter>
+      <Filter>base\http</Filter>
+    </ClInclude>
+    <ClInclude Include="..\SDK\Log\Log.h">
+      <Filter>base\Log</Filter>
+    </ClInclude>
+    <ClInclude Include="..\SDK\Log\LogPrivate.h">
+      <Filter>base\Log</Filter>
+    </ClInclude>
+    <ClInclude Include="..\SDK\Log\TXPerfLogTime.h">
+      <Filter>base\Log</Filter>
+    </ClInclude>
+    <ClInclude Include="..\SDK\Log\UtilCoreConvert.h">
+      <Filter>base\Log</Filter>
+    </ClInclude>
+    <ClInclude Include="..\SDK\Include\WYTypeDef.h">
+      <Filter>base\Include</Filter>
+    </ClInclude>
+    <ClInclude Include="..\SDK\Include\WYUtil.h">
+      <Filter>base\Include</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -46,13 +73,25 @@
       <Filter>Build</Filter>
     </ClCompile>
     <ClCompile Include="..\SDK\http\HttpRequest.cpp">
-      <Filter>http</Filter>
+      <Filter>base\http</Filter>
     </ClCompile>
     <ClCompile Include="..\SDK\http\HttpSession.cpp">
-      <Filter>http</Filter>
+      <Filter>base\http</Filter>
     </ClCompile>
     <ClCompile Include="..\SDK\http\ThreadPool.cpp">
-      <Filter>http</Filter>
+      <Filter>base\http</Filter>
+    </ClCompile>
+    <ClCompile Include="..\SDK\Log\Log.cpp">
+      <Filter>base\Log</Filter>
+    </ClCompile>
+    <ClCompile Include="..\SDK\Log\TXPerfLogTime.cpp">
+      <Filter>base\Log</Filter>
+    </ClCompile>
+    <ClCompile Include="..\SDK\Log\UtilCoreConvert.cpp">
+      <Filter>base\Log</Filter>
+    </ClCompile>
+    <ClCompile Include="..\SDK\Include\WYUtil.cpp">
+      <Filter>base\Include</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

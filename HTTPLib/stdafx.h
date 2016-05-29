@@ -52,3 +52,6 @@
 #endif
 
 #define MSG_OUT stdout /* Send info to stdout, change to stderr if you want */
+#include <Include/WYTypeDef.h>
+#include <Include/WYUtil.h>
+#include <Log/Log.h>
