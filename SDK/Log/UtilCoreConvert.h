@@ -43,9 +43,9 @@ namespace Util
 		/// 半角转全角
 		bool DBCToSBC(CWYStringW & strDBC);
 
-		bool StringToIPPort(const CString &strSrc, CString &strIP, WORD &wPort);
+		bool StringToIPPort(const CWYString &strSrc, CWYString &strIP, WORD &wPort);
 
-		void StringToStringVec(const CString &strSrc, const CString &strSplider, std::vector<CString> &vecStringDest);
+		void StringToStringVec(const CWYString &strSrc, const CWYString &strSplider, std::vector<CWYString> &vecStringDest);
 
 		// --- 以下是类型转换函数 -------------
 		CWYStringA IntToStringA(int nValue);
@@ -71,7 +71,7 @@ namespace Util
 		//以下是判断函数
 		bool __stdcall IsTextUtf8(const void * ptr_, int nLen);
 
-		void SplitCmdString(const CString &str, std::vector<CString> &vecStr);
+		void SplitCmdString(const CWYString &str, std::vector<CWYString> &vecStr);
 
 #define TXA2W(x) (CStringW(tagUTF8(), (x)).GetString())
 #define TXA2B(x) (CComBSTR(TXA2W(x)))

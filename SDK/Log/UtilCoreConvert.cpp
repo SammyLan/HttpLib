@@ -1065,7 +1065,7 @@ bool __stdcall Util::Convert::IsTextUtf8(const void * ptr_, int nLen)
 }
 
 
-bool Util::Convert::StringToIPPort(const CString &strSrc, CString &strIP, WORD &wPort)
+bool Util::Convert::StringToIPPort(const CWYString &strSrc, CWYString &strIP, WORD &wPort)
 {
 	int nPos = strSrc.Find(_T(':'));
 
@@ -1076,7 +1076,7 @@ bool Util::Convert::StringToIPPort(const CString &strSrc, CString &strIP, WORD &
 
 	strIP = strSrc.Mid(0,nPos);
 	DWORD dwPort = 0;
-	CString strPort = strSrc.Right(strSrc.GetLength()-nPos-1);
+	CWYString strPort = strSrc.Right(strSrc.GetLength()-nPos-1);
 	StringToDWordW( strPort,dwPort);
 	wPort = (WORD)dwPort;
 
@@ -1088,7 +1088,7 @@ bool Util::Convert::StringToIPPort(const CString &strSrc, CString &strIP, WORD &
 	return TRUE;
 }
 
-void Util::Convert::StringToStringVec(const CString &strSrc, const CString &strSplider, vector<CString> &vecStringDest)
+void Util::Convert::StringToStringVec(const CWYString &strSrc, const CWYString &strSplider, vector<CWYString> &vecStringDest)
 {
 	vecStringDest.clear();
 
@@ -1102,16 +1102,16 @@ void Util::Convert::StringToStringVec(const CString &strSrc, const CString &strS
 	int nPos = -1;
 	while ( -1 != (nPos = strSrc.Find(strSplider, nLastPos)) )
 	{
-		CString strTemp = strSrc.Mid(nLastPos, nPos - nLastPos);
+		CWYString strTemp = strSrc.Mid(nLastPos, nPos - nLastPos);
 		vecStringDest.push_back(strTemp);
 		nLastPos = nPos + nSpliderLen;
 	}
 
-	CString strTemp = strSrc.Mid(nLastPos);
+	CWYString strTemp = strSrc.Mid(nLastPos);
 	vecStringDest.push_back(strTemp);
 }
 
-void Util::Convert::SplitCmdString(const CString &str, std::vector<CString> &vecStr)
+void Util::Convert::SplitCmdString(const CWYString &str, std::vector<CWYString> &vecStr)
 {
 	BOOL bInQuotation = FALSE;
 	int nBeginChar	= 0;
@@ -1175,7 +1175,7 @@ void Util::Convert::SplitCmdString(const CString &str, std::vector<CString> &vec
 
 	if (nBeginChar <= nEndChar)
 	{
-		CString strTemp = str.Mid(nBeginChar, nEndChar - nBeginChar + 1);
+		CWYString strTemp = str.Mid(nBeginChar, nEndChar - nBeginChar + 1);
 		strTemp.TrimRight();
 		if (!strTemp.IsEmpty())
 		{

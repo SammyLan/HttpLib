@@ -104,7 +104,7 @@ namespace TXLog
 	/// 取session值，给bugreport用。
 	DWORD GetSession();
 	/// 取log
-	std::string GetLogByFilter(const CString & strLogPath, DWORD dwSession, const CString & strFilter, DWORD dwMaxItem);
+	std::string GetLogByFilter(const CWYString & strLogPath, DWORD dwSession, const CWYString & strFilter, DWORD dwMaxItem);
 	/// 获取当前Logger的窗口句柄
 	HWND GetLoggerWnd();
 };

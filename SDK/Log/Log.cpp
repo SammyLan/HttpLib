@@ -125,7 +125,7 @@ namespace
 		LOGBUFFER* m_pCurBuffer;
 		typedef std::vector<LOGBUFFER*> VECTOR_LOGBUFFER;
 		VECTOR_LOGBUFFER m_saveList;
-		std::set<CString> m_setFilters;
+		std::set<CWYString> m_setFilters;
 	private:
 		static CTXLoger* s_pLoger;
 	private:
@@ -219,13 +219,13 @@ namespace
 				g_nLogLevel = static_cast<INT>(pParam->dwLogLevel);
 				if(pParam->pszFilter)
 				{
-					CString strFilter = pParam->pszFilter;
+					CWYString strFilter = pParam->pszFilter;
 					strFilter.Remove(_T(' '));
 					strFilter += _T('|');
 
 					int nPos = 0;
 					m_setFilters.clear();
-					CString strSubFilter = _T("");
+					CWYString strSubFilter = _T("");
 					while((nPos = strFilter.Find(_T('|'))) != -1)
 					{
 						strSubFilter = strFilter.Left(nPos);
@@ -329,7 +329,7 @@ namespace
 
 			m_pCurBuffer = NULL;
 
-			vector<CString> args;
+			vector<CWYString> args;
 			Util::Convert::SplitCmdString(GetCommandLine(), args);
 
 			for (size_t i=1, usz=args.size(); i<usz; ++i)
@@ -771,7 +771,7 @@ void TXLog_DoTXLogVW(tagLogObj* pLogObj, LPCWSTR pszFilter, LPCWSTR pszFmt, va_l
 		LogFinal(L"PerfBenchmark",_T("%I64d"),lpFrequency.QuadPart);
 	}
 
-	CString str;
+	CWYString str;
 	str.FormatV(pszFmt, vg);
 	if(str.GetLength() >= 200 *1024 )
 	{
@@ -782,7 +782,7 @@ void TXLog_DoTXLogVW(tagLogObj* pLogObj, LPCWSTR pszFilter, LPCWSTR pszFmt, va_l
 
 
 
-string TXLog::GetLogByFilter(const CString & strLogPath, DWORD dwSession, const CString & strFilter, DWORD dwMaxItem)
+string TXLog::GetLogByFilter(const CWYString & strLogPath, DWORD dwSession, const CWYString & strFilter, DWORD dwMaxItem)
 {
 	string sr;
 	if (dwSession == 0 || dwMaxItem == 0)

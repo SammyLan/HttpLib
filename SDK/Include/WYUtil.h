@@ -9,11 +9,11 @@ namespace Util
 
 	namespace Encode
 	{
-		CString MakeMd5(void *pData,DWORD const dwSize);
+		CWYString MakeMd5(void *pData,DWORD const dwSize);
 	}
 	namespace Convert
 	{
-		inline CString ConvertFromUtf8(LPCSTR str)
+		inline CWYString ConvertFromUtf8(LPCSTR str)
 		{
 			return LPCTSTR(CA2W(str, CP_UTF8));
 		}
