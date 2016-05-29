@@ -65,7 +65,7 @@ EventNotifyMgr::EventNotifyMgr()
 {
 	s_dwNotifyThreadID = ::GetCurrentThreadId();
 	RegisterClass();
-	CString strName;
+	CWYString strName;
 	strName.Format(_T("%s_%u"),s_szClassName, (unsigned int)s_dwNotifyThreadID);
 	m_hWnd = ::CreateWindowEx(0,s_szClassName,strName, WS_OVERLAPPEDWINDOW,CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT, HWND_MESSAGE,NULL, ::GetModuleHandle(NULL),this);
 }

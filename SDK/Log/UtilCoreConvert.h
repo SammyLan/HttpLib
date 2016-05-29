@@ -75,6 +75,6 @@ namespace Util
 
 #define TXA2W(x) (CStringW(tagUTF8(), (x)).GetString())
 #define TXA2B(x) (CComBSTR(TXA2W(x)))
-#define TXW2A(x) (CStringA(tagUTF8(), (x)).GetString())
+#define TXW2A(x) (CWYStringA(tagUTF8(), (x)).GetString())
 	}
 }

@@ -17,7 +17,7 @@ namespace Util
 		{
 			return LPCTSTR(CA2W(str, CP_UTF8));
 		}
-		inline CStringA ConvertToUtf8(LPCTSTR str)
+		inline CWYStringA ConvertToUtf8(LPCTSTR str)
 		{
 			return (LPCSTR)CW2A(str, CP_UTF8);
 		}

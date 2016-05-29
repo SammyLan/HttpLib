@@ -8,7 +8,7 @@
     <LIB3_LIB>$(LIB3_DIR)Lib;$(LIB3_DIR)Lib$(Configuration)</LIB3_LIB>
   </PropertyGroup>
   <PropertyGroup>
-    <IncludePath>$(LIB3_INC);$(SolutionDir);$(SolutionDir)SDK;$(SolutionDir)SDK\WYSDK;$(IncludePath)</IncludePath>
+    <IncludePath>$(LIB3_INC);$(SolutionDir);$(SolutionDir)SDK;$(SolutionDir)SDK\WYSDK;$(SolutionDir)SDK\external;$(IncludePath)</IncludePath>
     <LibraryPath>$(LIB3_LIB);$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <ItemDefinitionGroup>

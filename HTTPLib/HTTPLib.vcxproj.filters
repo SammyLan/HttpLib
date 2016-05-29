@@ -20,6 +20,18 @@
     <Filter Include="base\NotifyModel">
       <UniqueIdentifier>{be2a65c1-0d4f-4f69-a9e5-071da77bf944}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Lib3rd">
+      <UniqueIdentifier>{a094786b-52aa-4de2-b81a-e5b28d2143b5}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Lib3rd\sha1">
+      <UniqueIdentifier>{8980d3cc-cf10-45fa-b222-dceef1bbaee3}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="base\FileSign">
+      <UniqueIdentifier>{341b3aaa-1ec4-43cb-89d9-29ec81f4e3b9}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="base\FileSign\lib">
+      <UniqueIdentifier>{ca8d7a0c-c8eb-46bd-aca0-4824b46299d9}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="targetver.h">
@@ -67,6 +79,21 @@
     <ClInclude Include="..\SDK\NotifyModel\EventNotifyMgr.h">
       <Filter>base\NotifyModel</Filter>
     </ClInclude>
+    <ClInclude Include="..\SDK\external\sha1\sha1.h">
+      <Filter>Lib3rd\sha1</Filter>
+    </ClInclude>
+    <ClInclude Include="..\SDK\FileSign\lib\crc32.h">
+      <Filter>base\FileSign\lib</Filter>
+    </ClInclude>
+    <ClInclude Include="..\SDK\FileSign\lib\md5.h">
+      <Filter>base\FileSign\lib</Filter>
+    </ClInclude>
+    <ClInclude Include="..\SDK\FileSign\lib\md5_loc.h">
+      <Filter>base\FileSign\lib</Filter>
+    </ClInclude>
+    <ClInclude Include="..\SDK\FileSign\UtilConvert.h">
+      <Filter>base\FileSign</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="HTTPLib.cpp">
@@ -101,6 +128,15 @@
     </ClCompile>
     <ClCompile Include="..\SDK\NotifyModel\EventNotifyMgr.cpp">
       <Filter>base\NotifyModel</Filter>
+    </ClCompile>
+    <ClCompile Include="..\SDK\external\sha1\sha1.cpp">
+      <Filter>Lib3rd\sha1</Filter>
+    </ClCompile>
+    <ClCompile Include="..\SDK\FileSign\lib\md5.c">
+      <Filter>base\FileSign\lib</Filter>
+    </ClCompile>
+    <ClCompile Include="..\SDK\FileSign\UtilConvert.cpp">
+      <Filter>base\FileSign</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

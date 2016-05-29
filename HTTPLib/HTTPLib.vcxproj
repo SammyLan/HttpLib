@@ -193,6 +193,11 @@
     <Text Include="ReadMe.txt" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="..\SDK\external\sha1\sha1.h" />
+    <ClInclude Include="..\SDK\FileSign\lib\crc32.h" />
+    <ClInclude Include="..\SDK\FileSign\lib\md5.h" />
+    <ClInclude Include="..\SDK\FileSign\lib\md5_loc.h" />
+    <ClInclude Include="..\SDK\FileSign\UtilConvert.h" />
     <ClInclude Include="..\SDK\http\HttpRequest.h" />
     <ClInclude Include="..\SDK\http\HttpSession.h" />
     <ClInclude Include="..\SDK\http\ThreadPool.h" />
@@ -210,6 +215,15 @@
     <ClInclude Include="targetver.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="..\SDK\external\sha1\sha1.cpp">
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">NotUsing</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">NotUsing</PrecompiledHeader>
+    </ClCompile>
+    <ClCompile Include="..\SDK\FileSign\lib\md5.c">
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">NotUsing</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">NotUsing</PrecompiledHeader>
+    </ClCompile>
+    <ClCompile Include="..\SDK\FileSign\UtilConvert.cpp" />
     <ClCompile Include="..\SDK\http\HttpRequest.cpp" />
     <ClCompile Include="..\SDK\http\HttpSession.cpp" />
     <ClCompile Include="..\SDK\http\ThreadPool.cpp" />
