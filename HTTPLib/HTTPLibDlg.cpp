@@ -162,6 +162,5 @@ void CHTTPLibDlg::OnBnClickedOk()
 {
 	// TODO: 在此添加控件通知处理程序代码
 	auto pRequest = new CHttpRequest(&hSession_);
-	pRequest->get("http://www.qq.com/");
 	nwThreadPool_.postTask(std::bind(&CHttpRequest::get, pRequest, "http://www.baidu.com/"));
 }

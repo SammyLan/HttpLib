@@ -25,13 +25,13 @@
     <ClInclude Include="stdafx.h">
       <Filter>Build</Filter>
     </ClInclude>
-    <ClInclude Include="..\http\HttpRequest.h">
+    <ClInclude Include="..\SDK\http\HttpRequest.h">
       <Filter>http</Filter>
     </ClInclude>
-    <ClInclude Include="..\http\HttpSession.h">
+    <ClInclude Include="..\SDK\http\HttpSession.h">
       <Filter>http</Filter>
     </ClInclude>
-    <ClInclude Include="..\http\ThreadPool.h">
+    <ClInclude Include="..\SDK\http\ThreadPool.h">
       <Filter>http</Filter>
     </ClInclude>
   </ItemGroup>
@@ -45,13 +45,13 @@
     <ClCompile Include="stdafx.cpp">
       <Filter>Build</Filter>
     </ClCompile>
-    <ClCompile Include="..\http\HttpRequest.cpp">
+    <ClCompile Include="..\SDK\http\HttpRequest.cpp">
       <Filter>http</Filter>
     </ClCompile>
-    <ClCompile Include="..\http\HttpSession.cpp">
+    <ClCompile Include="..\SDK\http\HttpSession.cpp">
       <Filter>http</Filter>
     </ClCompile>
-    <ClCompile Include="..\http\ThreadPool.cpp">
+    <ClCompile Include="..\SDK\http\ThreadPool.cpp">
       <Filter>http</Filter>
     </ClCompile>
   </ItemGroup>

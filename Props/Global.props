@@ -2,13 +2,13 @@
 <Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ImportGroup Label="PropertySheets" />
   <PropertyGroup Label="UserMacros">
-    <LIB3_DIR>F:\MyWorkspace\MyTools\build3rd_git\externals\</LIB3_DIR>
+    <LIB3_DIR>D:\MyGithub\MyTools\build3rd_git\externals\</LIB3_DIR>
     <BOOST_DIR>$(LIB3_DIR)boost-1_61</BOOST_DIR>
     <LIB3_INC>$(LIB3_DIR)Include;$(BOOST_DIR)</LIB3_INC>
     <LIB3_LIB>$(LIB3_DIR)Lib;$(LIB3_DIR)Lib$(Configuration)</LIB3_LIB>
   </PropertyGroup>
   <PropertyGroup>
-    <IncludePath>$(LIB3_INC);$(SolutionDir);$(IncludePath)</IncludePath>
+    <IncludePath>$(LIB3_INC);$(SolutionDir);$(SolutionDir)SDK;$(IncludePath)</IncludePath>
     <LibraryPath>$(LIB3_LIB);$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <ItemDefinitionGroup>

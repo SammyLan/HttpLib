@@ -193,9 +193,9 @@
     <Text Include="ReadMe.txt" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="..\http\HttpRequest.h" />
-    <ClInclude Include="..\http\HttpSession.h" />
-    <ClInclude Include="..\http\ThreadPool.h" />
+    <ClInclude Include="..\SDK\http\HttpRequest.h" />
+    <ClInclude Include="..\SDK\http\HttpSession.h" />
+    <ClInclude Include="..\SDK\http\ThreadPool.h" />
     <ClInclude Include="HTTPLib.h" />
     <ClInclude Include="HTTPLibDlg.h" />
     <ClInclude Include="Resource.h" />
@@ -203,9 +203,9 @@
     <ClInclude Include="targetver.h" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="..\http\HttpRequest.cpp" />
-    <ClCompile Include="..\http\HttpSession.cpp" />
-    <ClCompile Include="..\http\ThreadPool.cpp" />
+    <ClCompile Include="..\SDK\http\HttpRequest.cpp" />
+    <ClCompile Include="..\SDK\http\HttpSession.cpp" />
+    <ClCompile Include="..\SDK\http\ThreadPool.cpp" />
     <ClCompile Include="HTTPLib.cpp" />
     <ClCompile Include="HTTPLibDlg.cpp" />
     <ClCompile Include="stdafx.cpp">
