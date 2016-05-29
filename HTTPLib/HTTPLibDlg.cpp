@@ -87,7 +87,7 @@ BOOL CHTTPLibDlg::OnInitDialog()
 	if (pSysMenu != NULL)
 	{
 		BOOL bNameValid;
-		CString strAboutMenu;
+		CWYString strAboutMenu;
 		bNameValid = strAboutMenu.LoadString(IDS_ABOUTBOX);
 		ASSERT(bNameValid);
 		if (!strAboutMenu.IsEmpty())

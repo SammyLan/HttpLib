@@ -202,6 +202,7 @@
     <ClInclude Include="..\SDK\Log\LogPrivate.h" />
     <ClInclude Include="..\SDK\Log\TXPerfLogTime.h" />
     <ClInclude Include="..\SDK\Log\UtilCoreConvert.h" />
+    <ClInclude Include="..\SDK\NotifyModel\EventNotifyMgr.h" />
     <ClInclude Include="HTTPLib.h" />
     <ClInclude Include="HTTPLibDlg.h" />
     <ClInclude Include="Resource.h" />
@@ -216,6 +217,7 @@
     <ClCompile Include="..\SDK\Log\Log.cpp" />
     <ClCompile Include="..\SDK\Log\TXPerfLogTime.cpp" />
     <ClCompile Include="..\SDK\Log\UtilCoreConvert.cpp" />
+    <ClCompile Include="..\SDK\NotifyModel\EventNotifyMgr.cpp" />
     <ClCompile Include="HTTPLib.cpp" />
     <ClCompile Include="HTTPLibDlg.cpp" />
     <ClCompile Include="stdafx.cpp">

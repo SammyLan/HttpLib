@@ -17,6 +17,9 @@
     <Filter Include="base\Include">
       <UniqueIdentifier>{414f472c-d77e-4f36-9e42-2af416647fe3}</UniqueIdentifier>
     </Filter>
+    <Filter Include="base\NotifyModel">
+      <UniqueIdentifier>{be2a65c1-0d4f-4f69-a9e5-071da77bf944}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="targetver.h">
@@ -61,6 +64,9 @@
     <ClInclude Include="..\SDK\Include\WYUtil.h">
       <Filter>base\Include</Filter>
     </ClInclude>
+    <ClInclude Include="..\SDK\NotifyModel\EventNotifyMgr.h">
+      <Filter>base\NotifyModel</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="HTTPLib.cpp">
@@ -92,6 +98,9 @@
     </ClCompile>
     <ClCompile Include="..\SDK\Include\WYUtil.cpp">
       <Filter>base\Include</Filter>
+    </ClCompile>
+    <ClCompile Include="..\SDK\NotifyModel\EventNotifyMgr.cpp">
+      <Filter>base\NotifyModel</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
