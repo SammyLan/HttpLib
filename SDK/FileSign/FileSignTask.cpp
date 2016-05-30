@@ -31,12 +31,15 @@ void CFileSignTask::BeginTask(boost::asio::io_service& io_service)
 	m_dwBeginTime = ::GetTickCount();
 	if (!m_hFile.Create(io_service, m_strFile, GENERIC_READ, FILE_SHARE_READ, OPEN_EXISTING))
 	{
-		OnFinish(GetLastError());
+		int iError = GetLastError();
+		LogError(LOGFILTER, _T("创建文件失败,错误码:%i,文件名:%s"), iError, (LPCTSTR)m_strFile);
+		OnFinish(iError);
 		return;
 	}
 	m_uFileSize = m_hFile.GetSize();
 	if (m_uFileSize == 0)
 	{
+		LogFinal(LOGFILTER, _T("文件大小为0,文件名:%s"), (LPCTSTR)m_strFile);
 		OnFinish(0);
 		return;
 	}
@@ -115,6 +118,7 @@ void CFileSignTask::OnFinish(int iError, bool bCancel)
 {
 	if (bCancel)
 	{
+		LogFinal(LOGFILTER, _T("取消扫描,文件名:%s"), (LPCTSTR)m_strFile);
 		return;
 	}
 	auto total = ::GetTickCount() - m_dwBeginTime;
@@ -126,6 +130,10 @@ void CFileSignTask::OnFinish(int iError, bool bCancel)
 		m_strSHA.assign(sha, 20);
 		string strSHA = ByteToStringA((BYTE*)sha, 20);
 		m_oShaList.push_back(strSHA);
+	}
+	else
+	{
+		LogFinal(LOGFILTER, _T("扫描出错,错误码:%i,文件名:%s"),iError, (LPCTSTR)m_strFile);
 	}
 	EventNotifyMgr::instance()->PostEvent(NewTask(&CWYFileSignMgr::OnFinish, m_pMgr, m_taskID,iError,total));
 }
