@@ -2,15 +2,19 @@
 #include "FileSignTask.h"
 #include <functional>
 #include "UtilConvert.h"
+#include "NotifyModel\EventNotifyMgr.h"
+#include "FileSignMgr.h"
 
 static TCHAR LOGFILTER[] = _T("CFileSignTask");
 static DWORD const CRC_FILE_SIZE	= 256 * 1024;
 static size_t const SLICE_SISE = 512 * 1024; //512KB
+static size_t const UpdateSpeedTimeInterval = 1000;
 
-CFileSignTask::CFileSignTask(WYTASKID taskID, CWYString const & strFile, CWYFileSignMgr* pMgr)
+CFileSignTask::CFileSignTask(WYTASKID taskID, CWYString const & strFile, CWYFileSignMgr* pMgr, IFileSignDelegate * pCallback)
 	:m_taskID(taskID)
 	,m_strFile(strFile)
 	,m_pMgr(pMgr)
+	,m_pCallback(pCallback)
 {
 	
 }
@@ -23,6 +27,8 @@ CFileSignTask::~CFileSignTask()
 
 void CFileSignTask::BeginTask(boost::asio::io_service& io_service)
 {
+	m_bRunning = TRUE;
+	m_dwBeginTime = ::GetTickCount();
 	if (!m_hFile.Create(io_service, m_strFile, GENERIC_READ, FILE_SHARE_READ, OPEN_EXISTING))
 	{
 		OnFinish(GetLastError());
@@ -34,6 +40,8 @@ void CFileSignTask::BeginTask(boost::asio::io_service& io_service)
 		OnFinish(0);
 		return;
 	}
+	EventNotifyMgr::instance()->PostEvent(NewTask(&CWYFileSignMgr::OnBegin, m_pMgr, m_taskID));
+	m_uPreTime = ::GetTickCount();
 	m_pBufferRead = new BYTE[SLICE_SISE];
 	m_pBufferCalcHash = new BYTE[SLICE_SISE];
 	readAt(m_i64CompleteSize, m_pBufferRead, SLICE_SISE);
@@ -42,7 +50,7 @@ void CFileSignTask::BeginTask(boost::asio::io_service& io_service)
 void CFileSignTask::CancelTask()
 {
 	m_hFile.CancelIO();
-	m_pMgr = nullptr;
+	m_pCallback = nullptr;
 }
 
 void CFileSignTask::readAt(uint64_t const offset, BYTE * pBuff, size_t const size)
@@ -56,9 +64,9 @@ void CFileSignTask::handler(
 	std::size_t bytes_transferred           // Number of bytes read.
 	)
 {
-	if (m_pMgr == nullptr)
+	if (m_pCallback == nullptr)
 	{
-		//return;
+		return;
 	}
 
 	int iError = error.value();
@@ -81,6 +89,16 @@ void CFileSignTask::handler(
 			std::string strSHA = ByteToStringA((BYTE*)sha, 20);
 			m_oShaList.push_back(strSHA);
 		}
+
+		DWORD dwCur = ::GetTickCount();
+		if (dwCur - m_uPreTime > UpdateSpeedTimeInterval)
+		{
+			EventNotifyMgr::instance()->PostEvent(NewTask(&CWYFileSignMgr::OnProgress, m_pMgr, m_taskID
+				, m_uFileSize, m_i64CompleteSize, (float)((m_i64CompleteSize - m_i64PreCompleteSize) * 1000) / (dwCur - m_uPreTime) / 1024 / 1024));
+
+			m_uPreTime = dwCur;
+			m_i64PreCompleteSize = m_i64CompleteSize;
+		}
 	}
 	else if(iError == boost::asio::error::misc_errors::eof)
 	{
@@ -95,5 +113,19 @@ void CFileSignTask::handler(
 
 void CFileSignTask::OnFinish(int iError, bool bCancel)
 {
-
+	if (bCancel)
+	{
+		return;
+	}
+	auto total = ::GetTickCount() - m_dwBeginTime;
+	if (iError == 0)
+	{
+		char sha[20];
+		m_oSha1.Final();
+		m_oSha1.GetHash((BYTE*)sha);
+		m_strSHA.assign(sha, 20);
+		string strSHA = ByteToStringA((BYTE*)sha, 20);
+		m_oShaList.push_back(strSHA);
+	}
+	EventNotifyMgr::instance()->PostEvent(NewTask(&CWYFileSignMgr::OnFinish, m_pMgr, m_taskID,iError,total));
 }

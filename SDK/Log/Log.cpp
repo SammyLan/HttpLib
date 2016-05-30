@@ -29,6 +29,33 @@
 TCHAR LOGFILTER_ERROR[]= _T("WY_ERROR");
 TCHAR LOGFILTER_INFO[]= _T("WY_INFO");
 int  g_nLogLevel = LOGL_Info;
+
+#ifdef _DEBUG
+BOOL g_bAssert = FALSE;
+void InitAssertFlag()
+{
+	TCHAR szVar[256];
+	DWORD dwRet = ::GetEnvironmentVariable(_T("WYASSERT"), szVar, _countof(szVar));
+	if (dwRet != 0)
+	{
+		CString strVal = szVar;
+		if (strVal == _T("TRUE"))
+		{
+			g_bAssert = FALSE;
+		}
+	}
+}
+
+#else
+inline static void MainThreadCheck()
+{
+}
+
+inline void InitAssertFlag()
+{
+
+}
+#endif
 //log.cpp和logviewerdlg.cpp中都有要同步
 TCHAR chLogKeys[64] = 
 {

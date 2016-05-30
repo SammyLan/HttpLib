@@ -6,7 +6,7 @@
 #include "http\HttpSession.h"
 #include "http\HttpRequest.h"
 #include "http\ThreadPool.h"
-#include "FileSign\FileSignTask.h"
+#include "FileSign\FileSignMgr.h"
 
 // CHTTPLibDlg ¶Ô»°¿ò
 class CHTTPLibDlg : public CDialogEx
@@ -40,5 +40,5 @@ private:
 	ThreadPool nwThreadPool_;
 	ThreadPool ioThreadPool_;
 	CHttpSession hSession_;
-	CFileSignTaskPtr m_pFileSignTask;
+	CWYFileSignMgr m_pFileSignMgr;
 };

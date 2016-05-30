@@ -1,10 +1,11 @@
 #pragma once
 #include <cassert>
+#include <boost\noncopyable.hpp>
 namespace WYUtil
 {
 
 	template<class D>
-	class Instance
+	class Instance:public boost::noncopyable
 	{
 	public:
 		static D *instance(){return instance_;}

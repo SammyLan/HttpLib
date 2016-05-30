@@ -97,6 +97,9 @@
     <ClInclude Include="..\SDK\FileSign\FileSignTask.h">
       <Filter>base\FileSign</Filter>
     </ClInclude>
+    <ClInclude Include="..\SDK\FileSign\FileSignMgr.h">
+      <Filter>base\FileSign</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="HTTPLib.cpp">
@@ -142,6 +145,9 @@
       <Filter>base\File</Filter>
     </ClCompile>
     <ClCompile Include="..\SDK\FileSign\FileSignTask.cpp">
+      <Filter>base\FileSign</Filter>
+    </ClCompile>
+    <ClCompile Include="..\SDK\FileSign\FileSignMgr.cpp">
       <Filter>base\FileSign</Filter>
     </ClCompile>
   </ItemGroup>

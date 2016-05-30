@@ -8,11 +8,13 @@
 #include "lib\crc32.h"
 
 class CWYFileSignMgr;
-class CFileSignTask:public std::enable_shared_from_this<CFileSignTask>
+class CFileSignTask
+	:public std::enable_shared_from_this<CFileSignTask>
+	,public boost::noncopyable
 {
 	friend class CWYFileSignMgr;
 public:
-	CFileSignTask(WYTASKID taskID, CWYString const & strFile, CWYFileSignMgr* pMgr);
+	CFileSignTask(WYTASKID taskID, CWYString const & strFile, CWYFileSignMgr* pMgr, IFileSignDelegate*		pCallback);
 	~CFileSignTask();	
 	void	BeginTask(boost::asio::io_service& io_service);
 	void	CancelTask();
@@ -27,17 +29,20 @@ private:
 	WYTASKID const			m_taskID;	
 	CWYString const			m_strFile;	
 	CWYFileSignMgr *		m_pMgr;
-
+	IFileSignDelegate*		m_pCallback;
+	BOOL					m_bRunning = FALSE;
 	CAsyncFile				m_hFile;
-	uint64_t				m_uFileSize;
+	uint64_t				m_uFileSize = 0;
 	uint64_t				m_i64CompleteSize = 0;
-	
+	uint64_t				m_i64PreCompleteSize;
 	UINT32					m_validateCRC = 0;
 	CSHA1					m_oSha1;
 	std::vector<std::string> m_oShaList;
+	string					m_strSHA;
 	DWORD					m_dwBeginTime = 0;
 
 	BYTE *		m_pBufferRead = nullptr;
 	BYTE *		m_pBufferCalcHash = nullptr;
+	DWORD		m_uPreTime = 0;
 };
 typedef std::shared_ptr<CFileSignTask> CFileSignTaskPtr;
