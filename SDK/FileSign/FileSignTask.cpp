@@ -84,7 +84,7 @@ void CFileSignTask::handler(
 			m_validateCRC = crc32(m_validateCRC, m_pBufferCalcHash, crcSize);
 		}
 		m_oSha1.Update(m_pBufferCalcHash, bytes_transferred);
-		if (m_i64CompleteSize <= m_uFileSize)
+		if (m_i64CompleteSize < m_uFileSize)
 		{
 			char sha[20];
 			unsigned long long tmp;
@@ -130,6 +130,11 @@ void CFileSignTask::OnFinish(int iError, bool bCancel)
 		m_strSHA.assign(sha, 20);
 		string strSHA = ByteToStringA((BYTE*)sha, 20);
 		m_oShaList.push_back(strSHA);
+		auto cntBlock = (m_uFileSize + SLICE_SISE - 1) / SLICE_SISE;
+		if (cntBlock != m_oShaList.size())
+		{
+			LogError(_T("计算哈希错误,文件大小%llu,分块个数%u,文件名:%s"), m_uFileSize, (DWORD)m_oShaList.size(),(LPCTSTR)m_strFile);
+		}
 	}
 	else
 	{

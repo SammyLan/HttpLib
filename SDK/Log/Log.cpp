@@ -340,6 +340,7 @@ namespace
 
 		CTXLoger()
 		{
+			InitAssertFlag();
 			m_bBuffer   = 1;
 			m_hViewer   = 0;
 			m_hWnd      = 0;

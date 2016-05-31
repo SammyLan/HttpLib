@@ -1,6 +1,6 @@
 #pragma once
 #include <map>
-#include <instance.hpp>
+#include <WYSDK\instance.hpp>
 #include "Task.h"
 #include <cassert>
 using namespace std;

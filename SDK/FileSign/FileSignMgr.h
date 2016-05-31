@@ -1,8 +1,8 @@
 #pragma once
 #include <memory>
 #include <map>
-#include <IWYUploadSDK.h>
-#include <Instance.hpp>
+#include <WYSDK\IWYUploadSDK.h>
+#include <WYSDK\Instance.hpp>
 #include <Include\WYTypeDef.h>
 #include <boost\asio.hpp>
 

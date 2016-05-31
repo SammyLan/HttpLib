@@ -35,6 +35,9 @@
     <Filter Include="base\File">
       <UniqueIdentifier>{b54fff46-6789-4743-8b3c-918e7f324962}</UniqueIdentifier>
     </Filter>
+    <Filter Include="base\Thread">
+      <UniqueIdentifier>{8110ba24-9ad4-4de0-b0cc-d1e1a09ac490}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="targetver.h">
@@ -56,9 +59,6 @@
       <Filter>base\http</Filter>
     </ClInclude>
     <ClInclude Include="..\SDK\http\HttpSession.h">
-      <Filter>base\http</Filter>
-    </ClInclude>
-    <ClInclude Include="..\SDK\http\ThreadPool.h">
       <Filter>base\http</Filter>
     </ClInclude>
     <ClInclude Include="..\SDK\Log\Log.h">
@@ -100,6 +100,9 @@
     <ClInclude Include="..\SDK\FileSign\FileSignMgr.h">
       <Filter>base\FileSign</Filter>
     </ClInclude>
+    <ClInclude Include="..\SDK\Thread\ThreadPool.h">
+      <Filter>base\Thread</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="HTTPLib.cpp">
@@ -115,9 +118,6 @@
       <Filter>base\http</Filter>
     </ClCompile>
     <ClCompile Include="..\SDK\http\HttpSession.cpp">
-      <Filter>base\http</Filter>
-    </ClCompile>
-    <ClCompile Include="..\SDK\http\ThreadPool.cpp">
       <Filter>base\http</Filter>
     </ClCompile>
     <ClCompile Include="..\SDK\Log\Log.cpp">
@@ -149,6 +149,9 @@
     </ClCompile>
     <ClCompile Include="..\SDK\FileSign\FileSignMgr.cpp">
       <Filter>base\FileSign</Filter>
+    </ClCompile>
+    <ClCompile Include="..\SDK\Thread\ThreadPool.cpp">
+      <Filter>base\Thread</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

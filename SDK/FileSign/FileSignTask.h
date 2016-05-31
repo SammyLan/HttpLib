@@ -1,6 +1,6 @@
 #pragma once
 #include <Include\WYTypeDef.h>
-#include <IWYUploadSDK.h>
+#include <WYSDK\IWYUploadSDK.h>
 #include <File\AsyncFile.h>
 #include <vector>
 #include <string>
