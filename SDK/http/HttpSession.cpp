@@ -66,12 +66,11 @@ namespace NSCURL
 	}
 }
 
-CHttpSession * CHttpSession::s_pSession = nullptr;
+
 CHttpSession::CHttpSession(boost::asio::io_service & io_service)
 	:io_service_(io_service)
 	, timer_(io_service)
 {
-	s_pSession = this;
 	hMulti_ = curl_multi_init();
 
 	curl_multi_setopt(hMulti_, CURLMOPT_SOCKETFUNCTION, sock_cb);
@@ -84,13 +83,12 @@ CHttpSession::CHttpSession(boost::asio::io_service & io_service)
 CHttpSession::~CHttpSession()
 {
 	curl_multi_cleanup(hMulti_);
-	s_pSession = nullptr;
 }
 
 
 CURLMcode CHttpSession::addHandle(CHttpRequest * pHandle)
 {
-	fprintf(MSG_OUT,"\nAdding easy %p to multi %p (%s)", pHandle->easy, hMulti_, pHandle->url_.c_str());
+	fprintf(MSG_OUT,"\nAdding easy %p to multi %p (%s)", pHandle->easy_, hMulti_, pHandle->url_.c_str());
 	auto rc = curl_multi_add_handle(hMulti_, pHandle->handle());
 	NSCURL::mcode_or_die("new_conn: curl_multi_add_handle", rc);
 	return rc;
@@ -284,7 +282,7 @@ void CHttpSession::event_cb(CHttpSession *pThis, boost::asio::ip::tcp::socket *t
 }
 
 /* CURLOPT_OPENSOCKETFUNCTION */
-curl_socket_t CHttpSession::opensocket(void *clientp, curlsocktype purpose, struct curl_sockaddr *address)
+curl_socket_t CHttpSession::opensocket(curlsocktype purpose, struct curl_sockaddr *address)
 {
 	fprintf(MSG_OUT, "\nopensocket :");
 
@@ -294,7 +292,7 @@ curl_socket_t CHttpSession::opensocket(void *clientp, curlsocktype purpose, stru
 	if (purpose == CURLSOCKTYPE_IPCXN && address->family == AF_INET)
 	{
 		/* create a tcp socket object */
-		boost::asio::ip::tcp::socket *tcp_socket = new boost::asio::ip::tcp::socket(s_pSession->io_service_);
+		boost::asio::ip::tcp::socket *tcp_socket = new boost::asio::ip::tcp::socket(io_service_);
 
 		/* open it and get the native handle*/
 		boost::system::error_code ec;
@@ -312,7 +310,7 @@ curl_socket_t CHttpSession::opensocket(void *clientp, curlsocktype purpose, stru
 			fprintf(MSG_OUT, "\nOpened socket %d", sockfd);
 
 			/* save it for monitoring */
-			s_pSession->socketMap_.insert(std::pair<curl_socket_t, boost::asio::ip::tcp::socket *>(sockfd, tcp_socket));
+			socketMap_.insert(std::pair<curl_socket_t, boost::asio::ip::tcp::socket *>(sockfd, tcp_socket));
 		}
 	}
 
@@ -321,16 +319,16 @@ curl_socket_t CHttpSession::opensocket(void *clientp, curlsocktype purpose, stru
 
 
 /* CURLOPT_CLOSESOCKETFUNCTION */
-int CHttpSession::close_socket(void *clientp, curl_socket_t item)
+int CHttpSession::close_socket( curl_socket_t item)
 {
 	fprintf(MSG_OUT, "\nclose_socket : %d", item);
 
-	std::map<curl_socket_t, boost::asio::ip::tcp::socket *>::iterator it = s_pSession->socketMap_.find(item);
+	std::map<curl_socket_t, boost::asio::ip::tcp::socket *>::iterator it = socketMap_.find(item);
 
-	if (it != s_pSession->socketMap_.end())
+	if (it != socketMap_.end())
 	{
 		delete it->second;
-		s_pSession->socketMap_.erase(it);
+		socketMap_.erase(it);
 	}
 	return 0;
 }

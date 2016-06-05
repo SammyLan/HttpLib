@@ -21,8 +21,8 @@ public:
 	CURLMcode addHandle(CHttpRequest * pHandle);
 	CURLMcode removeHandle(CHttpRequest * pHandle);
 	CURLM * handle();
-	static curl_socket_t opensocket(void *clientp, curlsocktype purpose, struct curl_sockaddr *address);
-	static int close_socket(void *clientp, curl_socket_t item);
+	curl_socket_t opensocket(curlsocktype purpose, struct curl_sockaddr *address);
+	int close_socket(curl_socket_t item);
 private:
 	static int sock_cb(CURL *e, curl_socket_t s, int what, CHttpSession *pThis, void *sockp);
 	static int multi_timer_cb(CURLM *multi, long timeout_ms, CHttpSession *pThis);
@@ -39,6 +39,5 @@ private:
 	boost::asio::io_service & io_service_;
 	boost::asio::deadline_timer timer_;	
 	std::map<curl_socket_t, boost::asio::ip::tcp::socket *> socketMap_;
-	static CHttpSession * s_pSession;
 };
 

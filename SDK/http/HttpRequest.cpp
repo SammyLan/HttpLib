@@ -7,28 +7,30 @@
 CHttpRequest::CHttpRequest(CHttpSession *pSession)
 	:pSession_(pSession)
 {
-	easy = curl_easy_init();
-	if (!easy)
+	easy_ = curl_easy_init();
+	if (!easy_)
 	{
 		fprintf(MSG_OUT, "\ncurl_easy_init() failed, exiting!");
 		exit(2);
 	}
-	curl_easy_setopt(this->easy, CURLOPT_WRITEFUNCTION, write_cb);
-	curl_easy_setopt(this->easy, CURLOPT_WRITEDATA, this);
-	curl_easy_setopt(this->easy, CURLOPT_VERBOSE, 1L);
-	curl_easy_setopt(this->easy, CURLOPT_ERRORBUFFER, this->error);
-	curl_easy_setopt(this->easy, CURLOPT_PRIVATE, this);
-	curl_easy_setopt(this->easy, CURLOPT_NOPROGRESS, 1L);
-	curl_easy_setopt(this->easy, CURLOPT_PROGRESSFUNCTION, prog_cb);
-	curl_easy_setopt(this->easy, CURLOPT_PROGRESSDATA, this);
-	curl_easy_setopt(this->easy, CURLOPT_LOW_SPEED_TIME, 3L);
-	curl_easy_setopt(this->easy, CURLOPT_LOW_SPEED_LIMIT, 10L);
+	curl_easy_setopt(this->easy_, CURLOPT_WRITEFUNCTION, write_cb);
+	curl_easy_setopt(this->easy_, CURLOPT_WRITEDATA, this);
+	curl_easy_setopt(this->easy_, CURLOPT_VERBOSE, 1L);
+	curl_easy_setopt(this->easy_, CURLOPT_ERRORBUFFER, this->error);
+	curl_easy_setopt(this->easy_, CURLOPT_PRIVATE, this);
+	curl_easy_setopt(this->easy_, CURLOPT_NOPROGRESS, 1L);
+	curl_easy_setopt(this->easy_, CURLOPT_PROGRESSFUNCTION, prog_cb);
+	curl_easy_setopt(this->easy_, CURLOPT_PROGRESSDATA, this);
+	curl_easy_setopt(this->easy_, CURLOPT_LOW_SPEED_TIME, 3L);
+	curl_easy_setopt(this->easy_, CURLOPT_LOW_SPEED_LIMIT, 10L);
 
 	/* call this function to get a socket */
-	curl_easy_setopt(easy, CURLOPT_OPENSOCKETFUNCTION, &CHttpSession::opensocket);
+	curl_easy_setopt(easy_, CURLOPT_OPENSOCKETFUNCTION, &CHttpRequest::opensocket);
+	curl_easy_setopt(easy_, CURLOPT_OPENSOCKETDATA, this->pSession_);
 
 	/* call this function to close a socket */
-	curl_easy_setopt(this->easy, CURLOPT_CLOSESOCKETFUNCTION, &CHttpSession::close_socket);	
+	curl_easy_setopt(this->easy_, CURLOPT_CLOSESOCKETFUNCTION, &CHttpRequest::close_socket);
+	curl_easy_setopt(easy_, CURLOPT_CLOSESOCKETDATA, this->pSession_);
 }
 
 
@@ -38,7 +40,7 @@ CHttpRequest::~CHttpRequest()
 
 CURL * CHttpRequest::handle()
 {
-	return easy;
+	return easy_;
 }
 
 bool CHttpRequest::close()
@@ -49,10 +51,10 @@ bool CHttpRequest::close()
 void CHttpRequest::onDone(CURLcode res)
 {
 	char *eff_url;
-	curl_easy_getinfo(easy, CURLINFO_EFFECTIVE_URL, &eff_url);
+	curl_easy_getinfo(easy_, CURLINFO_EFFECTIVE_URL, &eff_url);
 	fprintf(MSG_OUT, "\nDONE: %s => (%d) %s", eff_url, res, error);
 	pSession_->removeHandle(this);
-	curl_easy_cleanup(easy);	
+	curl_easy_cleanup(easy_);	
 	//TODO::delete
 	delete this;
 }
@@ -89,6 +91,16 @@ int CHttpRequest::prog_cb(CHttpRequest *pThis, double dltotal, double dlnow, dou
 void CHttpRequest::get(std::string const & url)
 {
 	url_ = url;
-	curl_easy_setopt(this->easy, CURLOPT_URL, this->url_.c_str());
+	curl_easy_setopt(this->easy_, CURLOPT_URL, this->url_.c_str());
 	auto rc = pSession_->addHandle(this);
+}
+
+curl_socket_t CHttpRequest::opensocket(CHttpSession *pThis, curlsocktype purpose, struct curl_sockaddr *address)
+{
+	return pThis->opensocket(purpose,address);
+}
+
+int CHttpRequest::close_socket(CHttpSession *pThis, curl_socket_t item)
+{
+	return pThis->close_socket(item);
 }
