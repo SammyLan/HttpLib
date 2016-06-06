@@ -3,6 +3,7 @@
 //
 
 #pragma once
+#include "http\HttpConnMgr.h"
 #include "http\HttpSession.h"
 #include "http\HttpRequest.h"
 #include "Thread\ThreadPool.h"
@@ -39,6 +40,7 @@ public:
 private:
 	ThreadPool nwThreadPool_;
 	ThreadPool ioThreadPool_;
+	CHttpConnMgr connMgr_;
 	CHttpSession hSession_;
 	CWYFileSignMgr m_pFileSignMgr;
 };

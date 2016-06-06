@@ -53,7 +53,8 @@ CHTTPLibDlg::CHTTPLibDlg(CWnd* pParent /*=NULL*/)
 	: CDialogEx(IDD_HTTPLIB_DIALOG, pParent)
 	, nwThreadPool_(1)
 	, ioThreadPool_(1)
-	,hSession_(nwThreadPool_.io_service())
+	, connMgr_(nwThreadPool_.io_service())
+	, hSession_(nwThreadPool_.io_service(), &connMgr_)
 	, m_pFileSignMgr(ioThreadPool_.io_service())
 {
 	m_hIcon = AfxGetApp()->LoadIcon(IDR_MAINFRAME);
@@ -167,8 +168,10 @@ HCURSOR CHTTPLibDlg::OnQueryDragIcon()
 void CHTTPLibDlg::OnBnClickedOk()
 {
 	// TODO: 在此添加控件通知处理程序代码
-	m_pFileSignMgr.AddTask(_T("D:\\连续剧\\超女\\[迅雷下载www.2tu.cc]美人制造15.1280高清.mp4"), 0, 0);
-	return;
+	//m_pFileSignMgr.AddTask(_T("D:\\连续剧\\超女\\[迅雷下载www.2tu.cc]美人制造15.1280高清.mp4"), 0, 0);
+	//return;
 	auto pRequest = new CHttpRequest(&hSession_);
+	nwThreadPool_.postTask(std::bind(&CHttpRequest::get, pRequest, "http://www.qq.com/"));
+	pRequest = new CHttpRequest(&hSession_);
 	nwThreadPool_.postTask(std::bind(&CHttpRequest::get, pRequest, "http://www.baidu.com/"));
 }

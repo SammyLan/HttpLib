@@ -30,7 +30,12 @@ CHttpRequest::CHttpRequest(CHttpSession *pSession)
 
 	/* call this function to close a socket */
 	curl_easy_setopt(this->easy_, CURLOPT_CLOSESOCKETFUNCTION, &CHttpRequest::close_socket);
-	curl_easy_setopt(easy_, CURLOPT_CLOSESOCKETDATA, this->pSession_);
+	curl_easy_setopt(this->easy_, CURLOPT_CLOSESOCKETDATA, this->pSession_);
+
+	curl_easy_setopt(this->easy_, CURLOPT_TCP_KEEPALIVE, 1L);
+	curl_easy_setopt(this->easy_, CURLOPT_TCP_KEEPIDLE, 120L);
+	curl_easy_setopt(this->easy_, CURLOPT_TCP_KEEPINTVL, 60L);
+	curl_easy_setopt(this->easy_, CURLOPT_NOSIGNAL, 1);
 }
 
 
