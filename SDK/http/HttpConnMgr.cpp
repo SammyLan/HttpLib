@@ -62,3 +62,14 @@ int CHttpConnMgr::close_socket( curl_socket_t item)
 	}
 	return 0;
 }
+
+CHttpConnMgr::SocketPtr CHttpConnMgr::getSock(curl_socket_t s)
+{
+	SocketPtr pItem;
+	auto it = socketMap_.find(s);
+	if (it != socketMap_.end())
+	{
+		pItem = it->second;
+	}
+	return pItem;
+}

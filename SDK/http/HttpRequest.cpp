@@ -2,6 +2,7 @@
 #include "HttpRequest.h"
 #include "HttpSession.h"
 #include <iostream>
+#include <fstream>
 
 
 CHttpRequest::CHttpRequest(CHttpSession *pSession)
@@ -67,14 +68,14 @@ void CHttpRequest::onDone(CURLcode res)
 /* CURLOPT_WRITEFUNCTION */
 size_t CHttpRequest::write_cb(void *ptr, size_t size, size_t nmemb, CHttpRequest *pThis)
 {
+	std::ofstream ofs("d:\\qq.html", ios_base::app);
 	size_t written = size * nmemb;
 	char* pBuffer = (char *)malloc(written + 1);
 
 	strncpy(pBuffer, (const char *)ptr, written);
 	pBuffer[written] = '\0';
 
-	fprintf(MSG_OUT, "%s", pBuffer);
-
+	ofs.write(pBuffer, written);
 	free(pBuffer);
 
 	return written;

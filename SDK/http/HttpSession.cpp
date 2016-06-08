@@ -202,19 +202,15 @@ void CHttpSession::setsock(int *fdp, curl_socket_t s, CURL*e, int act)
 {
 	fprintf(MSG_OUT, "\nsetsock: socket=%d, act=%d, fdp=%p", s, act, fdp);
 
-	auto it = socketMap_.find(s);
+	auto tcp_socket = pConnMgr_->getSock(s);
 
-	if (it == socketMap_.end())
+	if (tcp_socket.get() == nullptr)
 	{
 		fprintf(MSG_OUT, "\nsocket %d is a c-ares socket, ignoring", s);
-
 		return;
 	}
 
-	auto tcp_socket = it->second;
-
 	*fdp = act;
-
 	if (act == CURL_POLL_IN)
 	{
 		fprintf(MSG_OUT, "\nwatching for socket to become readable");
@@ -286,50 +282,12 @@ void CHttpSession::event_cb(CHttpSession *pThis, CHttpSession::SocketPtr & tcp_s
 /* CURLOPT_OPENSOCKETFUNCTION */
 curl_socket_t CHttpSession::opensocket(curlsocktype purpose, struct curl_sockaddr *address)
 {
-	fprintf(MSG_OUT, "\nopensocket :");
-
-	curl_socket_t sockfd = CURL_SOCKET_BAD;
-
-	/* restrict to IPv4 */
-	if (purpose == CURLSOCKTYPE_IPCXN && address->family == AF_INET)
-	{
-		/* create a tcp socket object */
-		SocketPtr tcp_socket(new boost::asio::ip::tcp::socket(io_service_));
-
-		/* open it and get the native handle*/
-		boost::system::error_code ec;
-		tcp_socket->open(boost::asio::ip::tcp::v4(), ec);
-
-		if (ec)
-		{
-			/* An error occurred */
-			std::cout << std::endl << "Couldn't open socket [" << ec << "][" << ec.message() << "]";
-			fprintf(MSG_OUT, "\nERROR: Returning CURL_SOCKET_BAD to signal error");
-		}
-		else
-		{
-			sockfd = tcp_socket->native_handle();
-			fprintf(MSG_OUT, "\nOpened socket %d", sockfd);
-
-			/* save it for monitoring */
-			socketMap_.insert(std::make_pair(sockfd, tcp_socket));
-		}
-	}
-
-	return sockfd;
+	return pConnMgr_->opensocket(purpose, address);
 }
 
 
 /* CURLOPT_CLOSESOCKETFUNCTION */
 int CHttpSession::close_socket( curl_socket_t item)
 {
-	fprintf(MSG_OUT, "\nclose_socket : %d", item);
-
-	auto it = socketMap_.find(item);
-
-	if (it != socketMap_.end())
-	{
-		socketMap_.erase(it);
-	}
-	return 0;
+	return pConnMgr_->close_socket(item);
 }

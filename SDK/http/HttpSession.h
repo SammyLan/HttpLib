@@ -18,7 +18,6 @@ class CHttpSession
 {
 public:
 	typedef std::shared_ptr<boost::asio::ip::tcp::socket> SocketPtr;
-	typedef std::map<curl_socket_t, SocketPtr>	SocketPool;
 public:
 	CHttpSession(boost::asio::io_service & io_service, CHttpConnMgr * pConnMgr);
 	~CHttpSession();
@@ -43,6 +42,5 @@ private:
 	boost::asio::io_service & io_service_;
 	CHttpConnMgr * pConnMgr_;
 	boost::asio::deadline_timer timer_;	
-	SocketPool socketMap_;
 };
 
