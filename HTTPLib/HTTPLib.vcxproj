@@ -200,6 +200,7 @@
     <ClInclude Include="..\SDK\FileSign\UtilConvert.h" />
     <ClInclude Include="..\SDK\File\AsyncFile.h" />
     <ClInclude Include="..\SDK\http\HttpConnMgr.h" />
+    <ClInclude Include="..\SDK\http\HttpGlobal.h" />
     <ClInclude Include="..\SDK\http\HttpRequest.h" />
     <ClInclude Include="..\SDK\http\HttpSession.h" />
     <ClInclude Include="..\SDK\Include\WYTypeDef.h" />
@@ -226,6 +227,7 @@
     <ClCompile Include="..\SDK\FileSign\UtilConvert.cpp" />
     <ClCompile Include="..\SDK\File\AsyncFile.cpp" />
     <ClCompile Include="..\SDK\http\HttpConnMgr.cpp" />
+    <ClCompile Include="..\SDK\http\HttpGlobal.cpp" />
     <ClCompile Include="..\SDK\http\HttpRequest.cpp" />
     <ClCompile Include="..\SDK\http\HttpSession.cpp" />
     <ClCompile Include="..\SDK\Include\WYUtil.cpp" />

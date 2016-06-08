@@ -106,6 +106,9 @@
     <ClInclude Include="..\SDK\http\HttpConnMgr.h">
       <Filter>base\http</Filter>
     </ClInclude>
+    <ClInclude Include="..\SDK\http\HttpGlobal.h">
+      <Filter>base\http</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="HTTPLib.cpp">
@@ -157,6 +160,9 @@
       <Filter>base\Thread</Filter>
     </ClCompile>
     <ClCompile Include="..\SDK\http\HttpConnMgr.cpp">
+      <Filter>base\http</Filter>
+    </ClCompile>
+    <ClCompile Include="..\SDK\http\HttpGlobal.cpp">
       <Filter>base\http</Filter>
     </ClCompile>
   </ItemGroup>

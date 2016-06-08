@@ -3,15 +3,6 @@
 #include <boost/asio.hpp>
 #include <boost/bind.hpp>
 
-
-
-namespace NSCURL
-{
-	bool CurlInit();
-	bool CurlUninit();
-	void mcode_or_die(const char *where, CURLMcode code);
-}
-
 class CHttpRequest;
 class CHttpConnMgr;
 class CHttpSession
@@ -23,7 +14,7 @@ public:
 	~CHttpSession();
 	CURLMcode addHandle(CHttpRequest * pHandle);
 	CURLMcode removeHandle(CHttpRequest * pHandle);
-	CURLM * handle();
+	CURLM * getHandle() const { return hMulti_; }
 	curl_socket_t opensocket(curlsocktype purpose, struct curl_sockaddr *address);
 	int close_socket(curl_socket_t item);
 private:
