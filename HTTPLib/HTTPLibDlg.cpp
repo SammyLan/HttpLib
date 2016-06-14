@@ -171,7 +171,7 @@ void CHTTPLibDlg::OnBnClickedOk()
 	//m_pFileSignMgr.AddTask(_T("D:\\连续剧\\超女\\[迅雷下载www.2tu.cc]美人制造15.1280高清.mp4"), 0, 0);
 	//return;
 	auto pRequest = new CHttpRequest(&hSession_);
-	nwThreadPool_.postTask(std::bind(&CHttpRequest::get, pRequest, "http://www.qq.com/"));
-	pRequest = new CHttpRequest(&hSession_);
-	nwThreadPool_.postTask(std::bind(&CHttpRequest::get, pRequest, "http://www.baidu.com/"));
+	//nwThreadPool_.postTask(std::bind(&CHttpRequest::get, pRequest, "http://www.qq.com/"));
+	//pRequest = new CHttpRequest(&hSession_);
+	nwThreadPool_.postTask(std::bind(&CHttpRequest::get, pRequest, std::string("http://www.baidu.com/"), http::Parameters{}));
 }

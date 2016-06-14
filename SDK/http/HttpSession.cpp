@@ -13,9 +13,9 @@ CHttpSession::CHttpSession(boost::asio::io_service & io_service, CHttpConnMgr * 
 {
 	hMulti_ = curl_multi_init();
 
-	curl_multi_setopt(hMulti_, CURLMOPT_SOCKETFUNCTION, sock_cb);
+	curl_multi_setopt(hMulti_, CURLMOPT_SOCKETFUNCTION, socket_callback);
 	curl_multi_setopt(hMulti_, CURLMOPT_SOCKETDATA, this);
-	curl_multi_setopt(hMulti_, CURLMOPT_TIMERFUNCTION, multi_timer_cb);
+	curl_multi_setopt(hMulti_, CURLMOPT_TIMERFUNCTION, timer_callback);
 	curl_multi_setopt(hMulti_, CURLMOPT_TIMERDATA, this);
 }
 
@@ -39,31 +39,31 @@ CURLMcode CHttpSession::removeHandle(CHttpRequest * pHandle)
 	return curl_multi_remove_handle(hMulti_, pHandle->getHandle());
 }
 
-int CHttpSession::sock_cb(CURL *e, curl_socket_t s, int what, CHttpSession *pThis, void *sockp)
+int CHttpSession::socket_callback(CURL *easy, curl_socket_t s, int what, CHttpSession *pThis, void *socketp)
 {
-	LogFinal(HTTPLOG,_T( "\nsock_cb: socket=%d, what=%d, sockp=%p"), s, what, sockp);
+	LogFinal(HTTPLOG,_T( "\nsock_cb: socket=%d, what=%d, sockp=%p"), s, what, socketp);
 
-	int *actionp = (int *)sockp;
+	int *actionp = (int *)socketp;
 	const char *whatstr[] = { "none", "IN", "OUT", "INOUT", "REMOVE" };
 
-	LogFinal(HTTPLOG,_T("\nsocket callback: s=%d e=%p what=%S "), s, e, whatstr[what]);
+	LogFinal(HTTPLOG,_T("\nsocket callback: socket=%d e=%p what=%S "), s, easy, whatstr[what]);
 
 	if (what == CURL_POLL_REMOVE)
 	{
 		LogFinal(HTTPLOG,_T( "\n"));
-		pThis->remsock(actionp);
+		pThis->removeSocket(actionp);
 	}
 	else
 	{
 		if (!actionp)
 		{
 			LogFinal(HTTPLOG,_T( "\nAdding data: %S"), whatstr[what]);
-			pThis->addsock(s, e, what);
+			pThis->addSocket(s, easy, what);
 		}
 		else
 		{
 			LogFinal(HTTPLOG,_T("\nChanging action from %S to %S"),	whatstr[*actionp], whatstr[what]);
-			pThis->setsock(actionp, s, e, what);
+			pThis->setSocket(actionp, s, easy, what);
 		}
 	}
 
@@ -71,12 +71,11 @@ int CHttpSession::sock_cb(CURL *e, curl_socket_t s, int what, CHttpSession *pThi
 }
 
 /* Update the event timer after curl_multi library calls */
-int CHttpSession::multi_timer_cb(CURLM *multi, long timeout_ms, CHttpSession *pThis)
+int CHttpSession::timer_callback(CURLM *multi, long timeout_ms, CHttpSession *pThis)
 {
 	LogFinal(HTTPLOG,_T( "\nmulti_timer_cb: timeout_ms %ld"), timeout_ms);
 
-	/* cancel running timer */
-	pThis->timer_.cancel();
+	
 
 	if (timeout_ms > 0)
 	{
@@ -84,8 +83,15 @@ int CHttpSession::multi_timer_cb(CURLM *multi, long timeout_ms, CHttpSession *pT
 		pThis->timer_.expires_from_now(boost::posix_time::millisec(timeout_ms));
 		pThis->timer_.async_wait(std::bind(&timer_cb, std::placeholders::_1, pThis));
 	}
+	else if (timeout_ms == 0)
+	{
+		CURLMcode rc = curl_multi_socket_action(pThis->hMulti_, CURL_SOCKET_TIMEOUT, 0, &pThis->iStillRunning_);
+		LogError(_T("³¬Ê±"));
+	}
 	else
 	{
+		/* cancel running timer */
+		pThis->timer_.cancel();
 		/* call timeout function immediately */
 		boost::system::error_code error; /*success*/
 		timer_cb(error, pThis);
@@ -100,8 +106,7 @@ void CHttpSession::timer_cb(const boost::system::error_code & error, CHttpSessio
 	{
 		LogFinal(HTTPLOG,_T( "\ntimer_cb: "));
 
-		CURLMcode rc;
-		rc = curl_multi_socket_action(pThis->hMulti_, CURL_SOCKET_TIMEOUT, 0, &pThis->iStillRunning_);
+		CURLMcode rc = curl_multi_socket_action(pThis->hMulti_, CURL_SOCKET_TIMEOUT, 0, &pThis->iStillRunning_);
 
 		http::mcode_or_die("timer_cb: curl_multi_socket_action", rc);
 		pThis->check_multi_info();
@@ -109,7 +114,7 @@ void CHttpSession::timer_cb(const boost::system::error_code & error, CHttpSessio
 }
 
 /* Clean up any data */
-void CHttpSession::remsock(int *f)
+void CHttpSession::removeSocket(int *f)
 {
 	LogFinal(HTTPLOG,_T( "\nremsock: "));
 
@@ -119,16 +124,16 @@ void CHttpSession::remsock(int *f)
 	}
 }
 
-void CHttpSession::addsock(curl_socket_t s, CURL *easy, int action)
+void CHttpSession::addSocket(curl_socket_t s, CURL *easy, int action)
 {
 	/* fdp is used to store current action */
 	int *fdp = (int *)calloc(sizeof(int), 1);
 
-	setsock(fdp, s, easy, action);
+	setSocket(fdp, s, easy, action);
 	curl_multi_assign(hMulti_, s, fdp);
 }
 
-void CHttpSession::setsock(int *fdp, curl_socket_t s, CURL*e, int act)
+void CHttpSession::setSocket(int *fdp, curl_socket_t s, CURL*e, int act)
 {
 	LogFinal(HTTPLOG,_T( "\nsetsock: socket=%d, act=%d, fdp=%p"), s, act, fdp);
 
@@ -210,14 +215,14 @@ void CHttpSession::event_cb(CHttpSession *pThis, CHttpSession::SocketPtr & tcp_s
 }
 
 /* CURLOPT_OPENSOCKETFUNCTION */
-curl_socket_t CHttpSession::opensocket(curlsocktype purpose, struct curl_sockaddr *address)
+curl_socket_t CHttpSession::openSocket(curlsocktype purpose, struct curl_sockaddr *address)
 {
 	return pConnMgr_->opensocket(purpose, address);
 }
 
 
 /* CURLOPT_CLOSESOCKETFUNCTION */
-int CHttpSession::close_socket( curl_socket_t item)
+int CHttpSession::closeSocket( curl_socket_t item)
 {
 	return pConnMgr_->close_socket(item);
 }

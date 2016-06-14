@@ -3,6 +3,7 @@
 #include "HttpSession.h"
 #include <iostream>
 #include <fstream>
+#include <sstream>
 
 std::string CHttpRequest::strProxyHost;
 std::string CHttpRequest::strProxyUsrPwd;
@@ -34,24 +35,16 @@ CHttpRequest::CHttpRequest(CHttpSession *pSession)
 	curl_easy_setopt(this->handle_, CURLOPT_DEBUGFUNCTION, &CHttpRequest::debug_callback);
 	curl_easy_setopt(this->handle_, CURLOPT_DEBUGDATA, this);
 #endif
-	curl_easy_setopt(this->handle_, CURLOPT_WRITEFUNCTION, write_cb);
-	curl_easy_setopt(this->handle_, CURLOPT_WRITEDATA, this);
-	
-	curl_easy_setopt(this->handle_, CURLOPT_ERRORBUFFER, this->error);
-	curl_easy_setopt(this->handle_, CURLOPT_PRIVATE, this);
+	curl_easy_setopt(this->handle_, CURLOPT_NOSIGNAL, 1L);
 	//curl_easy_setopt(this->handle_, CURLOPT_NOPROGRESS, 1L);
 	//curl_easy_setopt(this->handle_, CURLOPT_PROGRESSFUNCTION, prog_cb);
 	//curl_easy_setopt(this->handle_, CURLOPT_PROGRESSDATA, this);
+	
+	curl_easy_setopt(this->handle_, CURLOPT_ERRORBUFFER, this->error);
+	curl_easy_setopt(this->handle_, CURLOPT_PRIVATE, this);
+	
 	curl_easy_setopt(this->handle_, CURLOPT_LOW_SPEED_TIME, 3L);
 	curl_easy_setopt(this->handle_, CURLOPT_LOW_SPEED_LIMIT, 10L);
-
-	/* call this function to get a socket */
-	curl_easy_setopt(handle_, CURLOPT_OPENSOCKETFUNCTION, &CHttpRequest::opensocket);
-	curl_easy_setopt(handle_, CURLOPT_OPENSOCKETDATA, this->pSession_);
-
-	/* call this function to close a socket */
-	curl_easy_setopt(this->handle_, CURLOPT_CLOSESOCKETFUNCTION, &CHttpRequest::close_socket);
-	curl_easy_setopt(this->handle_, CURLOPT_CLOSESOCKETDATA, this->pSession_);
 
 	curl_easy_setopt(this->handle_, CURLOPT_TCP_KEEPALIVE, 1L);
 	curl_easy_setopt(this->handle_, CURLOPT_TCP_KEEPIDLE, 120L);
@@ -65,7 +58,21 @@ CHttpRequest::CHttpRequest(CHttpSession *pSession)
 			curl_easy_setopt(handle_, CURLOPT_PROXYUSERPWD, strProxyUsrPwd.c_str());
 		}
 	}
-	
+	//setTimeout(1000000);
+	//setConnTimeout(1000000);
+	/* call this function to get a socket */
+	curl_easy_setopt(handle_, CURLOPT_OPENSOCKETFUNCTION, &CHttpRequest::opensocket);
+	curl_easy_setopt(handle_, CURLOPT_OPENSOCKETDATA, this->pSession_);
+
+	/* call this function to close a socket */
+	curl_easy_setopt(this->handle_, CURLOPT_CLOSESOCKETFUNCTION, &CHttpRequest::close_socket);
+	curl_easy_setopt(this->handle_, CURLOPT_CLOSESOCKETDATA, this->pSession_);
+
+	curl_easy_setopt(this->handle_, CURLOPT_SOCKOPTFUNCTION, &CHttpRequest::sockopt_callback);
+	curl_easy_setopt(this->handle_, CURLOPT_SOCKOPTDATA, this);
+	setReadDelegate();
+	setWriteDelegate();
+	setHeaderDelegate();
 }
 
 CHttpRequest::~CHttpRequest()
@@ -119,12 +126,19 @@ void CHttpRequest::setFormContent(const std::vector<std::pair<std::string, std::
 	curl_easy_setopt(handle_, CURLOPT_HTTPPOST, formpost);
 }
 
-void CHttpRequest::get(std::string const & url)
+void CHttpRequest::setCookie(std::string const & cookie)
 {
-	getWithParam(url, http::Parameters{});
+	curl_easy_setopt(handle_, CURLOPT_COOKIE, cookie.c_str());
 }
 
-void CHttpRequest::getWithParam(std::string const & url, const http::Parameters & para)
+void CHttpRequest::setRange(int64_t beg, int64_t end)
+{
+	std::ostringstream ofs;
+	ofs << beg << '-' << end;
+	curl_easy_setopt(handle_, CURLOPT_COOKIE, ofs.str().c_str());
+}
+
+void CHttpRequest::get(std::string const & url, const http::Parameters & para)
 {
 	setUrl(url, para);
 	auto rc = pSession_->addHandle(this);
@@ -139,16 +153,60 @@ void CHttpRequest::onDone(CURLcode res)
 {
 	char *eff_url;
 	curl_easy_getinfo(handle_, CURLINFO_EFFECTIVE_URL, &eff_url);
-	LogFinal(HTTPLOG,_T("\nDONE: %S => (%d) %S"), eff_url, res, error);
+	LogFinal(HTTPLOG, _T("\nDONE: %S => (%d) %S"), eff_url, res, error);
 	pSession_->removeHandle(this);
-	curl_easy_cleanup(handle_);	
+	curl_easy_cleanup(handle_);
 	//TODO::delete
 	delete this;
 }
 
+#pragma region option
+void CHttpRequest::setTimeout(long ms)
+{
+	curl_easy_setopt(handle_, CURLOPT_TIMEOUT_MS, ms);
+}
+
+void CHttpRequest::setConnTimeout(long ms)
+{
+	curl_easy_setopt(handle_, CURLOPT_CONNECTTIMEOUT_MS, ms);
+}
+
+
+void CHttpRequest::setMaxUploadSpeed(int64_t maxSpeed)
+{
+	curl_easy_setopt(handle_, CURLOPT_MAX_SEND_SPEED_LARGE, maxSpeed);
+}
+
+void CHttpRequest::setMaxDowloadSpeed(int64_t maxSpeed)
+{
+	curl_easy_setopt(handle_, CURLOPT_MAX_RECV_SPEED_LARGE, maxSpeed);
+}
+#pragma endregion option
+
 #pragma region delegate
+void CHttpRequest::setReadDelegate()
+{
+	curl_easy_setopt(this->handle_, CURLOPT_READFUNCTION, read_callback);
+	curl_easy_setopt(this->handle_, CURLOPT_READDATA, this);
+}
+
+void CHttpRequest::setWriteDelegate()
+{
+	curl_easy_setopt(this->handle_, CURLOPT_WRITEFUNCTION, write_callback);
+	curl_easy_setopt(this->handle_, CURLOPT_WRITEDATA, this);
+}
+
+void CHttpRequest::setHeaderDelegate()
+{
+	curl_easy_setopt(handle_, CURLOPT_HEADERFUNCTION, &CHttpRequest::header_callback);
+	curl_easy_setopt(handle_, CURLOPT_HEADERDATA, this);
+}
+#pragma endregion delegate
+
+#pragma region callback
+
 /* CURLOPT_WRITEFUNCTION */
-size_t CHttpRequest::write_cb(void *ptr, size_t size, size_t nmemb, CHttpRequest *pThis)
+size_t CHttpRequest::write_callback(void *ptr, size_t size, size_t nmemb, CHttpRequest *pThis)
 {
 	std::ofstream ofs("d:\\qq.html", ios_base::app);
 	size_t written = size * nmemb;
@@ -161,6 +219,11 @@ size_t CHttpRequest::write_cb(void *ptr, size_t size, size_t nmemb, CHttpRequest
 	free(pBuffer);
 
 	return written;
+}
+
+size_t CHttpRequest::read_callback(char *buffer, size_t size, size_t nitems, CHttpRequest *pThis)
+{
+	return size * nitems;
 }
 
 /* CURLOPT_PROGRESSFUNCTION */
@@ -206,13 +269,24 @@ int CHttpRequest::debug_callback(CURL *handle, curl_infotype type, char *data, s
 	return 0;
 }
 
+size_t CHttpRequest::header_callback(char *buffer, size_t size, size_t nitems, CHttpRequest * pThis)
+{
+	return size * nitems;
+}
+
 curl_socket_t CHttpRequest::opensocket(CHttpSession *pThis, curlsocktype purpose, struct curl_sockaddr *address)
 {
-	return pThis->opensocket(purpose,address);
+	return pThis->openSocket(purpose,address);
 }
 
 int CHttpRequest::close_socket(CHttpSession *pThis, curl_socket_t item)
 {
-	return pThis->close_socket(item);
+	return pThis->closeSocket(item);
 }
-#pragma endregion delegate
+
+int CHttpRequest::sockopt_callback(CHttpSession * pThis, curl_socket_t curlfd, curlsocktype purpose)
+{
+	return CURL_SOCKOPT_OK;
+}
+
+#pragma endregion callback
