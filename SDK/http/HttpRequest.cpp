@@ -5,10 +5,20 @@
 #include <fstream>
 #include <sstream>
 
+
 std::string CHttpRequest::strProxyHost;
 std::string CHttpRequest::strProxyUsrPwd;
+#ifdef _DEBUG
+bool	CHttpRequest::s_debugMode = true;
+#else
+bool	CHttpRequest::s_debugMode = false;
+#endif
 
-TCHAR LOGCURLDEBUG[] = _T("CURLDEBUG");
+void CHttpRequest::setDebugMode(bool debugMode)
+{
+	s_debugMode = debugMode;
+}
+
 void CHttpRequest::setProxy(std::string const & strIP, std::string const & strPort, std::string const &strUserName, std::string const & strPassword)
 {
 	if (!strIP.empty())
@@ -30,11 +40,14 @@ CHttpRequest::CHttpRequest(CHttpSession *pSession)
 		LogFinal(HTTPLOG,_T("\ncurl_easy_init() failed, exiting!"));
 		exit(2);
 	}
-#ifdef DEBUG
-	curl_easy_setopt(this->handle_, CURLOPT_VERBOSE, 1L);
-	curl_easy_setopt(this->handle_, CURLOPT_DEBUGFUNCTION, &CHttpRequest::debug_callback);
-	curl_easy_setopt(this->handle_, CURLOPT_DEBUGDATA, this);
-#endif
+
+	if (s_debugMode)
+	{
+		curl_easy_setopt(this->handle_, CURLOPT_VERBOSE, 1L);
+		curl_easy_setopt(this->handle_, CURLOPT_DEBUGFUNCTION, &CHttpRequest::debug_callback);
+		curl_easy_setopt(this->handle_, CURLOPT_DEBUGDATA, this);
+	}
+
 	curl_easy_setopt(this->handle_, CURLOPT_NOSIGNAL, 1L);
 	//curl_easy_setopt(this->handle_, CURLOPT_NOPROGRESS, 1L);
 	//curl_easy_setopt(this->handle_, CURLOPT_PROGRESSFUNCTION, prog_cb);
@@ -240,6 +253,7 @@ size_t CHttpRequest::read_callback(char *buffer, size_t size, size_t nitems, CHt
 
 int CHttpRequest::debug_callback(CURL *handle, curl_infotype type, char *data, size_t size, CHttpRequest * pThis)
 {
+	static TCHAR const LOGCURLDEBUG[] = _T("CURLDEBUG");
 	const char *text;
 	(void)handle; /* prevent compiler warning */
 

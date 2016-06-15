@@ -7,6 +7,7 @@ class CHttpRequest
 {
 	friend class CHttpSession;
 public:
+	static void setDebugMode(bool debugMode);
 	static void setProxy(std::string const & strIP, std::string const & strPort, std::string const &strUserName, std::string const & strPassword);
 
 	CHttpRequest(CHttpSession *pSession);
@@ -64,6 +65,7 @@ private:
 	char error[CURL_ERROR_SIZE];
 	static std::string strProxyHost;
 	static std::string strProxyUsrPwd;
+	static bool	s_debugMode;
 #pragma endregion data member
 };
 

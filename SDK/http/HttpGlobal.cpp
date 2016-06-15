@@ -4,12 +4,13 @@
 #include <cctype>
 #include <sstream>
 #include <iomanip>
+#include <cassert>
 
-#ifdef DEBUG
+#ifdef _DEBUG
 #pragma comment(lib,"libcurl_a_debug.lib")
 #else
 #pragma comment(lib,"libcurl_a.lib")
-#endif // DEBUG
+#endif // _DEBUG
 
 bool http::CurlInit()
 {
