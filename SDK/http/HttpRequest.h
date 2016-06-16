@@ -1,5 +1,6 @@
 #pragma once
 #include <curl\curl.h>
+#include <cpr\cpr.h>
 #include <string>
 #include "HttpGlobal.h"
 class CHttpSession;
@@ -13,13 +14,13 @@ public:
 	CHttpRequest(CHttpSession *pSession);
 	~CHttpRequest();
 
-	void setUrl(const std::string&url, const http::Parameters & para);	
-	void setHeader(const http::Header & header);
+	void setUrl(const std::string&url, const cpr::Parameters & para);
+	void setHeader(const cpr::Header & header);
 	void setFormContent(const std::vector<std::pair<std::string, std::string>> & vecName2Content);
 	void setCookie(std::string const & cookie);
 	void setRange(int64_t beg,int64_t end);
 
-	void get(std::string const & url, const http::Parameters & para = http::Parameters{});
+	void get(std::string const & url, const cpr::Parameters & para = cpr::Parameters{});
 
 	bool close();
 	void onDone(CURLcode res);

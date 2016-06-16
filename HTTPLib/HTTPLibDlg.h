@@ -35,12 +35,14 @@ protected:
 	afx_msg void OnPaint();
 	afx_msg HCURSOR OnQueryDragIcon();
 	DECLARE_MESSAGE_MAP()
-public:
-	afx_msg void OnBnClickedOk();
 private:
 	ThreadPool nwThreadPool_;
 	ThreadPool ioThreadPool_;
 	CHttpConnMgr connMgr_;
 	CHttpSession hSession_;
 	CWYFileSignMgr m_pFileSignMgr;
+public:
+	afx_msg void OnBnClickedDownload();
+	CString m_strURL;
+	CString m_strCookie;
 };

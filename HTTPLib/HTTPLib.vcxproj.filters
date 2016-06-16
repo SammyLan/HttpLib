@@ -38,6 +38,9 @@
     <Filter Include="base\Thread">
       <UniqueIdentifier>{8110ba24-9ad4-4de0-b0cc-d1e1a09ac490}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Lib3rd\cpr">
+      <UniqueIdentifier>{80a5e509-a5b5-41ca-adee-0b5bfe839983}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="targetver.h">
@@ -109,6 +112,60 @@
     <ClInclude Include="..\SDK\http\HttpGlobal.h">
       <Filter>base\http</Filter>
     </ClInclude>
+    <ClInclude Include="..\SDK\external\cpr\include\cpr\api.h">
+      <Filter>Lib3rd\cpr</Filter>
+    </ClInclude>
+    <ClInclude Include="..\SDK\external\cpr\include\cpr\auth.h">
+      <Filter>Lib3rd\cpr</Filter>
+    </ClInclude>
+    <ClInclude Include="..\SDK\external\cpr\include\cpr\body.h">
+      <Filter>Lib3rd\cpr</Filter>
+    </ClInclude>
+    <ClInclude Include="..\SDK\external\cpr\include\cpr\cookies.h">
+      <Filter>Lib3rd\cpr</Filter>
+    </ClInclude>
+    <ClInclude Include="..\SDK\external\cpr\include\cpr\cpr.h">
+      <Filter>Lib3rd\cpr</Filter>
+    </ClInclude>
+    <ClInclude Include="..\SDK\external\cpr\include\cpr\cprtypes.h">
+      <Filter>Lib3rd\cpr</Filter>
+    </ClInclude>
+    <ClInclude Include="..\SDK\external\cpr\include\cpr\curlholder.h">
+      <Filter>Lib3rd\cpr</Filter>
+    </ClInclude>
+    <ClInclude Include="..\SDK\external\cpr\include\cpr\defines.h">
+      <Filter>Lib3rd\cpr</Filter>
+    </ClInclude>
+    <ClInclude Include="..\SDK\external\cpr\include\cpr\digest.h">
+      <Filter>Lib3rd\cpr</Filter>
+    </ClInclude>
+    <ClInclude Include="..\SDK\external\cpr\include\cpr\error.h">
+      <Filter>Lib3rd\cpr</Filter>
+    </ClInclude>
+    <ClInclude Include="..\SDK\external\cpr\include\cpr\multipart.h">
+      <Filter>Lib3rd\cpr</Filter>
+    </ClInclude>
+    <ClInclude Include="..\SDK\external\cpr\include\cpr\parameters.h">
+      <Filter>Lib3rd\cpr</Filter>
+    </ClInclude>
+    <ClInclude Include="..\SDK\external\cpr\include\cpr\payload.h">
+      <Filter>Lib3rd\cpr</Filter>
+    </ClInclude>
+    <ClInclude Include="..\SDK\external\cpr\include\cpr\proxies.h">
+      <Filter>Lib3rd\cpr</Filter>
+    </ClInclude>
+    <ClInclude Include="..\SDK\external\cpr\include\cpr\response.h">
+      <Filter>Lib3rd\cpr</Filter>
+    </ClInclude>
+    <ClInclude Include="..\SDK\external\cpr\include\cpr\session.h">
+      <Filter>Lib3rd\cpr</Filter>
+    </ClInclude>
+    <ClInclude Include="..\SDK\external\cpr\include\cpr\timeout.h">
+      <Filter>Lib3rd\cpr</Filter>
+    </ClInclude>
+    <ClInclude Include="..\SDK\external\cpr\include\cpr\util.h">
+      <Filter>Lib3rd\cpr</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="HTTPLib.cpp">
@@ -164,6 +221,39 @@
     </ClCompile>
     <ClCompile Include="..\SDK\http\HttpGlobal.cpp">
       <Filter>base\http</Filter>
+    </ClCompile>
+    <ClCompile Include="..\SDK\external\cpr\cpr\auth.cpp">
+      <Filter>Lib3rd\cpr</Filter>
+    </ClCompile>
+    <ClCompile Include="..\SDK\external\cpr\cpr\cookies.cpp">
+      <Filter>Lib3rd\cpr</Filter>
+    </ClCompile>
+    <ClCompile Include="..\SDK\external\cpr\cpr\cprtypes.cpp">
+      <Filter>Lib3rd\cpr</Filter>
+    </ClCompile>
+    <ClCompile Include="..\SDK\external\cpr\cpr\digest.cpp">
+      <Filter>Lib3rd\cpr</Filter>
+    </ClCompile>
+    <ClCompile Include="..\SDK\external\cpr\cpr\error.cpp">
+      <Filter>Lib3rd\cpr</Filter>
+    </ClCompile>
+    <ClCompile Include="..\SDK\external\cpr\cpr\multipart.cpp">
+      <Filter>Lib3rd\cpr</Filter>
+    </ClCompile>
+    <ClCompile Include="..\SDK\external\cpr\cpr\parameters.cpp">
+      <Filter>Lib3rd\cpr</Filter>
+    </ClCompile>
+    <ClCompile Include="..\SDK\external\cpr\cpr\payload.cpp">
+      <Filter>Lib3rd\cpr</Filter>
+    </ClCompile>
+    <ClCompile Include="..\SDK\external\cpr\cpr\proxies.cpp">
+      <Filter>Lib3rd\cpr</Filter>
+    </ClCompile>
+    <ClCompile Include="..\SDK\external\cpr\cpr\session.cpp">
+      <Filter>Lib3rd\cpr</Filter>
+    </ClCompile>
+    <ClCompile Include="..\SDK\external\cpr\cpr\util.cpp">
+      <Filter>Lib3rd\cpr</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

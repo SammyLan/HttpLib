@@ -193,6 +193,24 @@
     <Text Include="ReadMe.txt" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="..\SDK\external\cpr\include\cpr\api.h" />
+    <ClInclude Include="..\SDK\external\cpr\include\cpr\auth.h" />
+    <ClInclude Include="..\SDK\external\cpr\include\cpr\body.h" />
+    <ClInclude Include="..\SDK\external\cpr\include\cpr\cookies.h" />
+    <ClInclude Include="..\SDK\external\cpr\include\cpr\cpr.h" />
+    <ClInclude Include="..\SDK\external\cpr\include\cpr\cprtypes.h" />
+    <ClInclude Include="..\SDK\external\cpr\include\cpr\curlholder.h" />
+    <ClInclude Include="..\SDK\external\cpr\include\cpr\defines.h" />
+    <ClInclude Include="..\SDK\external\cpr\include\cpr\digest.h" />
+    <ClInclude Include="..\SDK\external\cpr\include\cpr\error.h" />
+    <ClInclude Include="..\SDK\external\cpr\include\cpr\multipart.h" />
+    <ClInclude Include="..\SDK\external\cpr\include\cpr\parameters.h" />
+    <ClInclude Include="..\SDK\external\cpr\include\cpr\payload.h" />
+    <ClInclude Include="..\SDK\external\cpr\include\cpr\proxies.h" />
+    <ClInclude Include="..\SDK\external\cpr\include\cpr\response.h" />
+    <ClInclude Include="..\SDK\external\cpr\include\cpr\session.h" />
+    <ClInclude Include="..\SDK\external\cpr\include\cpr\timeout.h" />
+    <ClInclude Include="..\SDK\external\cpr\include\cpr\util.h" />
     <ClInclude Include="..\SDK\external\sha1\sha1.h" />
     <ClInclude Include="..\SDK\FileSign\FileSignMgr.h" />
     <ClInclude Include="..\SDK\FileSign\FileSignTask.h" />
@@ -218,6 +236,50 @@
     <ClInclude Include="targetver.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="..\SDK\external\cpr\cpr\auth.cpp">
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">NotUsing</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">NotUsing</PrecompiledHeader>
+    </ClCompile>
+    <ClCompile Include="..\SDK\external\cpr\cpr\cookies.cpp">
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">NotUsing</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">NotUsing</PrecompiledHeader>
+    </ClCompile>
+    <ClCompile Include="..\SDK\external\cpr\cpr\cprtypes.cpp">
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">NotUsing</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">NotUsing</PrecompiledHeader>
+    </ClCompile>
+    <ClCompile Include="..\SDK\external\cpr\cpr\digest.cpp">
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">NotUsing</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">NotUsing</PrecompiledHeader>
+    </ClCompile>
+    <ClCompile Include="..\SDK\external\cpr\cpr\error.cpp">
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">NotUsing</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">NotUsing</PrecompiledHeader>
+    </ClCompile>
+    <ClCompile Include="..\SDK\external\cpr\cpr\multipart.cpp">
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">NotUsing</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">NotUsing</PrecompiledHeader>
+    </ClCompile>
+    <ClCompile Include="..\SDK\external\cpr\cpr\parameters.cpp">
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">NotUsing</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">NotUsing</PrecompiledHeader>
+    </ClCompile>
+    <ClCompile Include="..\SDK\external\cpr\cpr\payload.cpp">
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">NotUsing</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">NotUsing</PrecompiledHeader>
+    </ClCompile>
+    <ClCompile Include="..\SDK\external\cpr\cpr\proxies.cpp">
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">NotUsing</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">NotUsing</PrecompiledHeader>
+    </ClCompile>
+    <ClCompile Include="..\SDK\external\cpr\cpr\session.cpp">
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">NotUsing</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">NotUsing</PrecompiledHeader>
+    </ClCompile>
+    <ClCompile Include="..\SDK\external\cpr\cpr\util.cpp">
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">NotUsing</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">NotUsing</PrecompiledHeader>
+    </ClCompile>
     <ClCompile Include="..\SDK\external\sha1\sha1.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">NotUsing</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">NotUsing</PrecompiledHeader>

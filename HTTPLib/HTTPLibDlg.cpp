@@ -56,6 +56,8 @@ CHTTPLibDlg::CHTTPLibDlg(CWnd* pParent /*=NULL*/)
 	, connMgr_(nwThreadPool_.io_service())
 	, hSession_(nwThreadPool_.io_service(), &connMgr_)
 	, m_pFileSignMgr(ioThreadPool_.io_service())
+	, m_strURL(_T("http://www.baidu.com/"))
+	, m_strCookie(_T(""))
 {
 	m_hIcon = AfxGetApp()->LoadIcon(IDR_MAINFRAME);
 }
@@ -68,13 +70,15 @@ CHTTPLibDlg::~CHTTPLibDlg()
 void CHTTPLibDlg::DoDataExchange(CDataExchange* pDX)
 {
 	CDialogEx::DoDataExchange(pDX);
+	DDX_Text(pDX, IDC_URL, m_strURL);
+	DDX_Text(pDX, IDC_URL2, m_strCookie);
 }
 
 BEGIN_MESSAGE_MAP(CHTTPLibDlg, CDialogEx)
 	ON_WM_SYSCOMMAND()
 	ON_WM_PAINT()
 	ON_WM_QUERYDRAGICON()
-	ON_BN_CLICKED(IDOK, &CHTTPLibDlg::OnBnClickedOk)
+	ON_BN_CLICKED(ID_DOWNLOAD, &CHTTPLibDlg::OnBnClickedDownload)
 END_MESSAGE_MAP()
 
 
@@ -164,14 +168,9 @@ HCURSOR CHTTPLibDlg::OnQueryDragIcon()
 }
 
 
-
-void CHTTPLibDlg::OnBnClickedOk()
+void CHTTPLibDlg::OnBnClickedDownload()
 {
-	// TODO: 在此添加控件通知处理程序代码
-	//m_pFileSignMgr.AddTask(_T("D:\\连续剧\\超女\\[迅雷下载www.2tu.cc]美人制造15.1280高清.mp4"), 0, 0);
-	//return;
+	UpdateData(TRUE);
 	auto pRequest = new CHttpRequest(&hSession_);
-	//nwThreadPool_.postTask(std::bind(&CHttpRequest::get, pRequest, "http://www.qq.com/"));
-	//pRequest = new CHttpRequest(&hSession_);
-	nwThreadPool_.postTask(std::bind(&CHttpRequest::get, pRequest, std::string("http://www.baidu.com/"), http::Parameters{}));
+	nwThreadPool_.postTask(std::bind(&CHttpRequest::get, pRequest, std::string(CW2A(m_strURL)), cpr::Parameters{}));
 }

@@ -72,7 +72,7 @@ CHttpRequest::CHttpRequest(CHttpSession *pSession)
 		}
 	}
 	//setTimeout(1000000);
-	//setConnTimeout(1000000);
+	setConnTimeout(1000*30);
 	/* call this function to get a socket */
 	curl_easy_setopt(handle_, CURLOPT_OPENSOCKETFUNCTION, &CHttpRequest::opensocket);
 	curl_easy_setopt(handle_, CURLOPT_OPENSOCKETDATA, this->pSession_);
@@ -92,7 +92,7 @@ CHttpRequest::~CHttpRequest()
 {
 }
 
-void CHttpRequest::setUrl(const std::string&url, const http::Parameters & para)
+void CHttpRequest::setUrl(const std::string&url, const cpr::Parameters & para)
 {
 	if (!para.content.empty())
 	{
@@ -105,7 +105,7 @@ void CHttpRequest::setUrl(const std::string&url, const http::Parameters & para)
 	curl_easy_setopt(handle_, CURLOPT_URL, url.data());
 }
 
-void CHttpRequest::setHeader(const http::Header & header)
+void CHttpRequest::setHeader(const cpr::Header & header)
 {
 	curl_slist* chunk = nullptr;
 	for (auto item = header.cbegin(); item != header.cend(); ++item)
@@ -151,7 +151,7 @@ void CHttpRequest::setRange(int64_t beg, int64_t end)
 	curl_easy_setopt(handle_, CURLOPT_COOKIE, ofs.str().c_str());
 }
 
-void CHttpRequest::get(std::string const & url, const http::Parameters & para)
+void CHttpRequest::get(std::string const & url, const cpr::Parameters & para)
 {
 	setUrl(url, para);
 	auto rc = pSession_->addHandle(this);
