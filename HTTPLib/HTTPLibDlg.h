@@ -38,6 +38,7 @@ protected:
 private:
 	ThreadPool nwThreadPool_;
 	ThreadPool ioThreadPool_;
+	http::CurGlobalInit init_;
 	CHttpConnMgr connMgr_;
 	CHttpSession hSession_;
 	CWYFileSignMgr m_pFileSignMgr;

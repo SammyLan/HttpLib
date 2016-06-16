@@ -177,9 +177,31 @@ void CHTTPLibDlg::OnBnClickedDownload()
 	{
 		if (retCode == 0)
 		{
-			std::ofstream ofs("d:\\baidu.html");
-			ofs.write(body->data(), body->length());
+			if (body.get() != nullptr)
+			{
+				std::ofstream ofs("d:\\baidu.html");
+				ofs.write(body->data(), body->length());
+			}			
 		}		
+	}
+	);
+
+
+	pRequest = new CHttpRequest(&hSession_);
+	pRequest->get(
+		std::string("www.qq.com"), cpr::Parameters{}, CHttpRequest::RecvData_Body | CHttpRequest::RecvData_Header,
+		[=](int retCode, std::string const & errMsg, data::BufferPtr const & header, data::BufferPtr const & body)
+	{
+		if (retCode == 0)
+		{
+			
+		}
+	},
+	CHttpRequest::OnDataRecv(),
+		[=](data::byte * data, size_t size)
+	{
+		std::ofstream ofs("d:\\qq.html",ios::app);
+		ofs.write(data, size);
 	}
 	);
 }
