@@ -6,7 +6,7 @@
 #include "HTTPLib.h"
 #include "HTTPLibDlg.h"
 #include "afxdialogex.h"
-
+#include <fstream>
 #ifdef _DEBUG
 #define new DEBUG_NEW
 #endif
@@ -172,5 +172,14 @@ void CHTTPLibDlg::OnBnClickedDownload()
 {
 	UpdateData(TRUE);
 	auto pRequest = new CHttpRequest(&hSession_);
-	pRequest->get(std::string(CW2A(m_strURL)), cpr::Parameters{}, CHttpRequest::RecvData_Body| CHttpRequest::RecvData_Header);
+	pRequest->get(std::string(CW2A(m_strURL)), cpr::Parameters{}, CHttpRequest::RecvData_Body| CHttpRequest::RecvData_Header,
+		[=](int retCode, std::string const & errMsg, data::BufferPtr const & header, data::BufferPtr const & body)
+	{
+		if (retCode == 0)
+		{
+			std::ofstream ofs("d:\\baidu.html");
+			ofs.write(body->data(), body->length());
+		}		
+	}
+	);
 }

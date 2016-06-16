@@ -16,8 +16,8 @@ public:
 		RecvData_Body = 0x00000002,
 		RecvData_All= RecvData_Header| RecvData_Body
 	};
-	typedef std::function<void(int retCode, std::string& errMsg, data::BufferPtr& header, data::BufferPtr& body)> OnRespond;
-	typedef std::function<void(void *ptr, size_t size)> OnDataRecv;
+	typedef std::function<void(int retCode, std::string const & errMsg, data::BufferPtr const& header, data::BufferPtr const& body)> OnRespond;
+	typedef std::function<void(data::byte * data, size_t size)> OnDataRecv;
 
 public:
 	static void setDebugMode(bool debugMode);
@@ -67,8 +67,6 @@ private:
 #pragma region delegate
 	void setDelegate(DWORD const recvDataFlag,	OnRespond const & onRespond,OnDataRecv const & onHeaderRecv,OnDataRecv const & onBodyRecv);
 	void setReadDelegate();
-	void setWriteDelegate();
-	void setHeaderDelegate();
 #pragma endregion delegate
 	
 private:
@@ -76,15 +74,18 @@ private:
 #pragma region callback
 	//static int prog_cb(CHttpRequest *pThis, double dltotal, double dlnow, double ult, double uln);
 
-	static size_t write_callback(void *ptr, size_t size, size_t nmemb, CHttpRequest *pThis);
-	static size_t read_callback(char *buffer, size_t size, size_t nitems, CHttpRequest *pThis);
+	static size_t header_callback(data::byte * data, size_t size, size_t nitems, CHttpRequest * pThis);
+	static size_t header_callbackEx(data::byte * data, size_t size, size_t nitems, data::Buffer * pData);
+
+	static size_t write_callback(data::byte * data, size_t size, size_t nitems, CHttpRequest *pThis);
+	static size_t write_callbackEx(data::byte * data, size_t size, size_t nitems, data::Buffer *pData);
+
+	static size_t read_callback(data::byte * data, size_t size, size_t nitems, CHttpRequest *pThis);
 
 	static curl_socket_t opensocket(CHttpSession *pThis, curlsocktype purpose, struct curl_sockaddr *address);
 	static int close_socket(CHttpSession *pThis, curl_socket_t item);
 	static int sockopt_callback(CHttpSession * pThis, curl_socket_t curlfd, curlsocktype purpose);
 	static int debug_callback(CURL *handle,curl_infotype type,	char *data,	size_t size, CHttpRequest * pThis);
-
-	static size_t header_callback(char *buffer, size_t size, size_t nitems, CHttpRequest * pThis);
 #pragma endregion callback
 private:
 #pragma region data member
@@ -96,7 +97,7 @@ private:
 	data::BufferPtr header_;
 	data::BufferPtr	body_;
 	CHttpSession *	pSession_;
-	char error[CURL_ERROR_SIZE];
+	char error_[CURL_ERROR_SIZE];
 	static std::string strProxyHost;
 	static std::string strProxyUsrPwd;
 	static bool	s_debugMode;

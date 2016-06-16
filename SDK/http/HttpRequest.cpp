@@ -1,8 +1,6 @@
 #include "stdafx.h"
 #include "HttpRequest.h"
 #include "HttpSession.h"
-#include <iostream>
-#include <fstream>
 #include <sstream>
 
 
@@ -33,10 +31,8 @@ void CHttpRequest::setProxy(std::string const & strIP, std::string const & strPo
 
 CHttpRequest::CHttpRequest(CHttpSession *pSession)
 	:pSession_(pSession)
-	,header_(new data::Buffer)
-	,body_(new data::Buffer)
 {
-	error[0] = '\0';
+	error_[0] = '\0';
 	handle_ = curl_easy_init();
 	if (!handle_)
 	{
@@ -56,7 +52,7 @@ CHttpRequest::CHttpRequest(CHttpSession *pSession)
 	//curl_easy_setopt(this->handle_, CURLOPT_PROGRESSFUNCTION, prog_cb);
 	//curl_easy_setopt(this->handle_, CURLOPT_PROGRESSDATA, this);
 	
-	curl_easy_setopt(this->handle_, CURLOPT_ERRORBUFFER, this->error);
+	curl_easy_setopt(this->handle_, CURLOPT_ERRORBUFFER, this->error_);
 	curl_easy_setopt(this->handle_, CURLOPT_PRIVATE, this);
 	
 	curl_easy_setopt(this->handle_, CURLOPT_LOW_SPEED_TIME, 3L);
@@ -192,7 +188,8 @@ void CHttpRequest::onDone(CURLcode res)
 {
 	char *eff_url;
 	curl_easy_getinfo(handle_, CURLINFO_EFFECTIVE_URL, &eff_url);
-	LogFinal(HTTPLOG, _T("\nDONE: %S => (%d) %S"), eff_url, res, error);
+	LogFinal(HTTPLOG, _T("\nDONE: %S => (%d) %S"), eff_url, res, error_);
+	onRespond_(res, error_, header_, body_);
 	pSession_->removeHandle(this);
 	curl_easy_cleanup(handle_);
 	//TODO::delete
@@ -228,14 +225,48 @@ void CHttpRequest::setDelegate(DWORD const recvDataFlag, OnRespond const & onRes
 	onRespond_ = onRespond;
 	onHeaderRecv_ = onHeaderRecv;
 	onBodyRecv_ = onBodyRecv;
+	if (header_.get())
+	{
+		header_->clear();
+	}
+	if (body_.get())
+	{
+		body_->clear();
+	}
 	if (recvDataFlag & RecvData_Header)
 	{
-		setWriteDelegate();
+		if (onHeaderRecv)
+		{
+			curl_easy_setopt(this->handle_, CURLOPT_HEADERFUNCTION, header_callback);
+			curl_easy_setopt(this->handle_, CURLOPT_HEADERDATA, this);
+		}
+		else
+		{
+			if (header_.get() == nullptr)
+			{
+				header_.reset(new data::Buffer());
+			}
+			curl_easy_setopt(this->handle_, CURLOPT_HEADERFUNCTION, header_callbackEx);
+			curl_easy_setopt(this->handle_, CURLOPT_HEADERDATA, header_.get());
+		}		
 	}
 
 	if (recvDataFlag & RecvData_Body)
 	{
-		setHeaderDelegate();
+		if (onBodyRecv)
+		{
+			curl_easy_setopt(this->handle_, CURLOPT_WRITEFUNCTION, write_callback);
+			curl_easy_setopt(this->handle_, CURLOPT_WRITEDATA, this);
+		}
+		else
+		{
+			if (body_.get() == nullptr)
+			{
+				body_.reset(new data::Buffer());
+			}
+			curl_easy_setopt(this->handle_, CURLOPT_WRITEFUNCTION, write_callbackEx);
+			curl_easy_setopt(this->handle_, CURLOPT_WRITEDATA, body_.get());
+		}
 	}
 }
 
@@ -245,17 +276,6 @@ void CHttpRequest::setReadDelegate()
 	curl_easy_setopt(this->handle_, CURLOPT_READDATA, this);
 }
 
-void CHttpRequest::setWriteDelegate()
-{
-	curl_easy_setopt(this->handle_, CURLOPT_WRITEFUNCTION, write_callback);
-	curl_easy_setopt(this->handle_, CURLOPT_WRITEDATA, this);
-}
-
-void CHttpRequest::setHeaderDelegate()
-{
-	curl_easy_setopt(handle_, CURLOPT_HEADERFUNCTION, &CHttpRequest::header_callback);
-	curl_easy_setopt(handle_, CURLOPT_HEADERDATA, this);
-}
 #pragma endregion delegate
 
 #pragma region private
@@ -277,24 +297,32 @@ void CHttpRequest::clearData()
 
 #pragma region private
 #pragma region callback
-
-/* CURLOPT_WRITEFUNCTION */
-size_t CHttpRequest::write_callback(void *ptr, size_t size, size_t nmemb, CHttpRequest *pThis)
+size_t CHttpRequest::header_callback(data::byte *data, size_t size, size_t nitems, CHttpRequest * pThis)
 {
-	std::ofstream ofs("d:\\qq.html", ios_base::app);
-	size_t written = size * nmemb;
-	char* pBuffer = (char *)malloc(written + 1);
-
-	strncpy(pBuffer, (const char *)ptr, written);
-	pBuffer[written] = '\0';
-
-	ofs.write(pBuffer, written);
-	free(pBuffer);
-
-	return written;
+	pThis->onHeaderRecv_(data, size * nitems);
+	return size * nitems;
 }
 
-size_t CHttpRequest::read_callback(char *buffer, size_t size, size_t nitems, CHttpRequest *pThis)
+size_t CHttpRequest::header_callbackEx(data::byte *data, size_t size, size_t nitems, data::Buffer * pData)
+{
+	pData->append(data, size * nitems);
+	return size * nitems;
+}
+
+/* CURLOPT_WRITEFUNCTION */
+size_t CHttpRequest::write_callback(data::byte *data, size_t size, size_t nitems, CHttpRequest *pThis)
+{
+	pThis->onHeaderRecv_(data, size * nitems);
+	return size * nitems;
+}
+
+size_t CHttpRequest::write_callbackEx(data::byte * data, size_t size, size_t nitems, data::Buffer *pData)
+{
+	pData->append(data, size * nitems);
+	return size * nitems;
+}
+
+size_t CHttpRequest::read_callback(data::byte *buffer, size_t size, size_t nitems, CHttpRequest *pThis)
 {
 	return size * nitems;
 }
@@ -341,12 +369,6 @@ int CHttpRequest::debug_callback(CURL *handle, curl_infotype type, char *data, s
 		break;
 	}
 	return 0;
-}
-
-size_t CHttpRequest::header_callback(char *buffer, size_t size, size_t nitems, CHttpRequest * pThis)
-{
-
-	return size * nitems;
 }
 
 curl_socket_t CHttpRequest::opensocket(CHttpSession *pThis, curlsocktype purpose, struct curl_sockaddr *address)

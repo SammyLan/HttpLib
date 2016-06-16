@@ -2,7 +2,7 @@
 #include <map>
 #include <string>
 #include <curl\curl.h>
-#include <vector>
+#include <string>
 #include <memory>
 #include <tuple>
 #define HTTPLOG _T("http")
@@ -15,8 +15,8 @@ namespace http
 }
 namespace data
 {
-	typedef unsigned char byte;
-	typedef std::vector<byte> Buffer;
+	typedef char byte;
+	typedef std::string Buffer;
 	typedef std::shared_ptr<Buffer> BufferPtr;	
 	typedef std::pair<std::string, BufferPtr> FormItem;
 	typedef std::vector<FormItem> FormList;
