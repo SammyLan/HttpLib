@@ -75,23 +75,16 @@ int CHttpSession::timer_callback(CURLM *multi, long timeout_ms, CHttpSession *pT
 {
 	LogFinal(HTTPLOG,_T( "\nmulti_timer_cb: timeout_ms %ld"), timeout_ms);
 
-	
-
+	/* cancel running timer */
+	pThis->timer_.cancel();
 	if (timeout_ms > 0)
 	{
 		/* update timer */
 		pThis->timer_.expires_from_now(boost::posix_time::millisec(timeout_ms));
 		pThis->timer_.async_wait(std::bind(&timer_cb, std::placeholders::_1, pThis));
 	}
-	else if (timeout_ms == 0)
-	{
-		CURLMcode rc = curl_multi_socket_action(pThis->hMulti_, CURL_SOCKET_TIMEOUT, 0, &pThis->iStillRunning_);
-		LogError(_T("³¬Ê±"));
-	}
 	else
 	{
-		/* cancel running timer */
-		pThis->timer_.cancel();
 		/* call timeout function immediately */
 		boost::system::error_code error; /*success*/
 		timer_cb(error, pThis);

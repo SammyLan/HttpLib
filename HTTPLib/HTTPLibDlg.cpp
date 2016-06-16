@@ -172,7 +172,7 @@ void CHTTPLibDlg::OnBnClickedDownload()
 {
 	UpdateData(TRUE);
 	auto pRequest = new CHttpRequest(&hSession_);
-	pRequest->get(std::string(CW2A(m_strURL)), cpr::Parameters{}, CHttpRequest::RecvData_Body| CHttpRequest::RecvData_Header,
+	/*pRequest->get(std::string(CW2A(m_strURL)), cpr::Parameters{}, CHttpRequest::RecvData_Body| CHttpRequest::RecvData_Header,
 		[=](int retCode, std::string const & errMsg, data::BufferPtr const & header, data::BufferPtr const & body)
 	{
 		if (retCode == 0)
@@ -187,14 +187,14 @@ void CHTTPLibDlg::OnBnClickedDownload()
 	);
 
 
-	pRequest = new CHttpRequest(&hSession_);
+	pRequest = new CHttpRequest(&hSession_);*/
 	pRequest->get(
 		std::string("www.qq.com"), cpr::Parameters{}, CHttpRequest::RecvData_Body | CHttpRequest::RecvData_Header,
 		[=](int retCode, std::string const & errMsg, data::BufferPtr const & header, data::BufferPtr const & body)
 	{
 		if (retCode == 0)
 		{
-			
+			//UpdateData(FALSE);
 		}
 	},
 	CHttpRequest::OnDataRecv(),
