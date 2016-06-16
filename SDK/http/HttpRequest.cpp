@@ -33,7 +33,10 @@ void CHttpRequest::setProxy(std::string const & strIP, std::string const & strPo
 
 CHttpRequest::CHttpRequest(CHttpSession *pSession)
 	:pSession_(pSession)
+	,header_(new data::Buffer)
+	,body_(new data::Buffer)
 {
+	error[0] = '\0';
 	handle_ = curl_easy_init();
 	if (!handle_)
 	{
@@ -84,12 +87,11 @@ CHttpRequest::CHttpRequest(CHttpSession *pSession)
 	curl_easy_setopt(this->handle_, CURLOPT_SOCKOPTFUNCTION, &CHttpRequest::sockopt_callback);
 	curl_easy_setopt(this->handle_, CURLOPT_SOCKOPTDATA, this);
 	setReadDelegate();
-	setWriteDelegate();
-	setHeaderDelegate();
 }
 
 CHttpRequest::~CHttpRequest()
 {
+	clearData();
 }
 
 void CHttpRequest::setUrl(const std::string&url, const cpr::Parameters & para)
@@ -102,12 +104,11 @@ void CHttpRequest::setUrl(const std::string&url, const cpr::Parameters & para)
 	{
 		url_ = url;
 	}
-	curl_easy_setopt(handle_, CURLOPT_URL, url.data());
+	curl_easy_setopt(handle_, CURLOPT_URL, url_.data());
 }
 
 void CHttpRequest::setHeader(const cpr::Header & header)
 {
-	curl_slist* chunk = nullptr;
 	for (auto item = header.cbegin(); item != header.cend(); ++item)
 	{
 		auto header_string = item->first;
@@ -119,24 +120,25 @@ void CHttpRequest::setHeader(const cpr::Header & header)
 		{
 			header_string += ": " + item->second;
 		}
-		chunk = curl_slist_append(chunk, header_string.data());
-		curl_easy_setopt(handle_, CURLOPT_HTTPHEADER, chunk);
+		headerList_ = curl_slist_append(headerList_, header_string.data());
+		curl_easy_setopt(handle_, CURLOPT_HTTPHEADER, headerList_);
 	}
 }
 
-void CHttpRequest::setFormContent(const std::vector<std::pair<std::string, std::string>> & vecName2Content)
+void CHttpRequest::setFormContent(data::FormList const & formList)
 {
-	curl_httppost *lastptr = nullptr;
-	curl_httppost *formpost = nullptr;
-	for (size_t i = 0; i < vecName2Content.size(); ++i)
+	formpost_ = nullptr;
+	curl_httppost *lastptr = nullptr;	
+	for (auto const & item: formList)
 	{
-		curl_formadd(&formpost, &lastptr,
-			CURLFORM_COPYNAME, vecName2Content[i].first.c_str(),
-			CURLFORM_COPYCONTENTS, vecName2Content[i].second.c_str(),
-			CURLFORM_CONTENTSLENGTH, vecName2Content[i].second.length(),
+		curl_formadd(&formpost_, &lastptr,
+			CURLFORM_COPYNAME, item.first.c_str(),
+			CURLFORM_PTRCONTENTS, item.second->data(),
+			CURLFORM_CONTENTSLENGTH, item.second->size(),
 			CURLFORM_END);
 	}
-	curl_easy_setopt(handle_, CURLOPT_HTTPPOST, formpost);
+	curl_easy_setopt(handle_, CURLOPT_HTTPPOST, formpost_);
+	formList_ = formList;
 }
 
 void CHttpRequest::setCookie(std::string const & cookie)
@@ -151,10 +153,34 @@ void CHttpRequest::setRange(int64_t beg, int64_t end)
 	curl_easy_setopt(handle_, CURLOPT_COOKIE, ofs.str().c_str());
 }
 
-void CHttpRequest::get(std::string const & url, const cpr::Parameters & para)
+int CHttpRequest::get(std::string const & url,
+	const cpr::Parameters & para,
+	DWORD const recvDataFlag,
+	OnRespond const &  onRespond,
+	OnDataRecv const & onHeaderRecv,
+	OnDataRecv const & onBodyRecv
+	)
 {
+	setDelegate(recvDataFlag, onRespond, onHeaderRecv, onBodyRecv);
 	setUrl(url, para);
 	auto rc = pSession_->addHandle(this);
+	return rc;
+}
+
+int CHttpRequest::MultiFormPost(std::string const & url,
+	cpr::Header const & header,
+	cpr::Parameters const & para,
+	data::FormList const & formList,
+	DWORD const recvDataFlag,
+	OnRespond const & onRespond,
+	OnDataRecv const & onHeaderRecv,
+	OnDataRecv const & onBodyRecv)
+{
+	setDelegate(recvDataFlag, onRespond, onHeaderRecv, onBodyRecv);
+	setUrl(url, para);
+	setFormContent(formList);
+	auto rc = pSession_->addHandle(this);
+	return rc;
 }
 
 bool CHttpRequest::close()
@@ -197,6 +223,22 @@ void CHttpRequest::setMaxDowloadSpeed(int64_t maxSpeed)
 #pragma endregion option
 
 #pragma region delegate
+void CHttpRequest::setDelegate(DWORD const recvDataFlag, OnRespond const & onRespond, OnDataRecv const & onHeaderRecv, OnDataRecv const & onBodyRecv)
+{
+	onRespond_ = onRespond;
+	onHeaderRecv_ = onHeaderRecv;
+	onBodyRecv_ = onBodyRecv;
+	if (recvDataFlag & RecvData_Header)
+	{
+		setWriteDelegate();
+	}
+
+	if (recvDataFlag & RecvData_Body)
+	{
+		setHeaderDelegate();
+	}
+}
+
 void CHttpRequest::setReadDelegate()
 {
 	curl_easy_setopt(this->handle_, CURLOPT_READFUNCTION, read_callback);
@@ -216,6 +258,24 @@ void CHttpRequest::setHeaderDelegate()
 }
 #pragma endregion delegate
 
+#pragma region private
+
+void CHttpRequest::clearData()
+{
+	if (formpost_ != nullptr)
+	{
+		curl_formfree(formpost_);
+		formpost_ = nullptr;
+	}
+	if (headerList_ != nullptr)
+	{
+		curl_slist_free_all(headerList_);
+		headerList_ = nullptr;
+	}
+	formList_.clear();
+}
+
+#pragma region private
 #pragma region callback
 
 /* CURLOPT_WRITEFUNCTION */
@@ -285,6 +345,7 @@ int CHttpRequest::debug_callback(CURL *handle, curl_infotype type, char *data, s
 
 size_t CHttpRequest::header_callback(char *buffer, size_t size, size_t nitems, CHttpRequest * pThis)
 {
+
 	return size * nitems;
 }
 

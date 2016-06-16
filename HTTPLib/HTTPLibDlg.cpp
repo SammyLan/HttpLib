@@ -172,5 +172,5 @@ void CHTTPLibDlg::OnBnClickedDownload()
 {
 	UpdateData(TRUE);
 	auto pRequest = new CHttpRequest(&hSession_);
-	nwThreadPool_.postTask(std::bind(&CHttpRequest::get, pRequest, std::string(CW2A(m_strURL)), cpr::Parameters{}));
+	pRequest->get(std::string(CW2A(m_strURL)), cpr::Parameters{}, CHttpRequest::RecvData_Body| CHttpRequest::RecvData_Header);
 }

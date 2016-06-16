@@ -2,11 +2,23 @@
 #include <curl\curl.h>
 #include <cpr\cpr.h>
 #include <string>
+#include <functional>
 #include "HttpGlobal.h"
 class CHttpSession;
 class CHttpRequest
 {
 	friend class CHttpSession;
+public:
+	enum RecvDataFlag
+	{
+		RecvData_None,
+		RecvData_Header =0x00000001,
+		RecvData_Body = 0x00000002,
+		RecvData_All= RecvData_Header| RecvData_Body
+	};
+	typedef std::function<void(int retCode, std::string& errMsg, data::BufferPtr& header, data::BufferPtr& body)> OnRespond;
+	typedef std::function<void(void *ptr, size_t size)> OnDataRecv;
+
 public:
 	static void setDebugMode(bool debugMode);
 	static void setProxy(std::string const & strIP, std::string const & strPort, std::string const &strUserName, std::string const & strPassword);
@@ -16,11 +28,27 @@ public:
 
 	void setUrl(const std::string&url, const cpr::Parameters & para);
 	void setHeader(const cpr::Header & header);
-	void setFormContent(const std::vector<std::pair<std::string, std::string>> & vecName2Content);
+	void setFormContent(data::FormList const & formList);
 	void setCookie(std::string const & cookie);
 	void setRange(int64_t beg,int64_t end);
 
-	void get(std::string const & url, const cpr::Parameters & para = cpr::Parameters{});
+	int get(std::string const & url,
+		const cpr::Parameters & para = cpr::Parameters{},
+		DWORD const recvDataFlag = CHttpRequest::RecvData_None,
+		OnRespond const &  onRespond = OnRespond(),
+		OnDataRecv const & onHeaderRecv = OnDataRecv(),
+		OnDataRecv const & onBodyRecv = OnDataRecv()
+		);
+
+	int MultiFormPost(std::string const & url,
+		cpr::Header const & header,
+		cpr::Parameters const & para,
+		data::FormList const & formList,
+		DWORD const recvDataFlag = CHttpRequest::RecvData_None,
+		OnRespond const &  onRespond = OnRespond(),
+		OnDataRecv const & onHeaderRecv = OnDataRecv(),
+		OnDataRecv const & onBodyRecv = OnDataRecv()
+		);
 
 	bool close();
 	void onDone(CURLcode res);
@@ -35,16 +63,16 @@ public:
 	void setMaxDowloadSpeed(int64_t maxSpeed);
 #pragma endregion option
 
+private:
 #pragma region delegate
+	void setDelegate(DWORD const recvDataFlag,	OnRespond const & onRespond,OnDataRecv const & onHeaderRecv,OnDataRecv const & onBodyRecv);
 	void setReadDelegate();
 	void setWriteDelegate();
 	void setHeaderDelegate();
 #pragma endregion delegate
-
-	
-
 	
 private:
+	void clearData();
 #pragma region callback
 	//static int prog_cb(CHttpRequest *pThis, double dltotal, double dlnow, double ult, double uln);
 
@@ -60,13 +88,23 @@ private:
 #pragma endregion callback
 private:
 #pragma region data member
-	CURL *	handle_;
+	CURL *	handle_ ;
+	curl_httppost * formpost_ = nullptr;
+	curl_slist * headerList_ = nullptr;
 	std::string	url_;
+	data::FormList formList_;
+	data::BufferPtr header_;
+	data::BufferPtr	body_;
 	CHttpSession *	pSession_;
 	char error[CURL_ERROR_SIZE];
 	static std::string strProxyHost;
 	static std::string strProxyUsrPwd;
 	static bool	s_debugMode;
+
+	OnRespond	onRespond_;
+	OnDataRecv	onHeaderRecv_;
+	OnDataRecv	onBodyRecv_;
+
 #pragma endregion data member
 };
 
