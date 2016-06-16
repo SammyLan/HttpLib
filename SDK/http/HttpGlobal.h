@@ -1,7 +1,6 @@
 #pragma once
 #include <map>
 #include <string>
-#include <curl\curl.h>
 #include <string>
 #include <memory>
 #include <tuple>
@@ -9,9 +8,13 @@
 
 namespace http
 {
-	bool CurlInit();
-	bool CurlUninit();
-	void mcode_or_die(const char *where, CURLMcode code);
+	struct CurGlobalInit
+	{
+		CurGlobalInit();
+		~CurGlobalInit();
+	};
+
+	void mcode_or_die(const char *where, int code);
 }
 namespace data
 {

@@ -163,7 +163,7 @@ int CHttpRequest::get(std::string const & url,
 	return rc;
 }
 
-int CHttpRequest::MultiFormPost(std::string const & url,
+int CHttpRequest::postMultiForm(std::string const & url,
 	cpr::Header const & header,
 	cpr::Parameters const & para,
 	data::FormList const & formList,
@@ -225,14 +225,8 @@ void CHttpRequest::setDelegate(DWORD const recvDataFlag, OnRespond const & onRes
 	onRespond_ = onRespond;
 	onHeaderRecv_ = onHeaderRecv;
 	onBodyRecv_ = onBodyRecv;
-	if (header_.get())
-	{
-		header_->clear();
-	}
-	if (body_.get())
-	{
-		body_->clear();
-	}
+	header_.reset();
+	body_.reset();
 	if (recvDataFlag & RecvData_Header)
 	{
 		if (onHeaderRecv)
@@ -242,10 +236,7 @@ void CHttpRequest::setDelegate(DWORD const recvDataFlag, OnRespond const & onRes
 		}
 		else
 		{
-			if (header_.get() == nullptr)
-			{
-				header_.reset(new data::Buffer());
-			}
+			header_ = std::make_shared<data::Buffer>();
 			curl_easy_setopt(this->handle_, CURLOPT_HEADERFUNCTION, header_callbackEx);
 			curl_easy_setopt(this->handle_, CURLOPT_HEADERDATA, header_.get());
 		}		
@@ -260,10 +251,7 @@ void CHttpRequest::setDelegate(DWORD const recvDataFlag, OnRespond const & onRes
 		}
 		else
 		{
-			if (body_.get() == nullptr)
-			{
-				body_.reset(new data::Buffer());
-			}
+			body_ = std::make_shared<data::Buffer>();			
 			curl_easy_setopt(this->handle_, CURLOPT_WRITEFUNCTION, write_callbackEx);
 			curl_easy_setopt(this->handle_, CURLOPT_WRITEDATA, body_.get());
 		}
@@ -312,7 +300,7 @@ size_t CHttpRequest::header_callbackEx(data::byte *data, size_t size, size_t nit
 /* CURLOPT_WRITEFUNCTION */
 size_t CHttpRequest::write_callback(data::byte *data, size_t size, size_t nitems, CHttpRequest *pThis)
 {
-	pThis->onHeaderRecv_(data, size * nitems);
+	pThis->onBodyRecv_(data, size * nitems);
 	return size * nitems;
 }
 

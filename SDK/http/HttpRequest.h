@@ -26,9 +26,6 @@ public:
 	CHttpRequest(CHttpSession *pSession);
 	~CHttpRequest();
 
-	void setUrl(const std::string&url, const cpr::Parameters & para);
-	void setHeader(const cpr::Header & header);
-	void setFormContent(data::FormList const & formList);
 	void setCookie(std::string const & cookie);
 	void setRange(int64_t beg,int64_t end);
 
@@ -40,7 +37,7 @@ public:
 		OnDataRecv const & onBodyRecv = OnDataRecv()
 		);
 
-	int MultiFormPost(std::string const & url,
+	int postMultiForm(std::string const & url,
 		cpr::Header const & header,
 		cpr::Parameters const & para,
 		data::FormList const & formList,
@@ -70,6 +67,9 @@ private:
 #pragma endregion delegate
 	
 private:
+	void setUrl(const std::string&url, const cpr::Parameters & para);
+	void setHeader(const cpr::Header & header);
+	void setFormContent(data::FormList const & formList);
 	void clearData();
 #pragma region callback
 	//static int prog_cb(CHttpRequest *pThis, double dltotal, double dlnow, double ult, double uln);

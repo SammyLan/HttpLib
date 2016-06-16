@@ -1,28 +1,27 @@
 #include "stdafx.h"
 #include "HttpGlobal.h"
-#include <algorithm>
-#include <cctype>
-#include <sstream>
-#include <iomanip>
-#include <cassert>
-
+#include <curl\curl.h>
 #ifdef _DEBUG
 #pragma comment(lib,"libcurl_a_debug.lib")
 #else
 #pragma comment(lib,"libcurl_a.lib")
 #endif // _DEBUG
 
-bool http::CurlInit()
+namespace http
 {
-	return true;
+	CurGlobalInit::CurGlobalInit()
+	{
+		curl_global_init(CURL_GLOBAL_ALL);
+	}
+
+	CurGlobalInit::~CurGlobalInit()
+	{
+		curl_global_cleanup();
+	}
 }
 
-bool http::CurlUninit()
-{
-	return true;
-}
 
-void http::mcode_or_die(const char *where, CURLMcode code)
+void http::mcode_or_die(const char *where, int code)
 {
 	if (CURLM_OK != code)
 	{
