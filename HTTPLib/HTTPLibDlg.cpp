@@ -7,6 +7,7 @@
 #include "HTTPLibDlg.h"
 #include "afxdialogex.h"
 #include <fstream>
+#include <sstream>
 #ifdef _DEBUG
 #define new DEBUG_NEW
 #endif
@@ -171,7 +172,15 @@ HCURSOR CHTTPLibDlg::OnQueryDragIcon()
 void CHTTPLibDlg::OnBnClickedDownload()
 {
 	UpdateData(TRUE);
-	std::ofstream ofs("d:\\qq.html", ios::app);
+	static int s_count = 0;
+	++s_count;
+	std::ostringstream oss;
+	oss << s_count;
+//#define BAIDU
+#define QQ
+#ifdef QQ
+	string strFileQQ = "d:\\qq" + oss.str() + ".html";
+	std::ofstream ofs(strFileQQ.c_str(), ios::app);
 	auto pRequestQQ = new CHttpRequest(&hSession_);
 	pRequestQQ->get(
 		std::string("www.qq.com"), cpr::Parameters{}, CHttpRequest::RecvData_Body | CHttpRequest::RecvData_Header,
@@ -185,11 +194,15 @@ void CHTTPLibDlg::OnBnClickedDownload()
 		CHttpRequest::OnDataRecv(),
 		[=](data::byte * data, size_t size)
 	{
-		std::ofstream ofs("d:\\qq.html", ios::app);
+		std::ofstream ofs(strFileQQ.c_str(), ios::app);
 		ofs.write(data, size);
 	}
 	);
+#ifndef BAIDU
 	return;
+#endif
+#endif
+	string strFileBaidu = "d:\\baidu" + oss.str() + ".html";
 	auto pRequestBaidu = new CHttpRequest(&hSession_);
 	pRequestBaidu->get(std::string(CW2A(m_strURL)), cpr::Parameters{}, CHttpRequest::RecvData_Body| CHttpRequest::RecvData_Header,
 		[=](int retCode, std::string const & errMsg, data::BufferPtr const & header, data::BufferPtr const & body)
@@ -198,7 +211,7 @@ void CHTTPLibDlg::OnBnClickedDownload()
 		{
 			if (body.get() != nullptr)
 			{
-				std::ofstream ofs("d:\\baidu.html");
+				std::ofstream ofs(strFileBaidu.c_str());
 				ofs.write(body->data(), body->length());
 			}			
 		}		
