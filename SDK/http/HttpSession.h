@@ -28,7 +28,7 @@ private:
 	void check_multi_info();
 private:
 	CURLM *	hMulti_;
-	int		iStillRunning_;	
+	int		iStillRunning_ = 0;	
 	boost::asio::io_service & io_service_;
 	CHttpConnMgr * pConnMgr_;
 	boost::asio::deadline_timer timer_;	
