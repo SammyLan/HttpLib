@@ -245,8 +245,7 @@ void CHTTPLibDlg::DownloadFile()
 void CHTTPLibDlg::OnBnClickedDownload()
 {
 	UpdateData(TRUE);
-	DownloadFile();
-	return;
+	//DownloadFile();
 	DownloadQQ();
-	DownloadBaidu();
+	//DownloadBaidu();
 }

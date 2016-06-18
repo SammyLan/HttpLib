@@ -38,10 +38,10 @@ http::SocketInfoPtr CHttpConnMgr::opensocket(curlsocktype purpose, struct curl_s
 		else
 		{
 			newSocket = tcp_socket;
-			LogFinal(HTTPLOG,_T("\nOpened socket %d"), newSocket->tcpSocket.native_handle());
-
 			/* save it for monitoring */
 			socketMap_.insert(std::make_pair(newSocket->tcpSocket.native_handle(), tcp_socket));
+			int size =(int) socketMap_.size();
+			LogFinal(HTTPLOG,_T("Opened socket %d,total size = %i"), newSocket->tcpSocket.native_handle(),size);
 		}
 	}
 
