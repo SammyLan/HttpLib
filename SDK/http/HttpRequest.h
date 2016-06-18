@@ -16,7 +16,7 @@ public:
 		RecvData_Body = 0x00000002,
 		RecvData_All= RecvData_Header| RecvData_Body
 	};
-	typedef std::function<void(int retCode, std::string const & errMsg, data::BufferPtr const& header, data::BufferPtr const& body)> OnRespond;
+	typedef std::function<void(cpr::Response const & response, data::BufferPtr const & body)> OnRespond;
 	typedef std::function<void(data::byte * data, size_t size)> OnDataRecv;
 
 public:
@@ -94,7 +94,7 @@ private:
 	curl_slist * headerList_ = nullptr;
 	std::string	url_;
 	data::FormList formList_;
-	data::BufferPtr header_;
+	data::Buffer header_;
 	data::BufferPtr	body_;
 	CHttpSession *	pSession_;
 	char error_[CURL_ERROR_SIZE];

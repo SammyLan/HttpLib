@@ -151,6 +151,7 @@ void CHttpSession::check_multi_info()
 			auto easy = msg->easy_handle;
 			auto res = msg->data.result;
 			curl_easy_getinfo(easy, CURLINFO_PRIVATE, &conn);
+			removeHandle(conn);
 			conn->onDone(res);
 		}
 	}

@@ -8,13 +8,14 @@
 #include "afxdialogex.h"
 #include <fstream>
 #include <sstream>
+#include <cpr/util.h>
 #ifdef _DEBUG
 #define new DEBUG_NEW
 #endif
 
 
 // 用于应用程序“关于”菜单项的 CAboutDlg 对话框
-
+TCHAR LOGFILTER[] = _T("CHTTPLibDlg");
 class CAboutDlg : public CDialogEx
 {
 public:
@@ -178,9 +179,9 @@ void CHTTPLibDlg::DownloadBaidu()
 	string strFileBaidu = "d:\\baidu" + oss.str() + ".html";
 	auto pRequestBaidu = new CHttpRequest(&hSession_);
 	pRequestBaidu->get(std::string(CW2A(m_strURL)), cpr::Parameters{}, CHttpRequest::RecvData_Body | CHttpRequest::RecvData_Header,
-		[=](int retCode, std::string const & errMsg, data::BufferPtr const & header, data::BufferPtr const & body)
+		[=](cpr::Response const & respond, data::BufferPtr const & body)
 	{
-		if (retCode == 0)
+		if (respond.error.code == cpr::ErrorCode::OK)
 		{
 			if (body.get() != nullptr)
 			{
@@ -204,12 +205,9 @@ void CHTTPLibDlg::DownloadQQ()
 	auto pRequestQQ = new CHttpRequest(&hSession_);
 	pRequestQQ->get(
 		std::string("www.qq.com"), cpr::Parameters{}, CHttpRequest::RecvData_Body | CHttpRequest::RecvData_Header,
-		[=](int retCode, std::string const & errMsg, data::BufferPtr const & header, data::BufferPtr const & body)
+		[=](cpr::Response const & respond, data::BufferPtr const & body)
 	{
-		if (retCode == 0)
-		{
-			//UpdateData(FALSE);
-		}
+		LogFinal(LOGFILTER, _T("End"));
 	},
 		CHttpRequest::OnDataRecv(),
 		[=](data::byte * data, size_t size)
@@ -231,12 +229,9 @@ void CHTTPLibDlg::DownloadFile()
 	auto pRequestQQ = new CHttpRequest(&hSession_);
 	pRequestQQ->get(
 		std::string(CW2A(m_strURL)), cpr::Parameters{}, CHttpRequest::RecvData_Body | CHttpRequest::RecvData_Header,
-		[=](int retCode, std::string const & errMsg, data::BufferPtr const & header, data::BufferPtr const & body)
+		[=](cpr::Response const & respond, data::BufferPtr const & body)
 	{
-		if (retCode == 0)
-		{
-			assert(header->length() != 0);
-		}
+		LogFinal(LOGFILTER, _T("End"));
 	},
 		CHttpRequest::OnDataRecv(),
 		[=](data::byte * data, size_t size)

@@ -2,6 +2,8 @@
 #include "HttpRequest.h"
 #include "HttpSession.h"
 #include <sstream>
+#include <cpr/error.h>
+#include <cpr/util.h>
 
 
 std::string CHttpRequest::strProxyHost;
@@ -46,7 +48,7 @@ CHttpRequest::CHttpRequest(CHttpSession *pSession)
 		curl_easy_setopt(this->handle_, CURLOPT_DEBUGFUNCTION, &CHttpRequest::debug_callback);
 		curl_easy_setopt(this->handle_, CURLOPT_DEBUGDATA, this);
 	}
-
+	curl_easy_setopt(this->handle_, CURLOPT_COOKIEFILE, ""); /* just to start the cookie engine */
 	curl_easy_setopt(this->handle_, CURLOPT_NOSIGNAL, 1L);
 	//curl_easy_setopt(this->handle_, CURLOPT_NOPROGRESS, 1L);
 	//curl_easy_setopt(this->handle_, CURLOPT_PROGRESSFUNCTION, prog_cb);
@@ -88,6 +90,7 @@ CHttpRequest::CHttpRequest(CHttpSession *pSession)
 CHttpRequest::~CHttpRequest()
 {
 	clearData();
+	curl_easy_cleanup(handle_);
 }
 
 void CHttpRequest::setUrl(const std::string&url, const cpr::Parameters & para)
@@ -186,12 +189,31 @@ bool CHttpRequest::close()
 
 void CHttpRequest::onDone(CURLcode res)
 {
-	char *eff_url;
-	curl_easy_getinfo(handle_, CURLINFO_EFFECTIVE_URL, &eff_url);
-	LogFinal(HTTPLOG, _T("\nDONE: %S => (%d) %S"), eff_url, res, error_);
-	onRespond_(res, error_, header_, body_);
-	pSession_->removeHandle(this);
-	curl_easy_cleanup(handle_);
+	char* raw_url;
+	long response_code;
+	double elapsed;
+	curl_easy_getinfo(handle_, CURLINFO_RESPONSE_CODE, &response_code);
+	curl_easy_getinfo(handle_, CURLINFO_TOTAL_TIME, &elapsed);
+	curl_easy_getinfo(handle_, CURLINFO_EFFECTIVE_URL, &raw_url);
+
+	cpr::Error error(res, error_);
+
+	cpr::Cookies cookies;
+	struct curl_slist* raw_cookies;
+	curl_easy_getinfo(handle_, CURLINFO_COOKIELIST, &raw_cookies);
+	for (struct curl_slist* nc = raw_cookies; nc; nc = nc->next) {
+		auto tokens = cpr::util::split(nc->data, '\t');
+		auto value = tokens.back();
+		tokens.pop_back();
+		cookies[tokens.back()] = value;
+	}
+	curl_slist_free_all(raw_cookies);
+
+	auto header = cpr::util::parseHeader(header_);
+	//auto && response_string = cpr::util::parseResponse(*body_);
+	cpr::Response response{ response_code, "", header, raw_url, elapsed, cookies, error };
+	LogFinal(HTTPLOG, _T("\nDONE: %S => (%d) %S"), raw_url, res, error_);
+	onRespond_(response, body_);
 	//TODO::delete
 	delete this;
 }
@@ -225,7 +247,7 @@ void CHttpRequest::setDelegate(DWORD const recvDataFlag, OnRespond const & onRes
 	onRespond_ = onRespond;
 	onHeaderRecv_ = onHeaderRecv;
 	onBodyRecv_ = onBodyRecv;
-	header_.reset();
+	header_.clear();
 	body_.reset();
 	if (recvDataFlag & RecvData_Header)
 	{
@@ -236,9 +258,8 @@ void CHttpRequest::setDelegate(DWORD const recvDataFlag, OnRespond const & onRes
 		}
 		else
 		{
-			header_ = std::make_shared<data::Buffer>();
 			curl_easy_setopt(this->handle_, CURLOPT_HEADERFUNCTION, header_callbackEx);
-			curl_easy_setopt(this->handle_, CURLOPT_HEADERDATA, header_.get());
+			curl_easy_setopt(this->handle_, CURLOPT_HEADERDATA, &header_);
 		}		
 	}
 
