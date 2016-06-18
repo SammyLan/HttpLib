@@ -362,7 +362,7 @@ int CHttpRequest::debug_callback(CURL *handle, curl_infotype type, char *data, s
 curl_socket_t CHttpRequest::opensocket(CHttpSession *pThis, curlsocktype purpose, struct curl_sockaddr *address)
 {
 	auto socket = pThis->openSocket(purpose, address);
-	return socket.get() != nullptr? socket->native_handle(): CURL_SOCKET_BAD;
+	return socket.get() != nullptr? socket->tcpSocket.native_handle(): CURL_SOCKET_BAD;
 }
 
 int CHttpRequest::close_socket(CHttpSession *pThis, curl_socket_t item)

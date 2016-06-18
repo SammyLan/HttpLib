@@ -9,7 +9,15 @@
 
 namespace http
 {
-	typedef std::shared_ptr<boost::asio::ip::tcp::socket> TCPSocketPtr;
+	struct SocketInfo
+	{
+		SocketInfo(boost::asio::io_service & io_service)
+			:tcpSocket(io_service)	{}
+		boost::asio::ip::tcp::socket tcpSocket;
+		int mask = 0;
+	};
+	typedef std::shared_ptr<SocketInfo> SocketInfoPtr;
+
 	struct CurGlobalInit
 	{
 		CurGlobalInit();

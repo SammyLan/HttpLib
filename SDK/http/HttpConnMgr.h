@@ -8,14 +8,14 @@
 class CHttpConnMgr
 {
 public:
-	typedef std::map<curl_socket_t, http::TCPSocketPtr>	SocketPool;
+	typedef std::map<curl_socket_t, http::SocketInfoPtr>	SocketPool;
 	friend class CHttpSession;
 public:
 	CHttpConnMgr(boost::asio::io_service & io_service);
 	~CHttpConnMgr();
-	http::TCPSocketPtr opensocket(curlsocktype purpose, struct curl_sockaddr *address);
+	http::SocketInfoPtr opensocket(curlsocktype purpose, struct curl_sockaddr *address);
 	int close_socket(curl_socket_t item);
-	http::TCPSocketPtr getSock(curl_socket_t s);
+	http::SocketInfoPtr getSock(curl_socket_t s);
 private:
 	boost::asio::io_service & io_service_;
 	SocketPool socketMap_;
