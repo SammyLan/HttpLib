@@ -10,7 +10,7 @@ public:
 	typedef std::vector<ThreadPtr> ThreadList;
 	typedef boost::asio::io_service io_serviceT;
 public:
-	ThreadPool(size_t threads);
+	ThreadPool(size_t threads,std::string const & threadName = std::string(""));
 	~ThreadPool();
 	void stop();
 

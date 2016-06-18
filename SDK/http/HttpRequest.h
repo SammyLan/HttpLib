@@ -17,7 +17,7 @@ public:
 		RecvData_All= RecvData_Header| RecvData_Body
 	};
 	typedef std::function<void(cpr::Response const & response, data::BufferPtr const & body)> OnRespond;
-	typedef std::function<void(data::byte * data, size_t size)> OnDataRecv;
+	typedef std::function<void(data::byte const * data, size_t size)> OnDataRecv;
 
 public:
 	static void setDebugMode(bool debugMode);

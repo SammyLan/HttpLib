@@ -19,7 +19,7 @@ public:
 private:
 	static int socket_callback(CURL *easy, curl_socket_t s, int what, CHttpSession *pThis, http::SocketInfo * sockInfo);
 	static int timer_callback(CURLM *multi, long timeout_ms, CHttpSession *pThis);
-	static void timer_cb(const boost::system::error_code & error, CHttpSession *pThis);
+	static void timer_cb(const boost::system::error_code & error, CHttpSession *pThis, long timeout_ms);
 	static void event_cb(CHttpSession *pThis, http::SocketInfoPtr& tcp_socket, curl_socket_t s,CURL*e, int action, const boost::system::error_code &err);
 private:
 	void setSocket(http::SocketInfoPtr & sockInfo, curl_socket_t s, CURL*e, int act);

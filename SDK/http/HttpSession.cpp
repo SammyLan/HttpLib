@@ -82,19 +82,24 @@ int CHttpSession::timer_callback(CURLM *multi, long timeout_ms, CHttpSession *pT
 	{
 		/* update timer */
 		pThis->timer_.expires_from_now(boost::posix_time::millisec(timeout_ms));
-		pThis->timer_.async_wait(std::bind(&timer_cb, std::placeholders::_1, pThis));
+		pThis->timer_.async_wait(std::bind(&timer_cb, std::placeholders::_1, pThis, timeout_ms));
 	}
-	else
+	else if (timeout_ms == 0)
 	{
 		/* call timeout function immediately */
 		boost::system::error_code error; /*success*/
-		timer_cb(error, pThis);
+		timer_cb(error, pThis, timeout_ms);
+
+	}
+	else
+	{
+		LogFinal(HTTPLOG, _T("\nmulti_timer_cb: timeout_ms %ld"), timeout_ms);
 	}
 
 	return 0;
 }
 
-void CHttpSession::timer_cb(const boost::system::error_code & error, CHttpSession *pThis)
+void CHttpSession::timer_cb(const boost::system::error_code & error, CHttpSession *pThis,long timeout_ms)
 {
 	if (!error)
 	{
@@ -103,6 +108,11 @@ void CHttpSession::timer_cb(const boost::system::error_code & error, CHttpSessio
 
 		http::mcode_or_die("timer_cb: curl_multi_socket_action", rc);
 		pThis->check_multi_info();
+	}
+	else
+	{
+		auto desc = error.message();
+		LogFinal(HTTPLOG, _T("%S"),desc.c_str());
 	}
 }
 
