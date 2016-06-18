@@ -12,16 +12,16 @@
 // CHTTPLibDlg 对话框
 class CHTTPLibDlg : public CDialogEx
 {
-// 构造
+	// 构造
 public:
 	CHTTPLibDlg(CWnd* pParent = NULL);	// 标准构造函数
 	~CHTTPLibDlg();
-// 对话框数据
+	// 对话框数据
 #ifdef AFX_DESIGN_TIME
 	enum { IDD = IDD_HTTPLIB_DIALOG };
 #endif
 
-	protected:
+protected:
 	virtual void DoDataExchange(CDataExchange* pDX);	// DDX/DDV 支持
 
 
@@ -35,6 +35,9 @@ protected:
 	afx_msg void OnPaint();
 	afx_msg HCURSOR OnQueryDragIcon();
 	DECLARE_MESSAGE_MAP()
+	void DownloadBaidu();
+	void DownloadQQ();
+	void DownloadFile();
 private:
 	ThreadPool nwThreadPool_;
 	ThreadPool ioThreadPool_;
