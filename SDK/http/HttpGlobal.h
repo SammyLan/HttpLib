@@ -4,10 +4,12 @@
 #include <string>
 #include <memory>
 #include <tuple>
+#include <boost/asio.hpp>
 #define HTTPLOG _T("http")
 
 namespace http
 {
+	typedef std::shared_ptr<boost::asio::ip::tcp::socket> TCPSocketPtr;
 	struct CurGlobalInit
 	{
 		CurGlobalInit();

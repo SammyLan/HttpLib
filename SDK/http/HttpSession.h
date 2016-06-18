@@ -2,26 +2,25 @@
 #include <curl/curl.h>
 #include <boost/asio.hpp>
 #include <boost/bind.hpp>
+#include "HttpGlobal.h"
 
 class CHttpRequest;
 class CHttpConnMgr;
 class CHttpSession
 {
 public:
-	typedef std::shared_ptr<boost::asio::ip::tcp::socket> SocketPtr;
-public:
 	CHttpSession(boost::asio::io_service & io_service, CHttpConnMgr * pConnMgr);
 	~CHttpSession();
 	CURLMcode addHandle(CHttpRequest * pHandle);
 	CURLMcode removeHandle(CHttpRequest * pHandle);
 	CURLM * getHandle() const { return hMulti_; }
-	curl_socket_t openSocket(curlsocktype purpose, struct curl_sockaddr *address);
+	http::TCPSocketPtr  openSocket(curlsocktype purpose, struct curl_sockaddr *address);
 	int closeSocket(curl_socket_t item);
 private:
 	static int socket_callback(CURL *easy, curl_socket_t s, int what, CHttpSession *pThis, void *socketp);
 	static int timer_callback(CURLM *multi, long timeout_ms, CHttpSession *pThis);
 	static void timer_cb(const boost::system::error_code & error, CHttpSession *pThis);
-	static void event_cb(CHttpSession *pThis, CHttpSession::SocketPtr& tcp_socket,int action);
+	static void event_cb(CHttpSession *pThis, http::TCPSocketPtr& tcp_socket,int action);
 private:
 	void removeSocket(int *f);
 	void addSocket(curl_socket_t s, CURL *easy, int action);

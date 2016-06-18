@@ -188,7 +188,7 @@ void CHttpSession::check_multi_info()
 }
 
 /* Called by asio when there is an action on a socket */
-void CHttpSession::event_cb(CHttpSession *pThis, CHttpSession::SocketPtr & tcp_socket,
+void CHttpSession::event_cb(CHttpSession *pThis, http::TCPSocketPtr & tcp_socket,
 	int action)
 {
 	LogFinal(HTTPLOG,_T( "\nevent_cb: action=%d"), action);
@@ -208,7 +208,7 @@ void CHttpSession::event_cb(CHttpSession *pThis, CHttpSession::SocketPtr & tcp_s
 }
 
 /* CURLOPT_OPENSOCKETFUNCTION */
-curl_socket_t CHttpSession::openSocket(curlsocktype purpose, struct curl_sockaddr *address)
+http::TCPSocketPtr  CHttpSession::openSocket(curlsocktype purpose, struct curl_sockaddr *address)
 {
 	return pConnMgr_->opensocket(purpose, address);
 }

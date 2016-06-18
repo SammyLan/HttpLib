@@ -1,6 +1,6 @@
 #include "stdafx.h"
 #include "HttpConnMgr.h"
-#include <iostream>
+#include "HttpGlobal.h"
 
 CHttpConnMgr::CHttpConnMgr(boost::asio::io_service & io_service)
 	:io_service_(io_service)
@@ -14,17 +14,17 @@ CHttpConnMgr::~CHttpConnMgr()
 }
 
 /* CURLOPT_OPENSOCKETFUNCTION */
-curl_socket_t CHttpConnMgr::opensocket(curlsocktype purpose, struct curl_sockaddr *address)
+http::TCPSocketPtr CHttpConnMgr::opensocket(curlsocktype purpose, struct curl_sockaddr *address)
 {
-	fprintf(MSG_OUT, "\nopensocket :");
+	LogFinal(HTTPLOG,_T("\nopensocket :"));
 
-	curl_socket_t sockfd = CURL_SOCKET_BAD;
+	http::TCPSocketPtr newSocket;
 
 	/* restrict to IPv4 */
 	if (purpose == CURLSOCKTYPE_IPCXN && address->family == AF_INET)
 	{
 		/* create a tcp socket object */
-		SocketPtr tcp_socket(new boost::asio::ip::tcp::socket(io_service_));
+		http::TCPSocketPtr tcp_socket(new boost::asio::ip::tcp::socket(io_service_));
 
 		/* open it and get the native handle*/
 		boost::system::error_code ec;
@@ -33,26 +33,25 @@ curl_socket_t CHttpConnMgr::opensocket(curlsocktype purpose, struct curl_sockadd
 		if (ec)
 		{
 			/* An error occurred */
-			std::cout << std::endl << "Couldn't open socket [" << ec << "][" << ec.message() << "]";
-			fprintf(MSG_OUT, "\nERROR: Returning CURL_SOCKET_BAD to signal error");
+			LogFinal(HTTPLOG,_T("\nERROR: Returning CURL_SOCKET_BAD to signal error,ec=%s"),ec.message());
 		}
 		else
 		{
-			sockfd = tcp_socket->native_handle();
-			fprintf(MSG_OUT, "\nOpened socket %d", sockfd);
+			newSocket = tcp_socket;
+			LogFinal(HTTPLOG,_T("\nOpened socket %d"), newSocket->native_handle());
 
 			/* save it for monitoring */
-			socketMap_.insert(std::make_pair(sockfd, tcp_socket));
+			socketMap_.insert(std::make_pair(newSocket->native_handle(), tcp_socket));
 		}
 	}
 
-	return sockfd;
+	return newSocket;
 }
 
 /* CURLOPT_CLOSESOCKETFUNCTION */
 int CHttpConnMgr::close_socket( curl_socket_t item)
 {
-	fprintf(MSG_OUT, "\nclose_socket : %d", item);
+	LogFinal(HTTPLOG,_T("\nclose_socket : %d"), item);
 
 	auto it = socketMap_.find(item);
 
@@ -63,9 +62,9 @@ int CHttpConnMgr::close_socket( curl_socket_t item)
 	return 0;
 }
 
-CHttpConnMgr::SocketPtr CHttpConnMgr::getSock(curl_socket_t s)
+http::TCPSocketPtr CHttpConnMgr::getSock(curl_socket_t s)
 {
-	SocketPtr pItem;
+	http::TCPSocketPtr pItem;
 	auto it = socketMap_.find(s);
 	if (it != socketMap_.end())
 	{

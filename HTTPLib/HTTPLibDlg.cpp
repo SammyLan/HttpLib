@@ -171,8 +171,27 @@ HCURSOR CHTTPLibDlg::OnQueryDragIcon()
 void CHTTPLibDlg::OnBnClickedDownload()
 {
 	UpdateData(TRUE);
-	auto pRequest = new CHttpRequest(&hSession_);
-	/*pRequest->get(std::string(CW2A(m_strURL)), cpr::Parameters{}, CHttpRequest::RecvData_Body| CHttpRequest::RecvData_Header,
+	std::ofstream ofs("d:\\qq.html", ios::app);
+	auto pRequestQQ = new CHttpRequest(&hSession_);
+	pRequestQQ->get(
+		std::string("www.qq.com"), cpr::Parameters{}, CHttpRequest::RecvData_Body | CHttpRequest::RecvData_Header,
+		[=](int retCode, std::string const & errMsg, data::BufferPtr const & header, data::BufferPtr const & body)
+	{
+		if (retCode == 0)
+		{
+			//UpdateData(FALSE);
+		}
+	},
+		CHttpRequest::OnDataRecv(),
+		[=](data::byte * data, size_t size)
+	{
+		std::ofstream ofs("d:\\qq.html", ios::app);
+		ofs.write(data, size);
+	}
+	);
+	return;
+	auto pRequestBaidu = new CHttpRequest(&hSession_);
+	pRequestBaidu->get(std::string(CW2A(m_strURL)), cpr::Parameters{}, CHttpRequest::RecvData_Body| CHttpRequest::RecvData_Header,
 		[=](int retCode, std::string const & errMsg, data::BufferPtr const & header, data::BufferPtr const & body)
 	{
 		if (retCode == 0)
@@ -183,25 +202,6 @@ void CHTTPLibDlg::OnBnClickedDownload()
 				ofs.write(body->data(), body->length());
 			}			
 		}		
-	}
-	);
-
-
-	pRequest = new CHttpRequest(&hSession_);*/
-	pRequest->get(
-		std::string("www.qq.com"), cpr::Parameters{}, CHttpRequest::RecvData_Body | CHttpRequest::RecvData_Header,
-		[=](int retCode, std::string const & errMsg, data::BufferPtr const & header, data::BufferPtr const & body)
-	{
-		if (retCode == 0)
-		{
-			//UpdateData(FALSE);
-		}
-	},
-	CHttpRequest::OnDataRecv(),
-		[=](data::byte * data, size_t size)
-	{
-		std::ofstream ofs("d:\\qq.html",ios::app);
-		ofs.write(data, size);
 	}
 	);
 }
