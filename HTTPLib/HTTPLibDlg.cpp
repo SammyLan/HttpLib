@@ -9,13 +9,15 @@
 #include <fstream>
 #include <sstream>
 #include <cpr/util.h>
+#include <Download/Download.h>
+
 #ifdef _DEBUG
 #define new DEBUG_NEW
 #endif
 
 
 // 用于应用程序“关于”菜单项的 CAboutDlg 对话框
-TCHAR LOGFILTER[] = _T("CHTTPLibDlg");
+static TCHAR LOGFILTER[] = _T("CHTTPLibDlg");
 class CAboutDlg : public CDialogEx
 {
 public:
@@ -58,8 +60,8 @@ CHTTPLibDlg::CHTTPLibDlg(CWnd* pParent /*=NULL*/)
 	, connMgr_(nwThreadPool_.io_service())
 	, hSession_(nwThreadPool_.io_service(), &connMgr_)
 	, m_pFileSignMgr(ioThreadPool_.io_service())
-	, m_strURL(_T("http://www.baidu.com/"))
-	, m_strCookie(_T(""))
+	, m_strURL(_T("http://sz-btfs-v2.yun.ftn.qq.com:80/ftn_handler/6bbe3c1a94f854109df2fd1e6e357a17c000eda382da615ee71cc7976e71cdd49121841ff7b2258a9078a070ca33a02525bd2a46e368efb20918d8dbf7eb69bf/?fname=Windows%2010%20x64.rar&from=30322&version=3.5.0.1665&uin=240201454"))
+	, m_strCookie(_T("FTN5K=0b2c497d"))
 	, m_bBaidu(FALSE)
 	, m_bQQ(FALSE)
 	, m_bDownFile(TRUE)
@@ -217,7 +219,6 @@ void CHTTPLibDlg::DownloadQQ()
 		assert(respond.error.code == cpr::ErrorCode::OK);
 		LogFinal(LOGFILTER, _T("End"));
 	},
-		CHttpRequest::OnDataRecv(),
 		[=](data::byte const * data, size_t size)
 	{
 		std::ofstream ofs(strFileQQ.c_str(), ios::app);
@@ -233,31 +234,9 @@ void CHTTPLibDlg::DownloadFile()
 	std::ostringstream oss;
 	oss << s_count;
 	string strFileQQ = "d:\\data" + oss.str() + ".zip";
-	std::ofstream ofs(strFileQQ.c_str(), ios::app);
-	auto pDownloadFile = new CHttpRequest(&hSession_);
-	//pDownloadFile->setRange(0, 100);
-	if (!m_strCookie.IsEmpty())
-	{
-		pDownloadFile->setCookie(std::string(CW2A(m_strCookie)));
-	}
-	pDownloadFile->get(
-		std::string(CW2A(m_strURL)), cpr::Parameters{}, CHttpRequest::RecvData_Body | CHttpRequest::RecvData_Header,
-		[=](cpr::Response const & respond, data::BufferPtr const & body)
-	{
-		assert(respond.error.code == cpr::ErrorCode::OK);
-		LogFinal(LOGFILTER, _T("End"));
-	},
-		CHttpRequest::OnDataRecv(),
-		[=](data::byte const * data, size_t size)
-	{
-		data::BufferPtr pData = std::make_shared<data::Buffer>(data, data + size);
-		ioThreadPool_.postTask([=]()
-		{
-			std::ofstream ofs(strFileQQ.c_str(), ios::app);
-			ofs.write(pData->data(), pData->length());
-		});		
-	}
-	);
+
+	auto pDownload = new CHttpDownload(ioThreadPool_, nwThreadPool_, hSession_);
+	pDownload->BeginDownload(1, strFileQQ, std::string(CW2A(m_strURL)), std::string(CW2A(m_strCookie)));
 }
 
 void CHTTPLibDlg::OnBnClickedDownload()

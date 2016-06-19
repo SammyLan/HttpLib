@@ -41,6 +41,9 @@
     <Filter Include="Lib3rd\cpr">
       <UniqueIdentifier>{80a5e509-a5b5-41ca-adee-0b5bfe839983}</UniqueIdentifier>
     </Filter>
+    <Filter Include="base\Download">
+      <UniqueIdentifier>{26eed977-4f9f-46b1-9370-9d4a4cb964a6}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="targetver.h">
@@ -166,6 +169,9 @@
     <ClInclude Include="..\SDK\external\cpr\include\cpr\util.h">
       <Filter>Lib3rd\cpr</Filter>
     </ClInclude>
+    <ClInclude Include="..\SDK\Download\Download.h">
+      <Filter>base\Download</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="HTTPLib.cpp">
@@ -254,6 +260,9 @@
     </ClCompile>
     <ClCompile Include="..\SDK\external\cpr\cpr\util.cpp">
       <Filter>Lib3rd\cpr</Filter>
+    </ClCompile>
+    <ClCompile Include="..\SDK\Download\Download.cpp">
+      <Filter>base\Download</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

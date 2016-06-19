@@ -35,8 +35,8 @@ public:
 		const cpr::Parameters & para = cpr::Parameters{},
 		DWORD const recvDataFlag = CHttpRequest::RecvData_None,
 		OnRespond const &  onRespond = OnRespond(),
-		OnDataRecv const & onHeaderRecv = OnDataRecv(),
-		OnDataRecv const & onBodyRecv = OnDataRecv()
+		OnDataRecv const & onBodyRecv = OnDataRecv(),
+		OnDataRecv const & onHeaderRecv = OnDataRecv()
 		);
 
 	int postMultiForm(std::string const & url,
@@ -45,8 +45,8 @@ public:
 		data::FormList const & formList,
 		DWORD const recvDataFlag = CHttpRequest::RecvData_None,
 		OnRespond const &  onRespond = OnRespond(),
-		OnDataRecv const & onHeaderRecv = OnDataRecv(),
-		OnDataRecv const & onBodyRecv = OnDataRecv()
+		OnDataRecv const & onBodyRecv = OnDataRecv(),
+		OnDataRecv const & onHeaderRecv = OnDataRecv()
 		);
 
 	bool close();
@@ -64,7 +64,7 @@ public:
 
 private:
 #pragma region delegate
-	void setDelegate(DWORD const recvDataFlag,	OnRespond const & onRespond,OnDataRecv const & onHeaderRecv,OnDataRecv const & onBodyRecv);
+	void setDelegate(DWORD const recvDataFlag,	OnRespond const & onRespond,OnDataRecv const & onBodyRecv,OnDataRecv const & onHeaderRecv);
 	void setReadDelegate();
 #pragma endregion delegate
 	

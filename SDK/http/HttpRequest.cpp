@@ -57,8 +57,8 @@ CHttpRequest::CHttpRequest(CHttpSession *pSession)
 	curl_easy_setopt(this->handle_, CURLOPT_ERRORBUFFER, this->error_);
 	curl_easy_setopt(this->handle_, CURLOPT_PRIVATE, this);
 	
-	curl_easy_setopt(this->handle_, CURLOPT_LOW_SPEED_TIME, 3L);
-	curl_easy_setopt(this->handle_, CURLOPT_LOW_SPEED_LIMIT, 10L);
+	//curl_easy_setopt(this->handle_, CURLOPT_LOW_SPEED_TIME, 3L);
+	//curl_easy_setopt(this->handle_, CURLOPT_LOW_SPEED_LIMIT, 10L);
 
 	curl_easy_setopt(this->handle_, CURLOPT_TCP_KEEPALIVE, 1L);
 	curl_easy_setopt(this->handle_, CURLOPT_TCP_KEEPIDLE, 120L);
@@ -156,7 +156,7 @@ int CHttpRequest::headRequest(std::string const & url,
 	const cpr::Parameters & para,
 	OnRespond const &  onRespond)
 {
-	setDelegate(CHttpRequest::RecvData_None, onRespond, OnDataRecv(), OnDataRecv());
+	setDelegate(CHttpRequest::RecvData_Header, onRespond, OnDataRecv(), OnDataRecv());
 	curl_easy_setopt(handle_, CURLOPT_NOBODY, 1);
 	setUrl(url, para);
 	auto rc = pSession_->addHandle(this);
@@ -167,11 +167,11 @@ int CHttpRequest::get(std::string const & url,
 	const cpr::Parameters & para,
 	DWORD const recvDataFlag,
 	OnRespond const &  onRespond,
-	OnDataRecv const & onHeaderRecv,
-	OnDataRecv const & onBodyRecv
+	OnDataRecv const & onBodyRecv,
+	OnDataRecv const & onHeaderRecv
 	)
 {
-	setDelegate(recvDataFlag, onRespond, onHeaderRecv, onBodyRecv);
+	setDelegate(recvDataFlag, onRespond, onBodyRecv,onHeaderRecv);
 	setUrl(url, para);
 	auto rc = pSession_->addHandle(this);
 	return rc;
@@ -183,10 +183,10 @@ int CHttpRequest::postMultiForm(std::string const & url,
 	data::FormList const & formList,
 	DWORD const recvDataFlag,
 	OnRespond const & onRespond,
-	OnDataRecv const & onHeaderRecv,
-	OnDataRecv const & onBodyRecv)
+	OnDataRecv const & onBodyRecv,
+	OnDataRecv const & onHeaderRecv)
 {
-	setDelegate(recvDataFlag, onRespond, onHeaderRecv, onBodyRecv);
+	setDelegate(recvDataFlag, onRespond, onBodyRecv, onHeaderRecv);
 	setUrl(url, para);
 	setFormContent(formList);
 	auto rc = pSession_->addHandle(this);
@@ -253,11 +253,11 @@ void CHttpRequest::setMaxDowloadSpeed(int64_t maxSpeed)
 #pragma endregion option
 
 #pragma region delegate
-void CHttpRequest::setDelegate(DWORD const recvDataFlag, OnRespond const & onRespond, OnDataRecv const & onHeaderRecv, OnDataRecv const & onBodyRecv)
+void CHttpRequest::setDelegate(DWORD const recvDataFlag, OnRespond const & onRespond, OnDataRecv const & onBodyRecv, OnDataRecv const & onHeaderRecv)
 {
 	onRespond_ = onRespond;
-	onHeaderRecv_ = onHeaderRecv;
 	onBodyRecv_ = onBodyRecv;
+	onHeaderRecv_ = onHeaderRecv;
 	header_.clear();
 	body_.reset();
 	if (recvDataFlag & RecvData_Header)
@@ -407,7 +407,7 @@ int CHttpRequest::sockopt_callback(CHttpSession * pThis, curl_socket_t curlfd, c
 	int buf = 0;
 	int len = sizeof(buf);
 	::getsockopt((SOCKET)curlfd, SOL_SOCKET, SO_RCVBUF, (char *)&buf,&len);
-	buf = 1024 *  330;
+	buf = 1024 * 1024 * 4;
 	::setsockopt((SOCKET)curlfd, SOL_SOCKET, SO_RCVBUF, (char const*)&buf,sizeof(buf));
 	return CURL_SOCKOPT_OK;
 }
