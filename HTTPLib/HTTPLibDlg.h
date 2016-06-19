@@ -49,4 +49,7 @@ public:
 	afx_msg void OnBnClickedDownload();
 	CString m_strURL;
 	CString m_strCookie;
+	BOOL m_bBaidu;
+	BOOL m_bQQ;
+	BOOL m_bDownFile;
 };

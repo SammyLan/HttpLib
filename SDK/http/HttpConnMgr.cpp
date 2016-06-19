@@ -1,7 +1,7 @@
 #include "stdafx.h"
 #include "HttpConnMgr.h"
 #include "HttpGlobal.h"
-
+#include <Winsock2.h>
 CHttpConnMgr::CHttpConnMgr(boost::asio::io_service & io_service)
 	:io_service_(io_service)
 {

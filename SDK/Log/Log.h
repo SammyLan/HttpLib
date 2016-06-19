@@ -17,6 +17,9 @@
 #include <cstring>
 using namespace std;
 
+#ifndef _DEBUG
+#define VER_FINAL_RELEASE
+#endif
 extern TCHAR LOGFILTER_ERROR[];
 extern TCHAR LOGFILTER_INFO[];
 extern int g_nLogLevel;

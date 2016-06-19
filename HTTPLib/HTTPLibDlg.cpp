@@ -53,13 +53,16 @@ END_MESSAGE_MAP()
 
 CHTTPLibDlg::CHTTPLibDlg(CWnd* pParent /*=NULL*/)
 	: CDialogEx(IDD_HTTPLIB_DIALOG, pParent)
-	, nwThreadPool_(1)
-	, ioThreadPool_(1)
+	, nwThreadPool_(1,"NetworkThread")
+	, ioThreadPool_(1,"IOThread")
 	, connMgr_(nwThreadPool_.io_service())
 	, hSession_(nwThreadPool_.io_service(), &connMgr_)
 	, m_pFileSignMgr(ioThreadPool_.io_service())
 	, m_strURL(_T("http://www.baidu.com/"))
 	, m_strCookie(_T(""))
+	, m_bBaidu(FALSE)
+	, m_bQQ(FALSE)
+	, m_bDownFile(TRUE)
 {
 	m_hIcon = AfxGetApp()->LoadIcon(IDR_MAINFRAME);
 }
@@ -74,6 +77,9 @@ void CHTTPLibDlg::DoDataExchange(CDataExchange* pDX)
 	CDialogEx::DoDataExchange(pDX);
 	DDX_Text(pDX, IDC_URL, m_strURL);
 	DDX_Text(pDX, IDC_URL2, m_strCookie);
+	DDX_Check(pDX, IDC_BAIDU, m_bBaidu);
+	DDX_Check(pDX, IDC_QQ, m_bQQ);
+	DDX_Check(pDX, IDC_DOWNFILE, m_bDownFile);
 }
 
 BEGIN_MESSAGE_MAP(CHTTPLibDlg, CDialogEx)
@@ -181,6 +187,7 @@ void CHTTPLibDlg::DownloadBaidu()
 	pRequestBaidu->get(std::string(CW2A(m_strURL)), cpr::Parameters{}, CHttpRequest::RecvData_Body | CHttpRequest::RecvData_Header,
 		[=](cpr::Response const & respond, data::BufferPtr const & body)
 	{
+		assert(respond.error.code == cpr::ErrorCode::OK);
 		if (respond.error.code == cpr::ErrorCode::OK)
 		{
 			if (body.get() != nullptr)
@@ -207,10 +214,11 @@ void CHTTPLibDlg::DownloadQQ()
 		std::string("www.qq.com"), cpr::Parameters{}, CHttpRequest::RecvData_Body | CHttpRequest::RecvData_Header,
 		[=](cpr::Response const & respond, data::BufferPtr const & body)
 	{
+		assert(respond.error.code == cpr::ErrorCode::OK);
 		LogFinal(LOGFILTER, _T("End"));
 	},
 		CHttpRequest::OnDataRecv(),
-		[=](data::byte * data, size_t size)
+		[=](data::byte const * data, size_t size)
 	{
 		std::ofstream ofs(strFileQQ.c_str(), ios::app);
 		ofs.write(data, size);
@@ -226,18 +234,28 @@ void CHTTPLibDlg::DownloadFile()
 	oss << s_count;
 	string strFileQQ = "d:\\data" + oss.str() + ".zip";
 	std::ofstream ofs(strFileQQ.c_str(), ios::app);
-	auto pRequestQQ = new CHttpRequest(&hSession_);
-	pRequestQQ->get(
+	auto pDownloadFile = new CHttpRequest(&hSession_);
+	//pDownloadFile->setRange(0, 100);
+	if (!m_strCookie.IsEmpty())
+	{
+		pDownloadFile->setCookie(std::string(CW2A(m_strCookie)));
+	}
+	pDownloadFile->get(
 		std::string(CW2A(m_strURL)), cpr::Parameters{}, CHttpRequest::RecvData_Body | CHttpRequest::RecvData_Header,
 		[=](cpr::Response const & respond, data::BufferPtr const & body)
 	{
+		assert(respond.error.code == cpr::ErrorCode::OK);
 		LogFinal(LOGFILTER, _T("End"));
 	},
 		CHttpRequest::OnDataRecv(),
-		[=](data::byte * data, size_t size)
+		[=](data::byte const * data, size_t size)
 	{
-		std::ofstream ofs(strFileQQ.c_str(), ios::app);
-		ofs.write(data, size);
+		data::BufferPtr pData = std::make_shared<data::Buffer>(data, data + size);
+		ioThreadPool_.postTask([=]()
+		{
+			std::ofstream ofs(strFileQQ.c_str(), ios::app);
+			ofs.write(pData->data(), pData->length());
+		});		
 	}
 	);
 }
@@ -245,7 +263,16 @@ void CHTTPLibDlg::DownloadFile()
 void CHTTPLibDlg::OnBnClickedDownload()
 {
 	UpdateData(TRUE);
-	//DownloadFile();
-	DownloadQQ();
-	//DownloadBaidu();
+	if (m_bDownFile)
+	{
+		DownloadFile();
+	}
+	if (m_bQQ)
+	{
+		DownloadQQ();
+	}
+	if (m_bBaidu)
+	{
+		DownloadBaidu();
+	}
 }

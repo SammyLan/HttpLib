@@ -887,6 +887,10 @@ HWND TXLog::GetLoggerWnd()
 void TXLog_DoLogV(LPCWSTR pszSourceFileName,
 	INT nLineNumber, LPCWSTR pszFuncName, int nLogLevel,LPCWSTR pszFilter, LPCWSTR pszFmt, va_list vg)
 {
+	if (nLogLevel > g_nLogLevel)
+	{
+		return;
+	}
 	tagLogObj logobj;
 	logobj.pszSourceFileName = pszSourceFileName;
 	logobj.pszFuncName = pszFuncName;

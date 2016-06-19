@@ -42,8 +42,8 @@ CURLMcode CHttpSession::removeHandle(CHttpRequest * pHandle)
 int CHttpSession::socket_callback(CURL *easy, curl_socket_t s, int what, CHttpSession *pThis, http::SocketInfo * sockInfo)
 {
 	const char *whatstr[] = { "none", "IN", "OUT", "INOUT", "REMOVE" };
-	LogFinal(HTTPLOG,_T("sock_cb: socket=%d, what=%d, sockp=%p"), s, what, sockInfo);
-	LogFinal(HTTPLOG,_T("socket callback: socket=%d e=%p what=%S "), s, easy, whatstr[what]);
+	LogDev(HTTPLOG,_T("sock_cb: socket=%d, what=%d, sockp=%p"), s, what, sockInfo);
+	LogDev(HTTPLOG,_T("socket callback: socket=%d e=%p what=%S "), s, easy, whatstr[what]);
 
 	auto ret = pThis->pConnMgr_->getSock(s);
 	if (ret.get() == nullptr)
@@ -53,7 +53,7 @@ int CHttpSession::socket_callback(CURL *easy, curl_socket_t s, int what, CHttpSe
 
 	if (what == CURL_POLL_REMOVE)
 	{
-		LogFinal(HTTPLOG,_T( "CURL_POLL_REMOVE\n"));
+		LogDev(HTTPLOG,_T( "CURL_POLL_REMOVE\n"));
 		curl_multi_assign(pThis->hMulti_, s, NULL);
 	}
 	else
@@ -64,7 +64,7 @@ int CHttpSession::socket_callback(CURL *easy, curl_socket_t s, int what, CHttpSe
 			curl_multi_assign(pThis->hMulti_, s, sockInfo);
 		}
 		assert(ret.get() == sockInfo);
-		LogFinal(HTTPLOG, _T("\nChanging action from %S to %S"), whatstr[sockInfo->mask], whatstr[what]);
+		LogDev(HTTPLOG, _T("\nChanging action from %S to %S"), whatstr[sockInfo->mask], whatstr[what]);
 		pThis->setSocket(ret, s, easy, what & (~sockInfo->mask));// only add new instrest
 	}
 	ret->mask = what;
@@ -74,7 +74,7 @@ int CHttpSession::socket_callback(CURL *easy, curl_socket_t s, int what, CHttpSe
 /* Update the event timer after curl_multi library calls */
 int CHttpSession::timer_callback(CURLM *multi, long timeout_ms, CHttpSession *pThis)
 {
-	LogFinal(HTTPLOG,_T( "\nmulti_timer_cb: timeout_ms %ld"), timeout_ms);
+	LogDev(HTTPLOG,_T( "\nmulti_timer_cb: timeout_ms %ld"), timeout_ms);
 
 	/* cancel running timer */
 	pThis->timer_.cancel();
@@ -93,7 +93,7 @@ int CHttpSession::timer_callback(CURLM *multi, long timeout_ms, CHttpSession *pT
 	}
 	else
 	{
-		LogFinal(HTTPLOG, _T("\nmulti_timer_cb: timeout_ms %ld"), timeout_ms);
+		LogDev(HTTPLOG, _T("\nmulti_timer_cb: timeout_ms %ld"), timeout_ms);
 	}
 
 	return 0;
@@ -103,7 +103,7 @@ void CHttpSession::timer_cb(const boost::system::error_code & error, CHttpSessio
 {
 	if (!error)
 	{
-		LogFinal(HTTPLOG,_T( "\ntimer_cb: "));
+		LogDev(HTTPLOG,_T( "\ntimer_cb: "));
 		CURLMcode rc = curl_multi_socket_action(pThis->hMulti_, CURL_SOCKET_TIMEOUT, 0, &pThis->nStillRunning_);
 
 		http::mcode_or_die("timer_cb: curl_multi_socket_action", rc);
@@ -118,27 +118,27 @@ void CHttpSession::timer_cb(const boost::system::error_code & error, CHttpSessio
 
 void CHttpSession::setSocket(http::SocketInfoPtr & socketInfo, curl_socket_t s, CURL*e, int act)
 {
-	LogFinal(HTTPLOG,_T( "\nsetsock: socket=%d, act=%d"), s, act);
+	LogDev(HTTPLOG,_T( "\nsetsock: socket=%d, act=%d"), s, act);
 	if (socketInfo.get() == nullptr)
 	{
-		LogFinal(HTTPLOG,_T( "\nsocket %d is a c-ares socket, ignoring"), s);
+		LogErrorEx(HTTPLOG,_T( "\nsocket %d is a c-ares socket, ignoring"), s);
 		return;
 	}
 	assert(socketInfo->tcpSocket.native_handle() == s);
 	auto & tcp_socket = socketInfo->tcpSocket;
 	if (act == CURL_POLL_IN)
 	{
-		LogFinal(HTTPLOG,_T( "\nwatching for socket to become readable"));
+		LogDev(HTTPLOG,_T( "\nwatching for socket to become readable"));
 		tcp_socket.async_read_some(boost::asio::null_buffers(),	std::bind(&event_cb, this, socketInfo,s,e, CURL_POLL_IN,std::placeholders::_1));
 	}
 	else if (act == CURL_POLL_OUT)
 	{
-		LogFinal(HTTPLOG,_T( "\nwatching for socket to become writable"));
+		LogDev(HTTPLOG,_T( "\nwatching for socket to become writable"));
 		tcp_socket.async_write_some(boost::asio::null_buffers(),std::bind(&event_cb, this, socketInfo, s,e, CURL_POLL_OUT, std::placeholders::_1));
 	}
 	else if (act == CURL_POLL_INOUT)
 	{
-		LogFinal(HTTPLOG,_T( "\nwatching for socket to become readable & writable"));
+		LogDev(HTTPLOG,_T( "\nwatching for socket to become readable & writable"));
 		tcp_socket.async_read_some(boost::asio::null_buffers(),std::bind(&event_cb, this, socketInfo, s, e,CURL_POLL_IN, std::placeholders::_1));
 		tcp_socket.async_write_some(boost::asio::null_buffers(),std::bind(&event_cb, this, socketInfo, s, e,CURL_POLL_OUT, std::placeholders::_1));
 	}
@@ -152,7 +152,7 @@ void CHttpSession::check_multi_info()
 	int msgs_left;
 	CHttpRequest *conn;
 
-	LogFinal(HTTPLOG,_T( "\nREMAINING: %d"), nStillRunning_);
+	LogDev(HTTPLOG,_T( "\nREMAINING: %d"), nStillRunning_);
 
 	while ((msg = curl_multi_info_read(hMulti_, &msgs_left)))
 	{
@@ -170,17 +170,17 @@ void CHttpSession::check_multi_info()
 /* Called by asio when there is an action on a socket */
 void CHttpSession::event_cb(CHttpSession *pThis, http::SocketInfoPtr& tcp_socket, curl_socket_t s, CURL*e, int action, const boost::system::error_code &err)
 {
-	LogFinal(HTTPLOG,_T( "\nevent_cb: action=%d"), action);
+	LogDev(HTTPLOG,_T( "\nevent_cb: action=%d"), action);
 	assert(tcp_socket->tcpSocket.native_handle() == s);
 	CURLMcode rc = CURLM_OK;
 	if (err)
 	{
-		LogFinal(HTTPLOG, _T("\nevent_cb: socket=%d action=%d \nERROR=%S"), s, action, err.message().c_str());
+		LogDev(HTTPLOG, _T("\nevent_cb: socket=%d action=%d \nERROR=%S"), s, action, err.message().c_str());
 		rc = curl_multi_socket_action(pThis->hMulti_, tcp_socket->tcpSocket.native_handle(), CURL_CSELECT_ERR, &pThis->nStillRunning_);
 	}
 	else
 	{
-		LogFinal(HTTPLOG, _T("\nevent_cb: socket=%d action=%d"), s, action);
+		LogErrorEx(HTTPLOG, _T("\nevent_cb: socket=%d action=%d"), s, action);
 		rc = curl_multi_socket_action(pThis->hMulti_, tcp_socket->tcpSocket.native_handle(), action, &pThis->nStillRunning_);
 	}
 
@@ -197,7 +197,7 @@ void CHttpSession::event_cb(CHttpSession *pThis, http::SocketInfoPtr& tcp_socket
 		int action_continue = (tcp_socket->mask) & action;
 		if (action_continue)
 		{
-			LogFinal(HTTPLOG, _T("\ncontinue read or write: %d"), action_continue);
+			LogDev(HTTPLOG, _T("\ncontinue read or write: %d"), action_continue);
 			pThis->setSocket(tcp_socket, s, e, action_continue); // continue read or write
 		}
 	}

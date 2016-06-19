@@ -28,7 +28,9 @@ public:
 
 	void setCookie(std::string const & cookie);
 	void setRange(int64_t beg,int64_t end);
-
+	int headRequest(std::string const & url,
+		const cpr::Parameters & para = cpr::Parameters{},
+		OnRespond const &  onRespond = OnRespond());
 	int get(std::string const & url,
 		const cpr::Parameters & para = cpr::Parameters{},
 		DWORD const recvDataFlag = CHttpRequest::RecvData_None,

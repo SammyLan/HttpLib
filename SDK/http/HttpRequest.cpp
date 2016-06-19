@@ -38,7 +38,7 @@ CHttpRequest::CHttpRequest(CHttpSession *pSession)
 	handle_ = curl_easy_init();
 	if (!handle_)
 	{
-		LogFinal(HTTPLOG,_T("\ncurl_easy_init() failed, exiting!"));
+		LogErrorEx(HTTPLOG,_T("\ncurl_easy_init() failed, exiting!"));
 		exit(2);
 	}
 
@@ -149,7 +149,18 @@ void CHttpRequest::setRange(int64_t beg, int64_t end)
 {
 	std::ostringstream ofs;
 	ofs << beg << '-' << end;
-	curl_easy_setopt(handle_, CURLOPT_COOKIE, ofs.str().c_str());
+	curl_easy_setopt(handle_, CURLOPT_RANGE, ofs.str().c_str());
+}
+
+int CHttpRequest::headRequest(std::string const & url,
+	const cpr::Parameters & para,
+	OnRespond const &  onRespond)
+{
+	setDelegate(CHttpRequest::RecvData_None, onRespond, OnDataRecv(), OnDataRecv());
+	curl_easy_setopt(handle_, CURLOPT_NOBODY, 1);
+	setUrl(url, para);
+	auto rc = pSession_->addHandle(this);
+	return rc;
 }
 
 int CHttpRequest::get(std::string const & url,
@@ -212,7 +223,7 @@ void CHttpRequest::onDone(CURLcode res)
 	auto header = cpr::util::parseHeader(header_);
 	//auto && response_string = cpr::util::parseResponse(*body_);
 	cpr::Response response{ response_code, "", header, raw_url, elapsed, cookies, error };
-	LogFinal(HTTPLOG, _T("\nDONE: %S => (%d) %S"), raw_url, res, error_);
+	LogFinal(HTTPLOG, _T("DONE: %S => (%d) %S"), raw_url, res, error_);
 	onRespond_(response, body_);
 	//TODO::delete
 	delete this;
@@ -342,8 +353,8 @@ size_t CHttpRequest::read_callback(data::byte *buffer, size_t size, size_t nitem
 	(void)ult;
 	(void)uln;
 
-	LogFinal(HTTPLOG,_T("\nProgress: %S (%g/%g)"), pThis->url_.c_str(), dlnow, dltotal);
-	LogFinal(HTTPLOG,_T("\nProgress: %S (%g)"), pThis->url_.c_str(), ult);
+	LogDev(HTTPLOG,_T("\nProgress: %S (%g/%g)"), pThis->url_.c_str(), dlnow, dltotal);
+	LogDev(HTTPLOG,_T("\nProgress: %S (%g)"), pThis->url_.c_str(), ult);
 
 	return 0;
 }*/
@@ -356,13 +367,13 @@ int CHttpRequest::debug_callback(CURL *handle, curl_infotype type, char *data, s
 
 	switch (type){
 	case CURLINFO_TEXT:
-		LogFinal(LOGCURLDEBUG, _T("%p:== Info:\r\n%S"), handle,data);
+		LogDev(LOGCURLDEBUG, _T("%p:== Info:\r\n%S"), handle,data);
 		break;	
 	case CURLINFO_HEADER_IN:
-		LogFinal(LOGCURLDEBUG, _T("%p:<= Recv header:\r\n%S"), handle,data);
+		LogDev(LOGCURLDEBUG, _T("%p:<= Recv header:\r\n%S"), handle,data);
 		break;
 	case CURLINFO_HEADER_OUT:
-		LogFinal(LOGCURLDEBUG, _T("%p:=> Send header:\r\n%S"), handle,data);
+		LogDev(LOGCURLDEBUG, _T("%p:=> Send header:\r\n%S"), handle,data);
 		break;
 	case CURLINFO_DATA_OUT:
 		text = "=> Send data";
@@ -393,6 +404,11 @@ int CHttpRequest::close_socket(CHttpSession *pThis, curl_socket_t item)
 
 int CHttpRequest::sockopt_callback(CHttpSession * pThis, curl_socket_t curlfd, curlsocktype purpose)
 {
+	int buf = 0;
+	int len = sizeof(buf);
+	::getsockopt((SOCKET)curlfd, SOL_SOCKET, SO_RCVBUF, (char *)&buf,&len);
+	buf = 1024 *  330;
+	::setsockopt((SOCKET)curlfd, SOL_SOCKET, SO_RCVBUF, (char const*)&buf,sizeof(buf));
 	return CURL_SOCKOPT_OK;
 }
 
