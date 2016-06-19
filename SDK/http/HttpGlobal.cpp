@@ -54,12 +54,12 @@ void http::mcode_or_die(const char *where, int code)
 			break;
 		case CURLM_BAD_SOCKET:
 			s = "CURLM_BAD_SOCKET";
-			LogFinal(HTTPLOG,_T( "\nERROR: %S returns %S"), where, s);
+			LogFinal(HTTPLOG,_T( "ERROR: %S returns %S"), where, s);
 			/* ignore this error */
 			return;
 		}
 		assert(false);
-		LogFinal(HTTPLOG,_T( "\nERROR: %S returns %S"), where, s);
+		LogFinal(HTTPLOG,_T( "ERROR: %S returns %S"), where, s);
 		exit(code);
 	}
 }

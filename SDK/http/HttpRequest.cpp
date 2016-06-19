@@ -38,7 +38,7 @@ CHttpRequest::CHttpRequest(CHttpSession *pSession)
 	handle_ = curl_easy_init();
 	if (!handle_)
 	{
-		LogErrorEx(HTTPLOG,_T("\ncurl_easy_init() failed, exiting!"));
+		LogErrorEx(HTTPLOG,_T("curl_easy_init() failed, exiting!"));
 		exit(2);
 	}
 
@@ -353,8 +353,8 @@ size_t CHttpRequest::read_callback(data::byte *buffer, size_t size, size_t nitem
 	(void)ult;
 	(void)uln;
 
-	LogDev(HTTPLOG,_T("\nProgress: %S (%g/%g)"), pThis->url_.c_str(), dlnow, dltotal);
-	LogDev(HTTPLOG,_T("\nProgress: %S (%g)"), pThis->url_.c_str(), ult);
+	LogDev(HTTPLOG,_T("Progress: %S (%g/%g)"), pThis->url_.c_str(), dlnow, dltotal);
+	LogDev(HTTPLOG,_T("Progress: %S (%g)"), pThis->url_.c_str(), ult);
 
 	return 0;
 }*/

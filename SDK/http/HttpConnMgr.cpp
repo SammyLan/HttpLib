@@ -16,7 +16,7 @@ CHttpConnMgr::~CHttpConnMgr()
 /* CURLOPT_OPENSOCKETFUNCTION */
 http::SocketInfoPtr CHttpConnMgr::opensocket(curlsocktype purpose, struct curl_sockaddr *address)
 {
-	LogFinal(HTTPLOG,_T("\nopensocket :"));
+	LogFinal(HTTPLOG,_T("opensocket :"));
 
 	http::SocketInfoPtr newSocket;
 
@@ -33,7 +33,7 @@ http::SocketInfoPtr CHttpConnMgr::opensocket(curlsocktype purpose, struct curl_s
 		if (ec)
 		{
 			/* An error occurred */
-			LogFinal(HTTPLOG,_T("\nERROR: Returning CURL_SOCKET_BAD to signal error,ec=%S"),ec.message());
+			LogFinal(HTTPLOG,_T("ERROR: Returning CURL_SOCKET_BAD to signal error,ec=%S"),ec.message());
 		}
 		else
 		{
@@ -51,7 +51,7 @@ http::SocketInfoPtr CHttpConnMgr::opensocket(curlsocktype purpose, struct curl_s
 /* CURLOPT_CLOSESOCKETFUNCTION */
 int CHttpConnMgr::close_socket( curl_socket_t item)
 {
-	LogFinal(HTTPLOG,_T("\nclose_socket : %d"), item);
+	LogFinal(HTTPLOG,_T("close_socket : %d"), item);
 
 	auto it = socketMap_.find(item);
 
