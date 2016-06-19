@@ -111,6 +111,6 @@ void CHttpDownload::OnDataRecv(data::byte const * data, size_t size, data::Buffe
 void CHttpDownload::OnSaveData(data::BufferPtr & pData, int64_t offset)
 {
 	auto size = pData->size();
-	assert((size == s_save_size)( || size + offset == fileSize_));
+	assert((size == s_save_size) || (size + offset == fileSize_));
 	ofs_.write(pData->data(), size);
 }
