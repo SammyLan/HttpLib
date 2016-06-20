@@ -30,7 +30,9 @@ namespace data
 {
 	typedef char byte;
 	typedef std::string Buffer;
-	typedef std::shared_ptr<Buffer> BufferPtr;	
+	typedef std::shared_ptr<Buffer> BufferPtr;
+	typedef std::pair<int64_t, Buffer> RecvData;	//offset-data
+	typedef std::shared_ptr<RecvData> SaveDataPtr;
 	typedef std::pair<std::string, BufferPtr> FormItem;
 	typedef std::vector<FormItem> FormList;
 

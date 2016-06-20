@@ -13,10 +13,10 @@ public:
 	~CHttpDownload();
 	bool BeginDownload(size_t nThread,std::wstring const & strSavePath, std::string const & strUrl, std::string const &strCookie = std::string(),::string const & strSHA = std::string(), int64_t fileSize = 0);
 private:
-	void OnRespond(cpr::Response const & response, data::BufferPtr const & body, int64_t const beg, int64_t end);
-	void OnDataRecv(data::byte const * data, size_t size, data::BufferPtr &pData, int64_t & offset);
-	void SaveData(data::BufferPtr & pData, int64_t offset);
-	void OnSaveDataHandler(data::BufferPtr & pData, int64_t offset,
+	void OnRespond(cpr::Response const & response, data::BufferPtr const & body, data::SaveDataPtr const& pData,int64_t const beg, int64_t end);
+	void OnDataRecv(data::byte const * data, size_t size, data::SaveDataPtr const & pData);
+	void SaveData(data::SaveDataPtr const & pData,bool bDel = false);
+	void OnSaveDataHandler(data::SaveDataPtr const & pData,bool bDel,
 		const boost::system::error_code& error, // Result of operation.
 		std::size_t bytes_transferred           // Number of bytes written.
 		);

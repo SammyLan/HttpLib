@@ -17,7 +17,7 @@ CHttpDownload::CHttpDownload(ThreadPool & ioThread, ThreadPool & nwThread, CHttp
 
 CHttpDownload::~CHttpDownload()
 {
-
+	LogFinal(LOGFILTER, _T("~CHttpDownload"));
 }
 
 bool CHttpDownload::BeginDownload(size_t nThread,std::wstring const & strSavePath, std::string const & strUrl, std::string const & strCookie, std::string const & strSHA, int64_t fileSize)
@@ -65,68 +65,85 @@ bool CHttpDownload::BeginDownload(size_t nThread,std::wstring const & strSavePat
 	}
 	else
 	{
-		data::BufferPtr pData = std::make_shared<data::Buffer>();
+		data::SaveDataPtr pData = std::make_shared<data::RecvData>();
+		pData->first = nextOffset_;
+
 		pDownloadFile->get(std::string(strUrl), cpr::Parameters{},CHttpRequest::RecvData_Body | CHttpRequest::RecvData_Header, 
-			[=](cpr::Response const & respond, data::BufferPtr const & body)
-		{
-			assert(respond.error.code == cpr::ErrorCode::OK);
-			auto itLen = respond.header.find("Content-Length");
-
-			if (itLen != respond.header.end())
-			{
-
-			}
-			LogFinal(LOGFILTER, _T("End"));
-			delete this;
-		}, 
-			std::bind(&CHttpDownload::OnDataRecv,this,std::placeholders::_1,std::placeholders::_2,pData, nextOffset_)
+			std::bind(&CHttpDownload::OnRespond,this,std::placeholders::_1,std::placeholders::_2,pData,0,0),
+			std::bind(&CHttpDownload::OnDataRecv,this,std::placeholders::_1,std::placeholders::_2,pData)
 			);
 	}
+	return true;
 }
 
-void CHttpDownload::OnRespond(cpr::Response const & response, data::BufferPtr const & body, int64_t const beg, int64_t end)
+void CHttpDownload::OnRespond(cpr::Response const & response, data::BufferPtr const & body, data::SaveDataPtr const& pData, int64_t const beg, int64_t end)
 {
+	assert(response.error.code == cpr::ErrorCode::OK);
+	auto itLen = response.header.find("Content-Length");
 
-}
-
-void CHttpDownload::OnDataRecv(data::byte const * data, size_t size, data::BufferPtr &pData, int64_t & offset)
-{
-	auto curSize = pData->size();
-	if (curSize + size >= s_save_size)
+	if (itLen != response.header.end())
 	{
-		size_t appSize = s_save_size - curSize;
-		pData->append(data, appSize);
-		data::BufferPtr pTmp = std::make_shared<data::Buffer>(data + appSize, size - appSize);
-		pData.swap(pTmp);
-		SaveData(pTmp, offset);
-		offset += s_save_size;
+		fileSize_ = atoll(itLen->second.c_str());
+		assert(pData->first + pData->second.size() == fileSize_);
+		if (pData->first + pData->second.size() != fileSize_)
+		{
+			LogErrorEx(LOGFILTER, _T("数据长度不对,文件长度为%ll,接受长度为%ll"), pData->first + pData->second.size());
+		}
+	}
+	if (pData->second.empty())
+	{
+		delete this;
+		LogFinal(LOGFILTER, _T("delete this"));
 	}
 	else
 	{
-		pData->append(data, size);
-		if ((pData->size() + offset) == fileSize_)
-		{
-			auto pTmp = pData;
-			pData.reset();
-			SaveData(pTmp, offset);
-			offset += pTmp->size();
-		}
+		SaveData(pData,true);
+	}
+	LogFinal(LOGFILTER, _T("End"));
+	
+}
+
+void CHttpDownload::OnDataRecv(data::byte const * data, size_t size, data::SaveDataPtr const& pData)
+{
+	auto & pBuff = pData->second;
+	auto curSize = pBuff.size();
+	auto newSize = curSize + size;
+	if (newSize >= s_save_size)
+	{
+		size_t appSize = size - (newSize%s_save_size);
+		pBuff.append(data, appSize);
+
+		data::SaveDataPtr  pTmp = std::make_shared<data::RecvData>();
+		pTmp->first = pData->first;
+		pData->first += pBuff.size();
+		pTmp->second.swap(pBuff);
+		pBuff.assign(data + appSize, size - appSize);
+		SaveData(pTmp);
+	}
+	else
+	{
+		pBuff.append(data, size);
 	}
 }
 
-void CHttpDownload::SaveData(data::BufferPtr & pData, int64_t offset)
+void CHttpDownload::SaveData(data::SaveDataPtr const & pData, bool bDel)
 {
-	auto size = pData->size();
-	assert((size == s_save_size) || (size + offset == fileSize_));
-	pSaveFile_->async_write_some_at(offset, boost::asio::buffer(pData->data(), pData->size()),
-		std::bind(&CHttpDownload::OnSaveDataHandler,this, pData, offset, std::placeholders::_1, std::placeholders::_2));
+	auto & pBuff = pData->second;
+	auto size = pBuff.size();
+	pSaveFile_->async_write_some_at(pData->first, boost::asio::buffer(pBuff.data(), size),
+		std::bind(&CHttpDownload::OnSaveDataHandler,this, pData, bDel,std::placeholders::_1, std::placeholders::_2));
 }
 
 void CHttpDownload::OnSaveDataHandler(
-	data::BufferPtr & pData, int64_t offset,
+	data::SaveDataPtr const & pData,bool bDel,
 	const boost::system::error_code& error, // Result of operation.
 	std::size_t bytes_transferred           // Number of bytes written.	
 	)
 {
-	assert(bytes_transferred == pData->size());
+	assert((bytes_transferred == pData->second.size()) || (pData->first + pData->second.size() == fileSize_));
+	if (bDel)
+	{
+		LogFinal(LOGFILTER, _T("delete this"));
+		delete this;
+	}
 }
