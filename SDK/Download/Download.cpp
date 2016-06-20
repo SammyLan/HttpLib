@@ -20,16 +20,22 @@ CHttpDownload::~CHttpDownload()
 
 }
 
-void CHttpDownload::BeginDownload(size_t nThread,std::string const & strSavePath, std::string const & strUrl, std::string const & strCookie, std::string const & strSHA, int64_t fileSize)
+bool CHttpDownload::BeginDownload(size_t nThread,std::wstring const & strSavePath, std::string const & strUrl, std::string const & strCookie, std::string const & strSHA, int64_t fileSize)
 {
-	strSavePath_ = strSavePath;
+	strSavePath_ = strSavePath.c_str();
 	strUrl_ = strUrl;
 	strCookie_ = strCookie;
 	strSHA_ = strSHA;
 	fileSize_ = fileSize;
 	nextOffset_ = 0;
 
-	ofs_.open(strSavePath.c_str());
+	pSaveFile_ = WY::File::CreateAsioFile(ioThreadPool_.io_service(),strSavePath_.c_str(), GENERIC_WRITE,FILE_SHARE_READ, CREATE_ALWAYS, FILE_FLAG_RANDOM_ACCESS | FILE_FLAG_OVERLAPPED);
+	if (pSaveFile_.get() == nullptr)
+	{
+		return false;
+	}
+
+
 
 	auto pDownloadFile = new CHttpRequest(&hSession_);
 	if (!strCookie.empty())
@@ -92,7 +98,7 @@ void CHttpDownload::OnDataRecv(data::byte const * data, size_t size, data::Buffe
 		pData->append(data, appSize);
 		data::BufferPtr pTmp = std::make_shared<data::Buffer>(data + appSize, size - appSize);
 		pData.swap(pTmp);
-		ioThreadPool_.postTask(std::bind(&CHttpDownload::OnSaveData, this, pTmp, offset));
+		SaveData(pTmp, offset);
 		offset += s_save_size;
 	}
 	else
@@ -102,15 +108,25 @@ void CHttpDownload::OnDataRecv(data::byte const * data, size_t size, data::Buffe
 		{
 			auto pTmp = pData;
 			pData.reset();
-			ioThreadPool_.postTask(std::bind(&CHttpDownload::OnSaveData,this, pTmp, offset));
+			SaveData(pTmp, offset);
 			offset += pTmp->size();
 		}
 	}
 }
 
-void CHttpDownload::OnSaveData(data::BufferPtr & pData, int64_t offset)
+void CHttpDownload::SaveData(data::BufferPtr & pData, int64_t offset)
 {
 	auto size = pData->size();
 	assert((size == s_save_size) || (size + offset == fileSize_));
-	ofs_.write(pData->data(), size);
+	pSaveFile_->async_write_some_at(offset, boost::asio::buffer(pData->data(), pData->size()),
+		std::bind(&CHttpDownload::OnSaveDataHandler,this, pData, offset, std::placeholders::_1, std::placeholders::_2));
+}
+
+void CHttpDownload::OnSaveDataHandler(
+	data::BufferPtr & pData, int64_t offset,
+	const boost::system::error_code& error, // Result of operation.
+	std::size_t bytes_transferred           // Number of bytes written.	
+	)
+{
+	assert(bytes_transferred == pData->size());
 }

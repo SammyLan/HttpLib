@@ -231,9 +231,9 @@ void CHTTPLibDlg::DownloadFile()
 {
 	static int s_count = 0;
 	++s_count;
-	std::ostringstream oss;
+	std::wostringstream oss;
 	oss << s_count;
-	string strFileQQ = "d:\\data" + oss.str() + ".zip";
+	wstring strFileQQ = _T("d:\\data") + oss.str() + _T(".zip");
 
 	auto pDownload = new CHttpDownload(ioThreadPool_, nwThreadPool_, hSession_);
 	pDownload->BeginDownload(1, strFileQQ, std::string(CW2A(m_strURL)), std::string(CW2A(m_strCookie)));

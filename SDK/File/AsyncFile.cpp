@@ -110,3 +110,27 @@ BOOL CAsyncFile::CancelIO()
 	}
 	return TRUE;
 }
+
+
+WY::File::AsioFilePtr WY::File::CreateAsioFile(
+	boost::asio::io_service& io_service,
+	_In_z_ LPCTSTR szFilename,
+	_In_ DWORD dwDesiredAccess,
+	_In_ DWORD dwShareMode ,
+	_In_ DWORD dwCreationDisposition,
+	_In_ DWORD dwFlagsAndAttributes,
+	_In_opt_ LPSECURITY_ATTRIBUTES lpsa ,
+	_In_opt_ HANDLE hTemplateFile )
+{
+	CAtlFile file;
+	WY::File::AsioFilePtr pFile;
+	auto hr = file.Create(szFilename, dwDesiredAccess
+		, dwShareMode, dwCreationDisposition, dwFlagsAndAttributes | FILE_FLAG_OVERLAPPED
+		, lpsa, hTemplateFile);
+	BOOL bRet = (hr == S_OK);
+	if (bRet)
+	{
+		pFile = std::make_shared<AsioFile>(io_service, file.Detach());
+	}
+	return pFile;
+}
