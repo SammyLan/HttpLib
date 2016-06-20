@@ -370,10 +370,10 @@ int CHttpRequest::debug_callback(CURL *handle, curl_infotype type, char *data, s
 		LogDev(LOGCURLDEBUG, _T("%p:== Info:\r\n%S"), handle,data);
 		break;	
 	case CURLINFO_HEADER_IN:
-		LogDev(LOGCURLDEBUG, _T("%p:<= Recv header:\r\n%S"), handle,data);
+		//LogDev(LOGCURLDEBUG, _T("%p:<= Recv header:\r\n%S"), handle,data);
 		break;
 	case CURLINFO_HEADER_OUT:
-		LogDev(LOGCURLDEBUG, _T("%p:=> Send header:\r\n%S"), handle,data);
+		//LogDev(LOGCURLDEBUG, _T("%p:=> Send header:\r\n%S"), handle,data);
 		break;
 	case CURLINFO_DATA_OUT:
 		text = "=> Send data";

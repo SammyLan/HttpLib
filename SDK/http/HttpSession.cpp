@@ -173,14 +173,15 @@ void CHttpSession::event_cb(CHttpSession *pThis, http::SocketInfoPtr& tcp_socket
 	LogDev(HTTPLOG,_T( "event_cb: action=%d"), action);
 	assert(tcp_socket->tcpSocket.native_handle() == s);
 	CURLMcode rc = CURLM_OK;
+	auto &&errMsg = err.message();
 	if (err)
 	{
-		LogDev(HTTPLOG, _T("event_cb: socket=%d action=%d \nERROR=%S"), s, action, err.message().c_str());
+		LogDev(HTTPLOG, _T("event_cb: socket=%d action=%d \nERROR=%S"), s, action, errMsg.c_str());
 		rc = curl_multi_socket_action(pThis->hMulti_, tcp_socket->tcpSocket.native_handle(), CURL_CSELECT_ERR, &pThis->nStillRunning_);
 	}
 	else
 	{
-		LogErrorEx(HTTPLOG, _T("event_cb: socket=%d action=%d"), s, action);
+		LogDev(HTTPLOG, _T("event_cb: socket=%d action=%d \nERROR=%S"), s, action, errMsg.c_str());
 		rc = curl_multi_socket_action(pThis->hMulti_, tcp_socket->tcpSocket.native_handle(), action, &pThis->nStillRunning_);
 	}
 
