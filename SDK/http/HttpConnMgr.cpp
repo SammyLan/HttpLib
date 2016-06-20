@@ -59,7 +59,9 @@ int CHttpConnMgr::close_socket( curl_socket_t item)
 	{
 		// close or cancel will cancel any asynchronous send, receive or connect operations 
 		// Caution: on Windows platform, if connect host timeout, the event_cb will pending forever. Must be canceled manually
-		it->second->tcpSocket.cancel();
+#if _WIN32_WINNT >= _WIN32_WINNT_VISTA
+	it->second->tcpSocket.cancel();
+#endif // _WIN32_WINNT >= _WIN32_WINNT_VISTA
 		socketMap_.erase(it);
 	}
 	return 0;

@@ -2,7 +2,7 @@
 #include "ThreadPool.h"
 #include <functional>
 
-void SetThreadNameInternal(void * hThread, std::string const & threadName)
+void SetThreadNameInternal(std::string const & threadName)
 {
 #ifdef WIN32
 	//只在调试的时候生效 
@@ -18,7 +18,7 @@ void SetThreadNameInternal(void * hThread, std::string const & threadName)
 	THREADNAME_INFO info;
 	info.dwType = 0x1000;
 	info.szName = threadName.c_str();
-	info.dwThreadID = ::GetThreadId(hThread);
+	info.dwThreadID = ::GetCurrentThreadId();
 	info.dwFlags = 0;
 
 	__try
@@ -37,12 +37,12 @@ ThreadPool::ThreadPool(size_t threads, std::string const & threadName)
 {
 	for (size_t i = 0; i < threads; i++)
 	{
-		auto && thread = std::make_shared<std::thread>(std::bind<size_t(io_serviceT::*)()>(&io_serviceT::run, &io_service_));
-		if (IsDebuggerPresent())
+		auto && thread = std::make_shared<std::thread>(
+			[&]()
 		{
-
-		}
-		SetThreadNameInternal(thread->native_handle(), threadName.empty()?"iothread":threadName);
+			SetThreadNameInternal(threadName.empty()?"iothread":threadName);
+			io_service_.run();
+		});
 		threadPool_.push_back(thread);
 	}
 }
