@@ -14,7 +14,7 @@ public:
 	WY::TaskID AddDownload(std::wstring const & strSavePath, std::string const & strUrl, std::string const &strCookie, std::string const & strSHA = std::string(), int64_t fileSize = 0);
 private:
 #pragma region  delegate
-	virtual void OnFinish(WY::TaskID taskID, CDownloadFile::ResponseInfo const & info) override;
+	virtual void OnFinish(bool bSuccess, WY::TaskID taskID, CDownloadFile::ResponseInfo const & info) override;
 #pragma endregion delegate
 private:
 	WY::CWYLock		csLock_;

@@ -111,3 +111,5 @@ private:
 #pragma endregion data member
 };
 
+typedef std::shared_ptr<CHttpRequest> CHttpRequestPtr;
+

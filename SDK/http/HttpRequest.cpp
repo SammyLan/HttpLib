@@ -225,8 +225,6 @@ void CHttpRequest::onDone(CURLcode res)
 	cpr::Response response{ response_code, "", header, raw_url, elapsed, cookies, error };
 	LogFinal(HTTPLOG, _T("DONE: %S => (%d) %S"), raw_url, res, error_);
 	onRespond_(response, body_);
-	//TODO::delete
-	delete this;
 }
 
 #pragma region option

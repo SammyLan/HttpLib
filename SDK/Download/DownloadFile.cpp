@@ -37,28 +37,31 @@ bool CDownloadFile::BeginDownload(size_t nThread,std::wstring const & strSavePat
 		return false;
 	}
 
+	pHttpRequest_ = std::make_shared<CHttpRequest>(&hSession_);
 
-
-	auto pDownloadFile = new CHttpRequest(&hSession_);
 	if (!strCookie.empty())
 	{
-		pDownloadFile->setCookie(strCookie);
+		pHttpRequest_->setCookie(strCookie);
 	}
 	if (nThread > 1)
 	{
-		pDownloadFile->headRequest(	std::string(strUrl), cpr::Parameters{},
+		pHttpRequest_->headRequest(	std::string(strUrl), cpr::Parameters{},
 			[=](cpr::Response const & response, data::BufferPtr const & body)
 		{
-			auto ret = GetResponseInfo(response);
-			if (std::get<0>(ret) != 0)
+			auto && ret = GetResponseInfo(response);
+			auto curlCode = std::get<CurlErrorCode>(ret);
+			auto httpCode = std::get<HttpCode>(ret);
+			auto userReturnCode = std::get<UserReturnCode>(ret);
+			bool bSuccess = ((curlCode == (int)cpr::ErrorCode::OK) && (httpCode == 200) && (userReturnCode == 0));
+			if (!bSuccess)
 			{
-				OnFinish(ret);
+				assert(false);
+				OnFinish(bSuccess,ret);
 			}
 			else
 			{
 				//TODO
 			}
-			LogFinal(LOGFILTER, _T("End"));
 		});
 	}
 	else
@@ -66,7 +69,7 @@ bool CDownloadFile::BeginDownload(size_t nThread,std::wstring const & strSavePat
 		data::SaveDataPtr pData = std::make_shared<data::RecvData>();
 		pData->first = nextOffset_;
 
-		pDownloadFile->get(std::string(strUrl), cpr::Parameters{},CHttpRequest::RecvData_Body | CHttpRequest::RecvData_Header, 
+		pHttpRequest_->get(std::string(strUrl), cpr::Parameters{},CHttpRequest::RecvData_Body | CHttpRequest::RecvData_Header,
 			std::bind(&CDownloadFile::OnRespond,this,std::placeholders::_1,std::placeholders::_2,pData,0,0),
 			std::bind(&CDownloadFile::OnDataRecv,this,std::placeholders::_1,std::placeholders::_2,pData)
 			);
@@ -76,27 +79,35 @@ bool CDownloadFile::BeginDownload(size_t nThread,std::wstring const & strSavePat
 
 void CDownloadFile::OnRespond(cpr::Response const & response, data::BufferPtr const & body, data::SaveDataPtr const& pData, int64_t const beg, int64_t end)
 {
-	assert(response.error.code == cpr::ErrorCode::OK);
+	auto &&ret = GetResponseInfo(response);
+	auto curlCode = std::get<CurlErrorCode>(ret);
+	auto httpCode = std::get<HttpCode>(ret);
+	auto userReturnCode = std::get<UserReturnCode>(ret);
 
-	auto ret = GetResponseInfo(response);
-	auto iErrorCode = std::get<0>(ret);
-	fileSize_ = std::get<3>(ret);
-
-	if (pData->first + pData->second.size() != fileSize_)
+	bool bSuccess = ( (curlCode == (int)cpr::ErrorCode::OK) && (httpCode == 200) && (userReturnCode == 0));
+	if (bSuccess)
 	{
-		LogErrorEx(LOGFILTER, _T("数据长度不对,文件长度为%ll,接受长度为%ll"), pData->first + pData->second.size());
-	}
+		fileSize_ = std::get<ContentLength>(ret);
+		if (pData->first + pData->second.size() != fileSize_)
+		{
+			assert(false);
+			LogErrorEx(LOGFILTER, _T("数据长度不对,文件长度为%ll,接受长度为%ll"), pData->first + pData->second.size());
+		}
 
-	if (pData->second.empty() || std::get<0>(ret) != 0)
-	{
-		OnFinish(ret);
+		if (pData->second.empty())
+		{
+			OnFinish(bSuccess,ret);
+		}
+		else
+		{
+			SaveData(pData, true);
+		}
 	}
 	else
 	{
-		SaveData(pData,true);
-	}
-	LogFinal(LOGFILTER, _T("End"));
-	
+		assert(false);
+		OnFinish(bSuccess,ret);
+	}	
 }
 
 void CDownloadFile::OnDataRecv(data::byte const * data, size_t size, data::SaveDataPtr const& pData)
@@ -140,13 +151,13 @@ void CDownloadFile::OnSaveDataHandler(
 	if (bDel)
 	{
 		ResponseInfo info;
-		OnFinish(info);
+		OnFinish(true,info);
 	}
 }
 
-void CDownloadFile::OnFinish(ResponseInfo const & info)
+void CDownloadFile::OnFinish(bool bSuccess,ResponseInfo const & info)
 {
-	ioThreadPool_.postTask(std::bind(&IDelegate::OnFinish, pDelegate_, taskID_,info));
+	ioThreadPool_.postTask(std::bind(&IDelegate::OnFinish, pDelegate_,bSuccess, taskID_,info));
 }
 
 CDownloadFile::ResponseInfo CDownloadFile::GetResponseInfo(cpr::Response const & response)
@@ -156,33 +167,34 @@ CDownloadFile::ResponseInfo CDownloadFile::GetResponseInfo(cpr::Response const &
 
 	if (response.error.code == cpr::ErrorCode::OK)
 	{
-		std::get<0>(res) = 0;
-		//std::get<1>(ret);
+		std::get<CurlErrorCode>(res) = 0;
+		//std::get<CurlErrorMsg>(ret);
 
-		auto itRet = header.find("ser-ReturnCode");
+		auto itLen = header.find("Content-Length");
+		if (itLen != header.end())
+		{
+			std::get<ContentLength>(res) = atoll(itLen->second.c_str());
+		}
+		else
+		{
+			LogErrorEx(LOGFILTER, _T("can't find the value of Content-Length"));
+		}
+
+		auto itRet = header.find("User-ReturnCode");
 		if (itRet != header.end())
 		{
-			std::get<2>(res) = atoi(itRet->second.c_str());
+			std::get<UserReturnCode>(res) = atoi(itRet->second.c_str());
 		}
 		else
 		{
 			LogErrorEx(LOGFILTER, _T("can't find the value of ser-ReturnCode"));
 		}
-
-		auto itLen = header.find("Content-Length");
-		if (itLen != header.end())
-		{
-			std::get<3>(res) = atoll(itLen->second.c_str());
-		}
-		else
-		{
-			LogErrorEx(LOGFILTER, _T("can't find the value of Content-Length"));
-		}		
+				
 	}
 	else
 	{
-		std::get<0>(res) = (int)response.error.code;
-		std::get<1>(res) = response.error.message;
+		std::get<CurlErrorCode>(res) = (int)response.error.code;
+		std::get<CurlErrorMsg>(res) = response.error.message;
 	}
 	return res;
 }

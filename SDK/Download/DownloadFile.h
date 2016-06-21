@@ -10,11 +10,29 @@
 class CDownloadFile
 {
 public:
-	struct IDelegate
+	/*	
+	
+	
+	
+	
+	
+	*/
+	enum ResponseInfoPos
 	{
-		virtual void OnFinish(WY::TaskID taskID, int iError, std::string const & strErr) = 0;
+		CurlErrorCode = 0,	//curl_error
+		CurlErrorMsg = 1,	//curl_error_msg
+		HttpCode = 2,		//http - code
+		ContentLength = 3,	//Content - Length		
+		UserReturnCode = 4	//User - ReturnCode
 	};
 
+	typedef std::tuple<int, std::string, int,int64_t,int> ResponseInfo;
+	struct IDelegate
+	{
+		virtual void OnFinish(bool bSuccess, WY::TaskID taskID, ResponseInfo const & info) = 0;
+	};
+	
+	 
 public:
 	CDownloadFile(WY::TaskID const taskID, CDownloadFile::IDelegate * pDelegate,
 		ThreadPool & ioThread, ThreadPool & nwThread, CHttpSession& hSession);
@@ -28,8 +46,9 @@ private:
 		const boost::system::error_code& error, // Result of operation.
 		std::size_t bytes_transferred           // Number of bytes written.
 		);
-	void OnFinish(int iError, std::string const & strErr);
-	std::tuple<int,std::string,int64_t> GetResponseInfo(cpr::Response const & response);
+	
+	void OnFinish(bool bSuccess,ResponseInfo const & info);
+	ResponseInfo GetResponseInfo(cpr::Response const & response);
 private:
 	WY::TaskID const	taskID_;
 	IDelegate *			pDelegate_;
@@ -41,8 +60,9 @@ private:
 	std::string			strCookie_;	
 	std::string			strSHA_;
 	int64_t				fileSize_;
-	int64_t				nextOffset_ = 0;
+	CHttpRequestPtr		pHttpRequest_;
 	WY::File::AsioFilePtr pSaveFile_;
+	int64_t				nextOffset_ = 0;	
 };
 
 typedef std::shared_ptr<CDownloadFile> CDownloadFilePtr;
