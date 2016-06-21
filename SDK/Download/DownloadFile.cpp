@@ -52,7 +52,7 @@ bool CDownloadFile::BeginDownload(size_t nThread,std::wstring const & strSavePat
 			auto ret = GetResponseInfo(response);
 			if (std::get<0>(ret) != 0)
 			{
-				OnFinish(std::get<0>(ret), std::get<1>(ret));
+				OnFinish(ret);
 			}
 			else
 			{
@@ -77,21 +77,19 @@ bool CDownloadFile::BeginDownload(size_t nThread,std::wstring const & strSavePat
 void CDownloadFile::OnRespond(cpr::Response const & response, data::BufferPtr const & body, data::SaveDataPtr const& pData, int64_t const beg, int64_t end)
 {
 	assert(response.error.code == cpr::ErrorCode::OK);
-	auto itLen = response.header.find("Content-Length");
 
-	if (itLen != response.header.end())
-	{
-		fileSize_ = atoll(itLen->second.c_str());
-		assert(pData->first + pData->second.size() == fileSize_);
-		if (pData->first + pData->second.size() != fileSize_)
-		{
-			LogErrorEx(LOGFILTER, _T("数据长度不对,文件长度为%ll,接受长度为%ll"), pData->first + pData->second.size());
-		}
-	}
 	auto ret = GetResponseInfo(response);
+	auto iErrorCode = std::get<0>(ret);
+	fileSize_ = std::get<3>(ret);
+
+	if (pData->first + pData->second.size() != fileSize_)
+	{
+		LogErrorEx(LOGFILTER, _T("数据长度不对,文件长度为%ll,接受长度为%ll"), pData->first + pData->second.size());
+	}
+
 	if (pData->second.empty() || std::get<0>(ret) != 0)
 	{
-		OnFinish(std::get<0>(ret), std::get<1>(ret));
+		OnFinish(ret);
 	}
 	else
 	{
@@ -141,38 +139,50 @@ void CDownloadFile::OnSaveDataHandler(
 	assert((bytes_transferred == pData->second.size()) || (pData->first + pData->second.size() == fileSize_));
 	if (bDel)
 	{
-		OnFinish(0, "");
+		ResponseInfo info;
+		OnFinish(info);
 	}
 }
 
-void CDownloadFile::OnFinish(int iError, std::string const & strErr)
+void CDownloadFile::OnFinish(ResponseInfo const & info)
 {
-	ioThreadPool_.postTask(std::bind(&IDelegate::OnFinish, pDelegate_, taskID_, iError, strErr));
+	ioThreadPool_.postTask(std::bind(&IDelegate::OnFinish, pDelegate_, taskID_,info));
 }
 
-std::tuple<int, std::string, int64_t> CDownloadFile::GetResponseInfo(cpr::Response const & response)
+CDownloadFile::ResponseInfo CDownloadFile::GetResponseInfo(cpr::Response const & response)
 {
-	std::tuple<int, std::string, int64_t> ret;
-
+	ResponseInfo res;
 	auto const & header = response.header;
 
 	if (response.error.code == cpr::ErrorCode::OK)
 	{
-		std::get<0>(ret) = 0;
+		std::get<0>(res) = 0;
+		//std::get<1>(ret);
+
+		auto itRet = header.find("ser-ReturnCode");
+		if (itRet != header.end())
+		{
+			std::get<2>(res) = atoi(itRet->second.c_str());
+		}
+		else
+		{
+			LogErrorEx(LOGFILTER, _T("can't find the value of ser-ReturnCode"));
+		}
+
 		auto itLen = header.find("Content-Length");
 		if (itLen != header.end())
 		{
-			std::get<2>(ret) = atoll(itLen->second.c_str());
+			std::get<3>(res) = atoll(itLen->second.c_str());
 		}
 		else
 		{
 			LogErrorEx(LOGFILTER, _T("can't find the value of Content-Length"));
-		}
+		}		
 	}
 	else
 	{
-		std::get<0>(ret) = (int)response.error.code;
-		std::get<1>(ret) = response.error.message;
+		std::get<0>(res) = (int)response.error.code;
+		std::get<1>(res) = response.error.message;
 	}
-	return ret;
+	return res;
 }

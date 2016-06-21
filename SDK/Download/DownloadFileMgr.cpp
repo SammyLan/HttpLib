@@ -33,7 +33,7 @@ WY::TaskID CDownloadFileMgr::AddDownload(std::wstring const & strSavePath, std::
 
 #pragma region delegate
 
-void CDownloadFileMgr::OnFinish(WY::TaskID taskID, int iError, std::string const & strErr)
+void CDownloadFileMgr::OnFinish(WY::TaskID taskID, CDownloadFile::ResponseInfo const & info)
 {
 	WY::LockGuard guard(csLock_);
 	auto it = downLoadList_.find(taskID);
