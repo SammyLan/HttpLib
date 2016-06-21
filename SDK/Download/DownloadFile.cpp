@@ -2,10 +2,14 @@
 #include "DownloadFile.h"
 #include <sstream>
 #include <http/HttpGlobal.h>
+#ifdef min
+#undef min
+#endif // min
 
 static TCHAR LOGFILTER[] = _T("CHttpDownload");
 
 size_t const s_save_size = 1024 * 64;
+size_t const s_block_size = 1024 * 1024 * 10; //10M
 
 CDownloadFile::CDownloadFile(WY::TaskID const taskID, CDownloadFile::IDelegate * pDelegate,ThreadPool & ioThread, ThreadPool & nwThread, CHttpSession& hSession)
 	:taskID_(taskID)
@@ -30,6 +34,7 @@ bool CDownloadFile::BeginDownload(size_t nThread,std::wstring const & strSavePat
 	strSHA_ = strSHA;
 	fileSize_ = fileSize;
 	nextOffset_ = 0;
+	nThread_ = nThread;
 
 	pSaveFile_ = WY::File::CreateAsioFile(ioThreadPool_.io_service(),strSavePath_.c_str(), GENERIC_WRITE,FILE_SHARE_READ, CREATE_ALWAYS, FILE_FLAG_RANDOM_ACCESS | FILE_FLAG_OVERLAPPED);
 	if (pSaveFile_.get() == nullptr)
@@ -60,7 +65,23 @@ bool CDownloadFile::BeginDownload(size_t nThread,std::wstring const & strSavePat
 			}
 			else
 			{
-				//TODO
+				if (fileSize_ == 0)
+				{
+					fileSize_ = std::get<ContentLength>(ret);
+				}
+				else
+				{
+					assert(fileSize_ == std::get<ContentLength>(ret));
+					std::get<UserReturnCode>(ret) = 1;//TODO
+					OnFinish(false, ret);
+					return;
+				}
+				size_t nThread =(int) std::min((int64_t)nThread_, fileSize_/s_block_size);
+				LockGuard gurad(csLock_);
+				for (size_t i = 0; i < nThread; i++)
+				{
+					DownLoadNextRange();
+				}
 			}
 		});
 	}
@@ -70,14 +91,14 @@ bool CDownloadFile::BeginDownload(size_t nThread,std::wstring const & strSavePat
 		pData->first = nextOffset_;
 
 		pHttpRequest_->get(std::string(strUrl), cpr::Parameters{},CHttpRequest::RecvData_Body | CHttpRequest::RecvData_Header,
-			std::bind(&CDownloadFile::OnRespond,this,std::placeholders::_1,std::placeholders::_2,pData,0,0),
+			std::bind(&CDownloadFile::OnRespond,this,std::placeholders::_1,std::placeholders::_2,pData),
 			std::bind(&CDownloadFile::OnDataRecv,this,std::placeholders::_1,std::placeholders::_2,pData)
 			);
 	}
 	return true;
 }
 
-void CDownloadFile::OnRespond(cpr::Response const & response, data::BufferPtr const & body, data::SaveDataPtr const& pData, int64_t const beg, int64_t end)
+void CDownloadFile::OnRespond(cpr::Response const & response, data::BufferPtr const & body, data::SaveDataPtr const& pData)
 {
 	auto &&ret = GetResponseInfo(response);
 	auto curlCode = std::get<CurlErrorCode>(ret);
@@ -87,7 +108,15 @@ void CDownloadFile::OnRespond(cpr::Response const & response, data::BufferPtr co
 	bool bSuccess = ( (curlCode == (int)cpr::ErrorCode::OK) && (httpCode == 200) && (userReturnCode == 0));
 	if (bSuccess)
 	{
-		fileSize_ = std::get<ContentLength>(ret);
+		if (fileSize_ == 0)
+		{
+			fileSize_ = std::get<ContentLength>(ret);
+		}
+		else
+		{
+			assert(fileSize_ == std::get<ContentLength>(ret));
+		}
+		
 		if (pData->first + pData->second.size() != fileSize_)
 		{
 			assert(false);
@@ -157,6 +186,14 @@ void CDownloadFile::OnSaveDataHandler(
 
 void CDownloadFile::OnFinish(bool bSuccess,ResponseInfo const & info)
 {
+	if (!bSuccess)
+	{
+		LogError(LOGFILTER, _T("curl_error=%i, curl_error_msg=%S, HttpCode=%i, UserReturnCode=%i\r\nURL=%S"),
+			std::get<CurlErrorCode>(info),
+			std::get<CurlErrorMsg>(info).c_str(),
+			::get<HttpCode>(info),
+			::get<UserReturnCode>(info));
+	}
 	ioThreadPool_.postTask(std::bind(&IDelegate::OnFinish, pDelegate_,bSuccess, taskID_,info));
 }
 
@@ -164,12 +201,11 @@ CDownloadFile::ResponseInfo CDownloadFile::GetResponseInfo(cpr::Response const &
 {
 	ResponseInfo res;
 	auto const & header = response.header;
-
+	std::get<CurlErrorCode>(res) = 0;
+	std::get<CurlErrorCode>(res) = (int)response.error.code;
 	if (response.error.code == cpr::ErrorCode::OK)
 	{
-		std::get<CurlErrorCode>(res) = 0;
 		//std::get<CurlErrorMsg>(ret);
-
 		auto itLen = header.find("Content-Length");
 		if (itLen != header.end())
 		{
@@ -189,12 +225,16 @@ CDownloadFile::ResponseInfo CDownloadFile::GetResponseInfo(cpr::Response const &
 		{
 			LogErrorEx(LOGFILTER, _T("can't find the value of ser-ReturnCode"));
 		}
-				
 	}
 	else
 	{
-		std::get<CurlErrorCode>(res) = (int)response.error.code;
 		std::get<CurlErrorMsg>(res) = response.error.message;
 	}
 	return res;
+}
+
+void CDownloadFile::DownLoadNextRange()
+{
+	LockGuard gurad(csLock_);
+
 }

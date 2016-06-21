@@ -10,13 +10,6 @@
 class CDownloadFile
 {
 public:
-	/*	
-	
-	
-	
-	
-	
-	*/
 	enum ResponseInfoPos
 	{
 		CurlErrorCode = 0,	//curl_error
@@ -39,7 +32,7 @@ public:
 	~CDownloadFile();
 	bool BeginDownload(size_t nThread,std::wstring const & strSavePath, std::string const & strUrl, std::string const &strCookie = std::string(),::string const & strSHA = std::string(), int64_t fileSize = 0);
 private:
-	void OnRespond(cpr::Response const & response, data::BufferPtr const & body, data::SaveDataPtr const& pData,int64_t const beg, int64_t end);
+	void OnRespond(cpr::Response const & response, data::BufferPtr const & body, data::SaveDataPtr const& pData);
 	void OnDataRecv(data::byte const * data, size_t size, data::SaveDataPtr const & pData);
 	void SaveData(data::SaveDataPtr const & pData,bool bDel = false);
 	void OnSaveDataHandler(data::SaveDataPtr const & pData,bool bDel,
@@ -49,6 +42,7 @@ private:
 	
 	void OnFinish(bool bSuccess,ResponseInfo const & info);
 	ResponseInfo GetResponseInfo(cpr::Response const & response);
+	void DownLoadNextRange();
 private:
 	WY::TaskID const	taskID_;
 	IDelegate *			pDelegate_;
@@ -60,9 +54,11 @@ private:
 	std::string			strCookie_;	
 	std::string			strSHA_;
 	int64_t				fileSize_;
+	size_t				nThread_ = 1;
 	CHttpRequestPtr		pHttpRequest_;
 	WY::File::AsioFilePtr pSaveFile_;
-	int64_t				nextOffset_ = 0;	
+	int64_t				nextOffset_ = 0;
+	WY::CWYLock			csLock_;
 };
 
 typedef std::shared_ptr<CDownloadFile> CDownloadFilePtr;
