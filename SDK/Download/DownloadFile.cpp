@@ -39,20 +39,25 @@ bool CDownloadFile::BeginDownload(size_t nThread,std::wstring const & strSavePat
 	pSaveFile_ = WY::File::CreateAsioFile(ioThreadPool_.io_service(),strSavePath_.c_str(), GENERIC_WRITE,FILE_SHARE_READ, CREATE_ALWAYS, FILE_FLAG_RANDOM_ACCESS | FILE_FLAG_OVERLAPPED);
 	if (pSaveFile_.get() == nullptr)
 	{
+		ResponseInfo resp;
+		std::get<UserReturnCode>(resp) = ::GetLastError();
+		OnFinish(false, resp);
 		return false;
 	}
 
-	pHttpRequest_ = std::make_shared<CHttpRequest>(&hSession_);
-
+	auto pHttpRequest = std::make_shared<CHttpRequest>(&hSession_);
+	requestList_.insert(std::make_pair(0, pHttpRequest));
 	if (!strCookie.empty())
 	{
-		pHttpRequest_->setCookie(strCookie);
+		pHttpRequest->setCookie(strCookie);
 	}
 	if (nThread > 1)
 	{
-		pHttpRequest_->headRequest(	std::string(strUrl), cpr::Parameters{},
+		pHttpRequest->headRequest(	std::string(strUrl), cpr::Parameters{},
 			[=](cpr::Response const & response, data::BufferPtr const & body)
 		{
+			auto pRequest = *requestList_.begin();
+			requestList_.clear();
 			auto && ret = GetResponseInfo(response);
 			auto curlCode = std::get<CurlErrorCode>(ret);
 			auto httpCode = std::get<HttpCode>(ret);
@@ -90,7 +95,7 @@ bool CDownloadFile::BeginDownload(size_t nThread,std::wstring const & strSavePat
 		data::SaveDataPtr pData = std::make_shared<data::RecvData>();
 		pData->first = nextOffset_;
 
-		pHttpRequest_->get(std::string(strUrl), cpr::Parameters{},CHttpRequest::RecvData_Body | CHttpRequest::RecvData_Header,
+		pHttpRequest->get(std::string(strUrl), cpr::Parameters{},CHttpRequest::RecvData_Body | CHttpRequest::RecvData_Header,
 			std::bind(&CDownloadFile::OnRespond,this,std::placeholders::_1,std::placeholders::_2,pData),
 			std::bind(&CDownloadFile::OnDataRecv,this,std::placeholders::_1,std::placeholders::_2,pData)
 			);
@@ -100,6 +105,7 @@ bool CDownloadFile::BeginDownload(size_t nThread,std::wstring const & strSavePat
 
 void CDownloadFile::OnRespond(cpr::Response const & response, data::BufferPtr const & body, data::SaveDataPtr const& pData)
 {
+	requestList_.clear();
 	auto &&ret = GetResponseInfo(response);
 	auto curlCode = std::get<CurlErrorCode>(ret);
 	auto httpCode = std::get<HttpCode>(ret);
@@ -136,7 +142,45 @@ void CDownloadFile::OnRespond(cpr::Response const & response, data::BufferPtr co
 	{
 		assert(false);
 		OnFinish(bSuccess,ret);
-	}	
+	}
+}
+
+void CDownloadFile::OnRespondEx(cpr::Response const & response, data::BufferPtr const & body, data::SaveDataPtr const& pData, int64_t offset)
+{
+	auto itFind = requestList_.find(offset);
+	auto pRequest = *itFind;
+	requestList_.erase(itFind);
+
+	auto &&ret = GetResponseInfo(response);
+	auto curlCode = std::get<CurlErrorCode>(ret);
+	auto httpCode = std::get<HttpCode>(ret);
+	auto userReturnCode = std::get<UserReturnCode>(ret);
+
+	bool bSuccess = ((curlCode == (int)cpr::ErrorCode::OK) && (httpCode == 200 || httpCode == 206) && (userReturnCode == 0));
+	if (bSuccess)
+	{
+		auto recvSize = std::get<ContentLength>(ret);
+		if (pData->first + pData->second.size() != offset + recvSize)
+		{
+			assert(false);
+			LogErrorEx(LOGFILTER, _T("数据长度不对,文件长度为%ll,接受长度为%ll"), pData->first + pData->second.size());
+		}
+		
+		bool bCont = DownLoadNextRange();
+		if (bCont)
+		{
+			SaveData(pData);
+		}
+		else
+		{
+			SaveData(pData, true);
+		}
+	}
+	else
+	{
+		assert(false);
+		//TODO
+	}
 }
 
 void CDownloadFile::OnDataRecv(data::byte const * data, size_t size, data::SaveDataPtr const& pData)
@@ -176,7 +220,6 @@ void CDownloadFile::OnSaveDataHandler(
 	std::size_t bytes_transferred           // Number of bytes written.	
 	)
 {
-	assert((bytes_transferred == pData->second.size()) || (pData->first + pData->second.size() == fileSize_));
 	if (bDel)
 	{
 		ResponseInfo info;
@@ -201,7 +244,7 @@ CDownloadFile::ResponseInfo CDownloadFile::GetResponseInfo(cpr::Response const &
 {
 	ResponseInfo res;
 	auto const & header = response.header;
-	std::get<CurlErrorCode>(res) = 0;
+	std::get<HttpCode>(res) = response.status_code;
 	std::get<CurlErrorCode>(res) = (int)response.error.code;
 	if (response.error.code == cpr::ErrorCode::OK)
 	{
@@ -233,8 +276,33 @@ CDownloadFile::ResponseInfo CDownloadFile::GetResponseInfo(cpr::Response const &
 	return res;
 }
 
-void CDownloadFile::DownLoadNextRange()
+bool CDownloadFile::DownLoadNextRange()
 {
 	LockGuard gurad(csLock_);
+	if (nextOffset_ >= fileSize_)
+	{
+		return false;
+	}
+	auto pHttpRequest = std::make_shared<CHttpRequest>(&hSession_);
+	requestList_.insert(std::make_pair(nextOffset_, pHttpRequest));
+	data::SaveDataPtr pData = std::make_shared<data::RecvData>();
+	auto const curOffset = nextOffset_;
+	pData->first = curOffset;
 
+	nextOffset_ += s_block_size;
+	if (nextOffset_ > fileSize_)
+	{
+		nextOffset_ = fileSize_;
+	}
+	if (!strCookie_.empty())
+	{
+		pHttpRequest->setCookie(strCookie_);
+	}
+	pHttpRequest->setRange(curOffset, nextOffset_ - 1);
+	
+	pHttpRequest->get(std::string(strUrl_), cpr::Parameters{}, CHttpRequest::RecvData_Body | CHttpRequest::RecvData_Header,
+		std::bind(&CDownloadFile::OnRespondEx, this, std::placeholders::_1, std::placeholders::_2, pData,curOffset),
+		std::bind(&CDownloadFile::OnDataRecv, this, std::placeholders::_1, std::placeholders::_2, pData)
+		);
+	return true;
 }

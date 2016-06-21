@@ -9,6 +9,7 @@
 
 class CDownloadFile
 {
+	typedef std::map<int64_t, CHttpRequestPtr> RequestList;
 public:
 	enum ResponseInfoPos
 	{
@@ -33,6 +34,7 @@ public:
 	bool BeginDownload(size_t nThread,std::wstring const & strSavePath, std::string const & strUrl, std::string const &strCookie = std::string(),::string const & strSHA = std::string(), int64_t fileSize = 0);
 private:
 	void OnRespond(cpr::Response const & response, data::BufferPtr const & body, data::SaveDataPtr const& pData);
+	void OnRespondEx(cpr::Response const & response, data::BufferPtr const & body, data::SaveDataPtr const& pData,int64_t offset);
 	void OnDataRecv(data::byte const * data, size_t size, data::SaveDataPtr const & pData);
 	void SaveData(data::SaveDataPtr const & pData,bool bDel = false);
 	void OnSaveDataHandler(data::SaveDataPtr const & pData,bool bDel,
@@ -42,7 +44,7 @@ private:
 	
 	void OnFinish(bool bSuccess,ResponseInfo const & info);
 	ResponseInfo GetResponseInfo(cpr::Response const & response);
-	void DownLoadNextRange();
+	bool DownLoadNextRange();
 private:
 	WY::TaskID const	taskID_;
 	IDelegate *			pDelegate_;
@@ -55,7 +57,7 @@ private:
 	std::string			strSHA_;
 	int64_t				fileSize_;
 	size_t				nThread_ = 1;
-	CHttpRequestPtr		pHttpRequest_;
+	RequestList			requestList_;
 	WY::File::AsioFilePtr pSaveFile_;
 	int64_t				nextOffset_ = 0;
 	WY::CWYLock			csLock_;
