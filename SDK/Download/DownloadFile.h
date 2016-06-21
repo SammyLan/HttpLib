@@ -6,11 +6,19 @@
 #include <fstream>
 #include <File/AsyncFile.h>
 
-class CHttpDownload
+
+class CDownloadFile
 {
 public:
-	CHttpDownload(ThreadPool & ioThread, ThreadPool & nwThread, CHttpSession& hSession);
-	~CHttpDownload();
+	struct IDelegate
+	{
+		virtual void OnFinish(WY::TaskID taskID, int iError, std::string const & strErr) = 0;
+	};
+
+public:
+	CDownloadFile(WY::TaskID const taskID, CDownloadFile::IDelegate * pDelegate,
+		ThreadPool & ioThread, ThreadPool & nwThread, CHttpSession& hSession);
+	~CDownloadFile();
 	bool BeginDownload(size_t nThread,std::wstring const & strSavePath, std::string const & strUrl, std::string const &strCookie = std::string(),::string const & strSHA = std::string(), int64_t fileSize = 0);
 private:
 	void OnRespond(cpr::Response const & response, data::BufferPtr const & body, data::SaveDataPtr const& pData,int64_t const beg, int64_t end);
@@ -20,17 +28,21 @@ private:
 		const boost::system::error_code& error, // Result of operation.
 		std::size_t bytes_transferred           // Number of bytes written.
 		);
+	void OnFinish(int iError, std::string const & strErr);
+	std::tuple<int,std::string,int64_t> GetResponseInfo(cpr::Response const & response);
 private:
-	ThreadPool  & ioThreadPool_;
-	ThreadPool  & nwThreadPool_;
-	CHttpSession& hSession_;
-	std::wstring strSavePath_;
-	std::string strUrl_;
-	std::string strCookie_;	
-	std::string strSHA_;
-	int64_t fileSize_;
-	int64_t nextOffset_ = 0;
+	WY::TaskID const	taskID_;
+	IDelegate *			pDelegate_;
+	ThreadPool  &		ioThreadPool_;
+	ThreadPool  &		nwThreadPool_;
+	CHttpSession&		hSession_;
+	std::wstring		strSavePath_;
+	std::string			strUrl_;
+	std::string			strCookie_;	
+	std::string			strSHA_;
+	int64_t				fileSize_;
+	int64_t				nextOffset_ = 0;
 	WY::File::AsioFilePtr pSaveFile_;
 };
 
-typedef std::shared_ptr<CHttpDownload> CHttpDownloadPtr;
+typedef std::shared_ptr<CDownloadFile> CDownloadFilePtr;

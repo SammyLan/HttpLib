@@ -8,6 +8,7 @@
 #include "http\HttpRequest.h"
 #include "Thread\ThreadPool.h"
 #include "FileSign\FileSignMgr.h"
+#include <Download/DownloadFileMgr.h>
 
 // CHTTPLibDlg ¶Ô»°¿ò
 class CHTTPLibDlg : public CDialogEx
@@ -44,6 +45,7 @@ private:
 	http::CurGlobalInit init_;
 	CHttpConnMgr connMgr_;
 	CHttpSession hSession_;
+	CDownloadFileMgr downloadMgr_;
 	CWYFileSignMgr m_pFileSignMgr;
 public:
 	afx_msg void OnBnClickedDownload();

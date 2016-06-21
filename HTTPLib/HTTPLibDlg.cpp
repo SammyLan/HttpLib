@@ -9,7 +9,7 @@
 #include <fstream>
 #include <sstream>
 #include <cpr/util.h>
-#include <Download/Download.h>
+#include <Download/DownloadFile.h>
 
 #ifdef _DEBUG
 #define new DEBUG_NEW
@@ -59,6 +59,7 @@ CHTTPLibDlg::CHTTPLibDlg(CWnd* pParent /*=NULL*/)
 	, ioThreadPool_(1,"IOThread")
 	, connMgr_(nwThreadPool_.io_service())
 	, hSession_(nwThreadPool_.io_service(), &connMgr_)
+	, downloadMgr_(ioThreadPool_,nwThreadPool_,hSession_)
 	, m_pFileSignMgr(ioThreadPool_.io_service())
 	, m_strURL(_T("http://sz-btfs-v2.yun.ftn.qq.com:80/ftn_handler/6bbe3c1a94f854109df2fd1e6e357a17c000eda382da615ee71cc7976e71cdd49121841ff7b2258a9078a070ca33a02525bd2a46e368efb20918d8dbf7eb69bf/?fname=Windows%2010%20x64.rar&from=30322&version=3.5.0.1665&uin=240201454"))
 	, m_strCookie(_T("FTN5K=0b2c497d"))
@@ -233,10 +234,8 @@ void CHTTPLibDlg::DownloadFile()
 	++s_count;
 	std::wostringstream oss;
 	oss << s_count;
-	wstring strFileQQ = _T("d:\\download\\data") + oss.str() + _T(".zip");
-
-	auto pDownload = new CHttpDownload(ioThreadPool_, nwThreadPool_, hSession_);
-	pDownload->BeginDownload(1, strFileQQ, std::string(CW2A(m_strURL)), std::string(CW2A(m_strCookie)));
+	wstring strFile = _T("d:\\download\\data") + oss.str() + _T(".zip");
+	downloadMgr_.AddDownload(strFile, std::string(CW2A(m_strURL)), std::string(CW2A(m_strCookie)));
 }
 
 void CHTTPLibDlg::OnBnClickedDownload()

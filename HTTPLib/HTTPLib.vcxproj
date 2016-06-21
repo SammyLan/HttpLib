@@ -193,7 +193,8 @@
     <Text Include="ReadMe.txt" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="..\SDK\Download\Download.h" />
+    <ClInclude Include="..\SDK\Download\DownloadFile.h" />
+    <ClInclude Include="..\SDK\Download\DownloadFileMgr.h" />
     <ClInclude Include="..\SDK\external\cpr\include\cpr\api.h" />
     <ClInclude Include="..\SDK\external\cpr\include\cpr\auth.h" />
     <ClInclude Include="..\SDK\external\cpr\include\cpr\body.h" />
@@ -237,7 +238,8 @@
     <ClInclude Include="targetver.h" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="..\SDK\Download\Download.cpp" />
+    <ClCompile Include="..\SDK\Download\DownloadFile.cpp" />
+    <ClCompile Include="..\SDK\Download\DownloadFileMgr.cpp" />
     <ClCompile Include="..\SDK\external\cpr\cpr\auth.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">NotUsing</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">NotUsing</PrecompiledHeader>

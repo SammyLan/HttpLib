@@ -126,7 +126,7 @@ void CWYFileSignMgr::OnFinish(WYTASKID taskID, int iError, DWORD dwTotalTime)
 			}
 			CFileSignInfo * pInfo = new CFileSignInfo;
 			pInfo->FileSize_ = pTask->m_uFileSize;
-			pInfo->Speed_ = (float)pTask->m_uFileSize * 1000 / dwTotalTime / 1024 / 1024;;
+			pInfo->Speed_ = (float)pTask->m_uFileSize * 1000 / dwTotalTime / 1024 / 1024;
 			pInfo->ScanTime_ = dwTotalTime;
 			pInfo->CRC_ = pTask->m_validateCRC;
 			pInfo->SHA_ = pTask->m_strSHA;
