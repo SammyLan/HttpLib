@@ -101,7 +101,7 @@ int CHttpSession::timer_callback(CURLM *multi, long timeout_ms, CHttpSession *pT
 
 void CHttpSession::timer_cb(const boost::system::error_code & error, CHttpSession *pThis,long timeout_ms)
 {
-	if (!error)
+	//if (!error)
 	{
 		LogDev(HTTPLOG,_T( "timer_cb: "));
 		CURLMcode rc = curl_multi_socket_action(pThis->hMulti_, CURL_SOCKET_TIMEOUT, 0, &pThis->nStillRunning_);
@@ -109,7 +109,7 @@ void CHttpSession::timer_cb(const boost::system::error_code & error, CHttpSessio
 		http::mcode_or_die("timer_cb: curl_multi_socket_action", rc);
 		pThis->check_multi_info();
 	}
-	else
+	//else
 	{
 		auto desc = error.message();
 		LogFinal(HTTPLOG, _T("%S"),desc.c_str());
