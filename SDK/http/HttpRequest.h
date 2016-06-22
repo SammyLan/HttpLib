@@ -54,6 +54,7 @@ public:
 
 	CURL * getHandle() const { return handle_; }
 	std::string const & getUrl() const { return url_; }
+	data::Buffer const & getHeader() const { return header_; }
 
 #pragma region option
 	void setTimeout(long ms);
