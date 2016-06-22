@@ -148,7 +148,14 @@ void CHttpRequest::setCookie(std::string const & cookie)
 void CHttpRequest::setRange(int64_t beg, int64_t end)
 {
 	std::ostringstream ofs;
-	ofs << beg << '-' << end;
+	if (end != 0)
+	{
+		ofs << beg << '-' << end;
+	}
+	else
+	{
+		ofs << beg << '-';
+	}	
 	curl_easy_setopt(handle_, CURLOPT_RANGE, ofs.str().c_str());
 }
 
