@@ -131,18 +131,18 @@ void CHttpSession::setSocket(http::SocketInfoPtr & socketInfo, curl_socket_t s, 
 	if (act == CURL_POLL_IN)
 	{
 		LogDev(HTTPLOG,_T( "watching for socket to become readable"));
-		tcp_socket.async_read_some(boost::asio::null_buffers(),	std::bind(&event_cb, this, socketInfo,s,e, CURL_POLL_IN,std::placeholders::_1));
+		tcp_socket.async_read_some(boost::asio::null_buffers(),	std::bind(&CHttpSession::event_cb, this, socketInfo,s,e, CURL_POLL_IN,std::placeholders::_1));
 	}
 	else if (act == CURL_POLL_OUT)
 	{
 		LogDev(HTTPLOG,_T( "watching for socket to become writable"));
-		tcp_socket.async_write_some(boost::asio::null_buffers(),std::bind(&event_cb, this, socketInfo, s,e, CURL_POLL_OUT, std::placeholders::_1));
+		tcp_socket.async_write_some(boost::asio::null_buffers(),std::bind(&CHttpSession::event_cb, this, socketInfo, s,e, CURL_POLL_OUT, std::placeholders::_1));
 	}
 	else if (act == CURL_POLL_INOUT)
 	{
 		LogDev(HTTPLOG,_T( "watching for socket to become readable & writable"));
-		tcp_socket.async_read_some(boost::asio::null_buffers(),std::bind(&event_cb, this, socketInfo, s, e,CURL_POLL_IN, std::placeholders::_1));
-		tcp_socket.async_write_some(boost::asio::null_buffers(),std::bind(&event_cb, this, socketInfo, s, e,CURL_POLL_OUT, std::placeholders::_1));
+		tcp_socket.async_read_some(boost::asio::null_buffers(),std::bind(&CHttpSession::event_cb, this, socketInfo, s, e,CURL_POLL_IN, std::placeholders::_1));
+		tcp_socket.async_write_some(boost::asio::null_buffers(),std::bind(&CHttpSession::event_cb, this, socketInfo, s, e,CURL_POLL_OUT, std::placeholders::_1));
 	}
 }
 
@@ -192,7 +192,7 @@ void CHttpSession::event_cb(CHttpSession *pThis, http::SocketInfoPtr& tcp_socket
 	if (pThis->nStillRunning_ <= 0)
 	{
 		LogFinal(HTTPLOG,_T( "last transfer done, kill timeout"));
-		pThis->timer_.cancel();
+		//pThis->timer_.cancel();//TODO:为什么这里必须要注释掉才能继续下去?
 	}
 	else //重要
 	{
