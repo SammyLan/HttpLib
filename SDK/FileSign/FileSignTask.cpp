@@ -32,7 +32,7 @@ void CFileSignTask::BeginTask(boost::asio::io_service& io_service)
 	if (!m_hFile.Create(io_service, m_strFile, GENERIC_READ, FILE_SHARE_READ, OPEN_EXISTING))
 	{
 		int iError = GetLastError();
-		LogError(LOGFILTER, _T("创建文件失败,错误码:%i,文件名:%s"), iError, (LPCTSTR)m_strFile);
+		LogErrorEx(LOGFILTER, _T("创建文件失败,错误码:%i,文件名:%s"), iError, (LPCTSTR)m_strFile);
 		OnFinish(iError);
 		return;
 	}
@@ -133,7 +133,7 @@ void CFileSignTask::OnFinish(int iError, bool bCancel)
 		auto cntBlock = (m_uFileSize + SLICE_SISE - 1) / SLICE_SISE;
 		if (cntBlock != m_oShaList.size())
 		{
-			LogError(_T("计算哈希错误,文件大小%llu,分块个数%u,文件名:%s"), m_uFileSize, (DWORD)m_oShaList.size(),(LPCTSTR)m_strFile);
+			LogErrorEx(LOGFILTER,_T("计算哈希错误,文件大小%llu,分块个数%u,文件名:%s"), m_uFileSize, (DWORD)m_oShaList.size(),(LPCTSTR)m_strFile);
 		}
 	}
 	else

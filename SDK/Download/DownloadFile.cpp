@@ -51,7 +51,7 @@ bool CDownloadFile::BeginDownload(size_t nThread,std::wstring const & strSavePat
 	{
 		pHttpRequest->setCookie(strCookie);
 	}
-	if (nThread > 1)
+	if (nThread >= 1)
 	{
 		pHttpRequest->headRequest(	std::string(strUrl), cpr::Parameters{},
 			[=](cpr::Response const & response, data::BufferPtr const & body)
@@ -231,7 +231,7 @@ void CDownloadFile::OnFinish(bool bSuccess,ResponseInfo const & info)
 {
 	if (!bSuccess)
 	{
-		LogError(LOGFILTER, _T("curl_error=%i, curl_error_msg=%S, HttpCode=%i, UserReturnCode=%i\r\nURL=%S"),
+		LogErrorEx(LOGFILTER, _T("curl_error=%i, curl_error_msg=%S, HttpCode=%i, UserReturnCode=%i\r\nURL=%S"),
 			std::get<CurlErrorCode>(info),
 			std::get<CurlErrorMsg>(info).c_str(),
 			::get<HttpCode>(info),
@@ -278,9 +278,11 @@ CDownloadFile::ResponseInfo CDownloadFile::GetResponseInfo(cpr::Response const &
 
 bool CDownloadFile::DownLoadNextRange()
 {
+	LogDev(LOGFILTER, _T("Request next range:%llu"), nextOffset_);
 	LockGuard gurad(csLock_);
 	if (nextOffset_ >= fileSize_)
 	{
+		LogFinal(LOGFILTER, _T("œ¬‘ÿΩ· ¯"));
 		return false;
 	}
 	auto pHttpRequest = std::make_shared<CHttpRequest>(&hSession_);

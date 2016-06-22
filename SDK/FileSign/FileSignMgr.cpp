@@ -87,7 +87,7 @@ void CWYFileSignMgr::OnBegin(WYTASKID taskID)
 	}
 	else
 	{
-		LogError(_T("task±»É¾³ý:%llu"), taskID);
+		LogErrorEx(LOGFILTER,_T("task±»É¾³ý:%llu"), taskID);
 	}
 }
 
@@ -106,7 +106,7 @@ void CWYFileSignMgr::OnProgress(WYTASKID taskID, ULONGLONG fileSize, ULONGLONG c
 	}
 	else
 	{
-		LogError(_T("task±»É¾³ý:%llu"), taskID);
+		LogErrorEx(LOGFILTER,_T("task±»É¾³ý:%llu"), taskID);
 	}
 }
 
@@ -137,7 +137,7 @@ void CWYFileSignMgr::OnFinish(WYTASKID taskID, int iError, DWORD dwTotalTime)
 	}
 	else
 	{
-		LogError(_T("task±»É¾³ý:%llu"), taskID);
+		LogErrorEx(LOGFILTER,_T("task±»É¾³ý:%llu"), taskID);
 	}
 	TryDoNextTask();
 }

@@ -9,12 +9,12 @@ CDownloadFileMgr::CDownloadFileMgr(ThreadPool & ioThread, ThreadPool & nwThread,
 	, nwThreadPool_(nwThread)
 	, hSession_(hSession)
 {
-
+	LogFinal(LOGFILTER, _T("CDownloadFileMgr constructor"));
 }
 
 CDownloadFileMgr::~CDownloadFileMgr()
 {
-
+	LogFinal(LOGFILTER, _T("~CDownloadFileMgr destructor"));
 }
 
 WY::TaskID CDownloadFileMgr::AddDownload(std::wstring const & strSavePath, std::string const & strUrl, std::string const &strCookie , std::string const & strSHA , int64_t fileSize )

@@ -177,7 +177,7 @@ void CHttpSession::event_cb(CHttpSession *pThis, http::SocketInfoPtr& tcp_socket
 	if (err)
 	{
 		std::wstring errMsg(CA2W(err.message().c_str()));
-		LogError(HTTPLOG, _T("1event_cb: socket=%p action=%d \nERROR=%s"), s, action, errMsg.c_str());
+		LogErrorEx(HTTPLOG, _T("1event_cb: socket=%p action=%d \nERROR=%s"), s, action, errMsg.c_str());
 		//rc = curl_multi_socket_action(pThis->hMulti_, tcp_socket->tcpSocket.native_handle(), CURL_CSELECT_ERR, &pThis->nStillRunning_);
 	}
 	else
