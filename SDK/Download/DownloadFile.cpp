@@ -9,7 +9,7 @@
 static TCHAR LOGFILTER[] = _T("CHttpDownload");
 
 size_t const s_save_size = 1024 * 64;
-size_t const s_block_size = 1024 * 1024 * 10; //10M
+size_t const s_block_size = 1024 * 1024 * 1; //10M
 size_t const s_srv_block_size = 1024 * 512;
 
 CDownloadFile::CDownloadFile(WY::TaskID const taskID, CDownloadFile::IDelegate * pDelegate,ThreadPool & ioThread, ThreadPool & nwThread, CHttpSession& hSession)
@@ -34,7 +34,6 @@ bool CDownloadFile::BeginDownload(size_t nThread,std::wstring const & strSavePat
 	strCookie_ = strCookie;
 	strSHA_ = strSHA;
 	fileSize_ = fileSize;
-	nextOffset_ = 0;
 	nThread_ = nThread;
 
 	pSaveFile_ = WY::File::CreateAsioFile(ioThreadPool_.io_service(),strSavePath_.c_str(), GENERIC_WRITE,FILE_SHARE_READ, CREATE_ALWAYS, FILE_FLAG_RANDOM_ACCESS | FILE_FLAG_OVERLAPPED);
@@ -81,15 +80,36 @@ bool CDownloadFile::BeginDownload(size_t nThread,std::wstring const & strSavePat
 				else
 				{
 					assert(fileSize_ == std::get<ContentLength>(ret));
-					std::get<UserReturnCode>(ret) = 1;//TODO
+					std::get<UserReturnCode>(ret) = 1;//TODO:
 					OnFinish(false, ret);
 					return;
 				}
 				size_t nThread =(int) std::min((int64_t)nThread_, fileSize_/s_block_size);
-				LockGuard gurad(csLock_);
-				for (size_t i = 0; i < nThread; i++)
+				if (nThread == 0)
 				{
-					DownLoadNextRange();
+					nThread = 1;
+				}
+				LockGuard gurad(csLock_);
+				int64_t beg = 0;
+				int64_t block_size = fileSize_ / nThread;
+				std::vector<int64_t> blockInfo;
+				blockInfo.push_back(beg);
+				beg += block_size;
+				while (beg < fileSize_)
+				{
+					beg = (beg + s_srv_block_size - 1) / s_srv_block_size * s_srv_block_size;
+					blockInfo.push_back(beg);
+					beg += block_size;
+				}
+				if (beg > fileSize_)
+				{
+					beg = fileSize_;
+					blockInfo.push_back(beg);
+				}
+				assert((nThread + 1) == blockInfo.size());
+				for (size_t i = 1; i < blockInfo.size(); ++i)
+				{
+					DownLoadNextRange(blockInfo[i-1], blockInfo[i]);
 				}
 			}
 		});
@@ -97,7 +117,7 @@ bool CDownloadFile::BeginDownload(size_t nThread,std::wstring const & strSavePat
 	else
 	{
 		data::SaveDataPtr pData = std::make_shared<data::RecvData>();
-		pData->first = nextOffset_;
+		pData->first = 0;
 
 		pHttpRequest->get(std::string(strUrl), cpr::Parameters{},CHttpRequest::RecvData_Body | CHttpRequest::RecvData_Header,
 			std::bind(&CDownloadFile::OnRespond,this,std::placeholders::_1,std::placeholders::_2,pData),
@@ -168,16 +188,11 @@ void CDownloadFile::OnRespondEx(cpr::Response const & response, data::BufferPtr 
 		{
 			assert(false);
 			LogErrorEx(LOGFILTER, _T("数据长度不对,文件长度为%ll,接受长度为%ll"), pData->first + pData->second.size());
-		}
-		
-		bool bCont = DownLoadNextRange();
-		if (bCont)
-		{
-			SaveData(pData);
+
 		}
 		else
 		{
-			SaveData(pData, true);
+			SaveData(pData);
 		}
 	}
 	else
@@ -185,7 +200,7 @@ void CDownloadFile::OnRespondEx(cpr::Response const & response, data::BufferPtr 
 		data::Buffer const & headerStr = pRequest->getHeader();
 		LogErrorEx(LOGFILTER, _T("下载出错:%S"), headerStr.data());
 		assert(false);
-		//TODO:
+		//TODO:Error
 	}
 }
 
@@ -282,34 +297,28 @@ CDownloadFile::ResponseInfo CDownloadFile::GetResponseInfo(cpr::Response const &
 	return res;
 }
 
-bool CDownloadFile::DownLoadNextRange()
+bool CDownloadFile::DownLoadNextRange(int64_t const beg, int64_t const end)
 {
-	LogDev(LOGFILTER, _T("Request next range:%llu"), nextOffset_);
-	LockGuard gurad(csLock_);
-	if (nextOffset_ >= fileSize_)
+	if (end != fileSize_)
 	{
-		LogFinal(LOGFILTER, _T("下载结束"));
-		return false;
+		if ((end & 0x7FFFF) != 0)
+		{
+			assert(false);
+			//TODO:
+		}
 	}
+	LogDev(LOGFILTER, _T("Request next range:%llu"), beg);
+	
 	auto pHttpRequest = std::make_shared<CHttpRequest>(&hSession_);
-	requestList_.insert(std::make_pair(nextOffset_, pHttpRequest));
-	data::SaveDataPtr pData = std::make_shared<data::RecvData>();
-	auto const curOffset = nextOffset_;
-	pData->first = curOffset;
+	requestList_.insert(std::make_pair(beg, pHttpRequest));
 
-	nextOffset_ += s_block_size;
-	if (nextOffset_ > fileSize_)
-	{
-		nextOffset_ = fileSize_;
-	}
-	if (!strCookie_.empty())
-	{
-		pHttpRequest->setCookie(strCookie_);
-	}
-	pHttpRequest->setRange(curOffset, nextOffset_ - 1);
+	data::SaveDataPtr pData = std::make_shared<data::RecvData>();
+	pData->first = beg;	
+	pHttpRequest->setCookie(strCookie_);
+	pHttpRequest->setRange(beg, end - 1);
 	
 	pHttpRequest->get(std::string(strUrl_), cpr::Parameters{}, CHttpRequest::RecvData_Body | CHttpRequest::RecvData_Header,
-		std::bind(&CDownloadFile::OnRespondEx, this, std::placeholders::_1, std::placeholders::_2, pData,curOffset),
+		std::bind(&CDownloadFile::OnRespondEx, this, std::placeholders::_1, std::placeholders::_2, pData,beg),
 		std::bind(&CDownloadFile::OnDataRecv, this, std::placeholders::_1, std::placeholders::_2, pData)
 		);
 	return true;

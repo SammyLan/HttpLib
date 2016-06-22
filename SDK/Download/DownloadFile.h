@@ -44,7 +44,7 @@ private:
 	
 	void OnFinish(bool bSuccess,ResponseInfo const & info);
 	ResponseInfo GetResponseInfo(cpr::Response const & response);
-	bool DownLoadNextRange();
+	bool DownLoadNextRange(int64_t const beg, int64_t const end);
 	void DumpRespond(cpr::Response const & response);
 private:
 	WY::TaskID const	taskID_;
@@ -60,7 +60,6 @@ private:
 	size_t				nThread_ = 1;
 	RequestList			requestList_;
 	WY::File::AsioFilePtr pSaveFile_;
-	int64_t				nextOffset_ = 0;
 	WY::CWYLock			csLock_;
 };
 
