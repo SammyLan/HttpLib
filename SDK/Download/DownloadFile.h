@@ -45,6 +45,7 @@ private:
 	void OnFinish(bool bSuccess,ResponseInfo const & info);
 	ResponseInfo GetResponseInfo(cpr::Response const & response);
 	bool DownLoadNextRange();
+	void DumpRespond(cpr::Response const & response);
 private:
 	WY::TaskID const	taskID_;
 	IDelegate *			pDelegate_;

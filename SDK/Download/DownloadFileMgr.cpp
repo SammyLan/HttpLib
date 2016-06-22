@@ -17,7 +17,7 @@ CDownloadFileMgr::~CDownloadFileMgr()
 	LogFinal(LOGFILTER, _T("~CDownloadFileMgr destructor"));
 }
 
-WY::TaskID CDownloadFileMgr::AddDownload(std::wstring const & strSavePath, std::string const & strUrl, std::string const &strCookie , std::string const & strSHA , int64_t fileSize )
+WY::TaskID CDownloadFileMgr::AddDownload(size_t nThread, std::wstring const & strSavePath, std::string const & strUrl, std::string const &strCookie , std::string const & strSHA , int64_t fileSize )
 {
 	static WY::TaskID s_nextTaskID = 0;
 	WY::TaskID taskID = 0;
@@ -26,7 +26,7 @@ WY::TaskID CDownloadFileMgr::AddDownload(std::wstring const & strSavePath, std::
 		auto taskID = ++s_nextTaskID;
 		auto pTask = std::make_shared<CDownloadFile>(taskID,this,ioThreadPool_, nwThreadPool_, hSession_);
 		downLoadList_.insert(std::make_pair(taskID, pTask));
-		pTask->BeginDownload(1, strSavePath, strUrl, strCookie, strSHA, fileSize);
+		pTask->BeginDownload(nThread, strSavePath, strUrl, strCookie, strSHA, fileSize);
 	}	
 	return taskID;
 }

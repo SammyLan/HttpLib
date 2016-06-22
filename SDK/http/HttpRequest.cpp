@@ -405,8 +405,8 @@ int CHttpRequest::sockopt_callback(CHttpSession * pThis, curl_socket_t curlfd, c
 	int buf = 0;
 	int len = sizeof(buf);
 	::getsockopt((SOCKET)curlfd, SOL_SOCKET, SO_RCVBUF, (char *)&buf,&len);
-	buf = 1024 * 1024 * 12;
-	::setsockopt((SOCKET)curlfd, SOL_SOCKET, SO_RCVBUF, (char const*)&buf,sizeof(buf));
+	buf = 1024*1024 * 20;
+	//::setsockopt((SOCKET)curlfd, SOL_SOCKET, SO_RCVBUF, (char const*)&buf,sizeof(buf));
 	return CURL_SOCKOPT_OK;
 }
 

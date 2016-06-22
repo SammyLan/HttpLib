@@ -10,6 +10,7 @@ static TCHAR LOGFILTER[] = _T("CHttpDownload");
 
 size_t const s_save_size = 1024 * 64;
 size_t const s_block_size = 1024 * 1024 * 10; //10M
+size_t const s_srv_block_size = 1024 * 512;
 
 CDownloadFile::CDownloadFile(WY::TaskID const taskID, CDownloadFile::IDelegate * pDelegate,ThreadPool & ioThread, ThreadPool & nwThread, CHttpSession& hSession)
 	:taskID_(taskID)
@@ -51,11 +52,14 @@ bool CDownloadFile::BeginDownload(size_t nThread,std::wstring const & strSavePat
 	{
 		pHttpRequest->setCookie(strCookie);
 	}
-	if (nThread >= 1)
+	if (nThread > 1)
 	{
+		int64_t beg = WYTime::g_watch.Now();
 		pHttpRequest->headRequest(	std::string(strUrl), cpr::Parameters{},
 			[=](cpr::Response const & response, data::BufferPtr const & body)
 		{
+			int64_t end = WYTime::g_watch.Now();
+			LogFinal(LOGFILTER, _T("take time=%llu"), end - beg);
 			auto pRequest = *requestList_.begin();
 			requestList_.clear();
 			auto && ret = GetResponseInfo(response);
@@ -148,7 +152,7 @@ void CDownloadFile::OnRespond(cpr::Response const & response, data::BufferPtr co
 void CDownloadFile::OnRespondEx(cpr::Response const & response, data::BufferPtr const & body, data::SaveDataPtr const& pData, int64_t offset)
 {
 	auto itFind = requestList_.find(offset);
-	auto pRequest = *itFind;
+	auto pRequest = itFind->second;
 	requestList_.erase(itFind);
 
 	auto &&ret = GetResponseInfo(response);
@@ -178,8 +182,10 @@ void CDownloadFile::OnRespondEx(cpr::Response const & response, data::BufferPtr 
 	}
 	else
 	{
+		data::Buffer const & headerStr = pRequest->getHeader();
+		LogErrorEx(LOGFILTER, _T("обтьЁЖ╢М:%S"), headerStr.data());
 		assert(false);
-		//TODO
+		//TODO:
 	}
 }
 
