@@ -66,6 +66,7 @@ CHTTPLibDlg::CHTTPLibDlg(CWnd* pParent /*=NULL*/)
 	, m_bBaidu(FALSE)
 	, m_bQQ(FALSE)
 	, m_bDownFile(TRUE)
+	, m_uConn(1)
 {
 	m_hIcon = AfxGetApp()->LoadIcon(IDR_MAINFRAME);
 }
@@ -83,6 +84,8 @@ void CHTTPLibDlg::DoDataExchange(CDataExchange* pDX)
 	DDX_Check(pDX, IDC_BAIDU, m_bBaidu);
 	DDX_Check(pDX, IDC_QQ, m_bQQ);
 	DDX_Check(pDX, IDC_DOWNFILE, m_bDownFile);
+	DDX_Text(pDX, IDC_CONN, m_uConn);
+	DDV_MinMaxUInt(pDX, m_uConn, 1, 5);
 }
 
 BEGIN_MESSAGE_MAP(CHTTPLibDlg, CDialogEx)
@@ -239,7 +242,7 @@ void CHTTPLibDlg::DownloadFile()
 #else
 	wstring strFile = _T("d:\\data") + oss.str() + _T(".zip");
 #endif // DEBUG
-	downloadMgr_.AddDownload(strFile, std::string(CW2A(m_strURL)), std::string(CW2A(m_strCookie)));
+	downloadMgr_.AddDownload(m_uConn, strFile, std::string(CW2A(m_strURL)), std::string(CW2A(m_strCookie)));
 }
 
 void CHTTPLibDlg::OnBnClickedDownload()

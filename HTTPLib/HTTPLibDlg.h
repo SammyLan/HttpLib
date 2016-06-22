@@ -54,4 +54,5 @@ public:
 	BOOL m_bBaidu;
 	BOOL m_bQQ;
 	BOOL m_bDownFile;
+	UINT m_uConn;
 };
