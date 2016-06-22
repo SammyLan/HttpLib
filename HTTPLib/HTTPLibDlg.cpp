@@ -234,7 +234,11 @@ void CHTTPLibDlg::DownloadFile()
 	++s_count;
 	std::wostringstream oss;
 	oss << s_count;
+#ifdef DEBUG
 	wstring strFile = _T("d:\\download\\data") + oss.str() + _T(".zip");
+#else
+	wstring strFile = _T("d:\\data") + oss.str() + _T(".zip");
+#endif // DEBUG
 	downloadMgr_.AddDownload(strFile, std::string(CW2A(m_strURL)), std::string(CW2A(m_strCookie)));
 }
 
