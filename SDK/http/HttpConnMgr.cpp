@@ -16,7 +16,7 @@ CHttpConnMgr::~CHttpConnMgr()
 /* CURLOPT_OPENSOCKETFUNCTION */
 http::SocketInfoPtr CHttpConnMgr::opensocket(curlsocktype purpose, struct curl_sockaddr *address)
 {
-	LogFinal(HTTPLOG,_T("opensocket :"));
+	
 
 	http::SocketInfoPtr newSocket;
 
@@ -33,7 +33,7 @@ http::SocketInfoPtr CHttpConnMgr::opensocket(curlsocktype purpose, struct curl_s
 		if (ec)
 		{
 			/* An error occurred */
-			LogFinal(HTTPLOG,_T("ERROR: Returning CURL_SOCKET_BAD to signal error,ec=%S"),ec.message());
+			LogErrorEx(HTTPLOG,_T("ERROR: Returning CURL_SOCKET_BAD to signal error,ec=%S"),ec.message());
 		}
 		else
 		{
@@ -41,8 +41,12 @@ http::SocketInfoPtr CHttpConnMgr::opensocket(curlsocktype purpose, struct curl_s
 			/* save it for monitoring */
 			socketMap_.insert(std::make_pair(newSocket->tcpSocket.native_handle(), tcp_socket));
 			int size =(int) socketMap_.size();
-			LogFinal(HTTPLOG,_T("Opened socket %d,total size = %i"), newSocket->tcpSocket.native_handle(),size);
+			LogFinal(HTTPLOG,_T("Opened socket %p,total size = %d"), (SOCKET)newSocket->tcpSocket.native_handle(),size);
 		}
+	}
+	else
+	{
+		LogErrorEx(HTTPLOG,_T("unknown  operation :"));
 	}
 
 	return newSocket;

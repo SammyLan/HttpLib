@@ -64,3 +64,7 @@ void http::mcode_or_die(const char *where, int code)
 	}
 }
 
+namespace convert
+{
+	std::wstring_convert<std::codecvt_utf8<wchar_t>> utf8ToUnicode;
+}

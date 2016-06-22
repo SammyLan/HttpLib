@@ -4,6 +4,7 @@
 #include "HttpRequest.h"
 #include "HttpConnMgr.h"
 #include "HttpGlobal.h"
+#include <codecvt>
 
 
 CHttpSession::CHttpSession(boost::asio::io_service & io_service, CHttpConnMgr * pConnMgr)
@@ -42,18 +43,18 @@ CURLMcode CHttpSession::removeHandle(CHttpRequest * pHandle)
 int CHttpSession::socket_callback(CURL *easy, curl_socket_t s, int what, CHttpSession *pThis, http::SocketInfo * sockInfo)
 {
 	const char *whatstr[] = { "none", "IN", "OUT", "INOUT", "REMOVE" };
-	LogDev(HTTPLOG,_T("sock_cb: socket=%d, what=%d, sockp=%p"), s, what, sockInfo);
-	LogDev(HTTPLOG,_T("socket callback: socket=%d e=%p what=%S "), s, easy, whatstr[what]);
-
+	LogDev(HTTPLOG,_T("sock_cb: socket=%p,easy=%p what=%d(%S), sockp=%p"), s, easy, what, whatstr[what], sockInfo);
 	auto ret = pThis->pConnMgr_->getSock(s);
+
 	if (ret.get() == nullptr)
 	{
+		LogErrorEx(HTTPLOG, _T("can't get the soket"));
 		return 0;
 	}
 
 	if (what == CURL_POLL_REMOVE)
 	{
-		LogDev(HTTPLOG,_T( "CURL_POLL_REMOVE"));
+		LogFinal(HTTPLOG,_T( "CURL_POLL_REMOVE"));
 		curl_multi_assign(pThis->hMulti_, s, NULL);
 	}
 	else
@@ -74,18 +75,18 @@ int CHttpSession::socket_callback(CURL *easy, curl_socket_t s, int what, CHttpSe
 /* Update the event timer after curl_multi library calls */
 int CHttpSession::timer_callback(CURLM *multi, long timeout_ms, CHttpSession *pThis)
 {
-	LogDev(HTTPLOG,_T( "multi_timer_cb: timeout_ms %ld"), timeout_ms);
-
 	/* cancel running timer */
 	pThis->timer_.cancel();
 	if (timeout_ms > 0)
 	{
+		LogDev(HTTPLOG,_T( "multi_timer_cb: timeout_ms %ld"), timeout_ms);
 		/* update timer */
 		pThis->timer_.expires_from_now(boost::posix_time::millisec(timeout_ms));
 		pThis->timer_.async_wait(std::bind(&timer_cb, std::placeholders::_1, pThis, timeout_ms));
 	}
 	else if (timeout_ms == 0)
 	{
+		LogDev(HTTPLOG, _T("timeout_ms == 0"));
 		/* call timeout function immediately */
 		boost::system::error_code error; /*success*/
 		timer_cb(error, pThis, timeout_ms);
@@ -93,7 +94,7 @@ int CHttpSession::timer_callback(CURLM *multi, long timeout_ms, CHttpSession *pT
 	}
 	else
 	{
-		LogDev(HTTPLOG, _T("multi_timer_cb: timeout_ms %ld"), timeout_ms);
+		LogFinal(HTTPLOG, _T("multi_timer_cb: timeout_ms %ld"), timeout_ms);
 	}
 
 	return 0;
@@ -101,24 +102,25 @@ int CHttpSession::timer_callback(CURLM *multi, long timeout_ms, CHttpSession *pT
 
 void CHttpSession::timer_cb(const boost::system::error_code & error, CHttpSession *pThis,long timeout_ms)
 {
-	//if (!error)
+	if (!error) //TODO
 	{
-		LogDev(HTTPLOG,_T( "timer_cb: "));
+		LogDev(HTTPLOG,_T( "timer_cb: %lu"), timeout_ms);
 		CURLMcode rc = curl_multi_socket_action(pThis->hMulti_, CURL_SOCKET_TIMEOUT, 0, &pThis->nStillRunning_);
 
 		http::mcode_or_die("timer_cb: curl_multi_socket_action", rc);
 		pThis->check_multi_info();
 	}
-	//else
+	else
 	{
-		auto desc = error.message();
-		LogFinal(HTTPLOG, _T("%S"),desc.c_str());
+		//std::wstring desc (convert::utf8ToUnicode.from_bytes(error.message()));
+		std::wstring desc(CA2W(error.message().c_str()));
+		LogErrorEx(HTTPLOG, _T("timer_cb error:%s"),desc.c_str());
 	}
 }
 
 void CHttpSession::setSocket(http::SocketInfoPtr & socketInfo, curl_socket_t s, CURL*e, int act)
 {
-	LogDev(HTTPLOG,_T( "setsock: socket=%d, act=%d"), s, act);
+	LogDev(HTTPLOG,_T( "setsock: socket=%p, act=%d"), s, act);
 	if (socketInfo.get() == nullptr)
 	{
 		LogErrorEx(HTTPLOG,_T( "socket %d is a c-ares socket, ignoring"), s);
@@ -148,11 +150,9 @@ void CHttpSession::setSocket(http::SocketInfoPtr & socketInfo, curl_socket_t s, 
 void CHttpSession::check_multi_info()
 {
 	
-	CURLMsg *msg;
-	int msgs_left;
+	CURLMsg * msg = nullptr;
+	int msgs_left = 0;
 	CHttpRequest *conn;
-
-	LogDev(HTTPLOG,_T( "REMAINING: %d"), nStillRunning_);
 
 	while ((msg = curl_multi_info_read(hMulti_, &msgs_left)))
 	{
@@ -173,15 +173,16 @@ void CHttpSession::event_cb(CHttpSession *pThis, http::SocketInfoPtr& tcp_socket
 	LogDev(HTTPLOG,_T( "event_cb: action=%d"), action);
 	assert(tcp_socket->tcpSocket.native_handle() == s);
 	CURLMcode rc = CURLM_OK;
-	auto &&errMsg = err.message();
+	
 	if (err)
 	{
-		LogDev(HTTPLOG, _T("event_cb: socket=%d action=%d \nERROR=%S"), s, action, errMsg.c_str());
-		rc = curl_multi_socket_action(pThis->hMulti_, tcp_socket->tcpSocket.native_handle(), CURL_CSELECT_ERR, &pThis->nStillRunning_);
+		std::wstring errMsg(CA2W(err.message().c_str()));
+		LogError(HTTPLOG, _T("1event_cb: socket=%p action=%d \nERROR=%s"), s, action, errMsg.c_str());
+		//rc = curl_multi_socket_action(pThis->hMulti_, tcp_socket->tcpSocket.native_handle(), CURL_CSELECT_ERR, &pThis->nStillRunning_);
 	}
 	else
 	{
-		LogDev(HTTPLOG, _T("event_cb: socket=%d action=%d \nERROR=%S"), s, action, errMsg.c_str());
+		//LogDev(HTTPLOG, _T("2event_cb: socket=%p action=%d \n"), s, action);
 		rc = curl_multi_socket_action(pThis->hMulti_, tcp_socket->tcpSocket.native_handle(), action, &pThis->nStillRunning_);
 	}
 
