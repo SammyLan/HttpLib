@@ -42,3 +42,30 @@ namespace convert
 {
 	extern std::wstring_convert<std::codecvt_utf8<wchar_t>> utf8ToUnicode;
 }
+
+namespace WYTime
+{
+	class TimeWatch {
+	public:
+		TimeWatch() { QueryPerformanceFrequency(&m_liPerfFreq); Start(); }
+
+		void Start() { QueryPerformanceCounter(&m_liPerfStart); }
+
+		int64_t Now() const 
+		{
+			LARGE_INTEGER liPerfNow;
+			QueryPerformanceCounter(&liPerfNow);
+			return(((liPerfNow.QuadPart - m_liPerfStart.QuadPart) * 1000)/ m_liPerfFreq.QuadPart);
+		}
+
+		int64_t NowInMicro() const {   // Returns # of microseconds since Start was called
+			LARGE_INTEGER liPerfNow;
+			QueryPerformanceCounter(&liPerfNow);
+			return(((liPerfNow.QuadPart - m_liPerfStart.QuadPart) * 1000000)/ m_liPerfFreq.QuadPart);
+		}
+	private:
+		LARGE_INTEGER m_liPerfFreq;   // Counts per second
+		LARGE_INTEGER m_liPerfStart;  // Starting count
+	};
+	extern TimeWatch g_watch;
+}
