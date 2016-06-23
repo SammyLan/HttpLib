@@ -5,16 +5,17 @@
 #include <map>
 #include <string>
 
-class CDownloadFileMgr:public CDownloadFile::IDelegate
+class CDownloadFileMgr:public CDownloadTask::IDelegate
 {
-	typedef std::map<int64_t, CDownloadFilePtr> DownloadList;
+	typedef std::map<int64_t, CDownloadTaskPtr> DownloadList;
 public:
 	CDownloadFileMgr(ThreadPool & ioThread, ThreadPool & nwThread, CHttpSession& hSession);
 	~CDownloadFileMgr();
-	WY::TaskID AddDownload(size_t nThread, std::wstring const & strSavePath, std::string const & strUrl, std::string const &strCookie, std::string const & strSHA = std::string(), int64_t fileSize = 0);
+	WY::TaskID AddTask(size_t nThread, std::wstring const & strSavePath, std::string const & strUrl, std::string const &strCookie, std::string const & strSHA = std::string(), int64_t fileSize = 0);
+	bool RemoveTask(WY::TaskID const taskID);
 private:
 #pragma region  delegate
-	virtual void OnFinish(bool bSuccess, WY::TaskID taskID, CDownloadFile::ResponseInfo const & info) override;
+	virtual void OnFinish(bool bSuccess, WY::TaskID taskID, CDownloadTask::ResponseInfo const & info) override;
 #pragma endregion delegate
 private:
 	WY::CWYLock		csLock_;

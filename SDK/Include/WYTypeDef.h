@@ -8,7 +8,7 @@ namespace WY
 	typedef  CAtlStringA				CWYStringA;
 	typedef  CAtlStringW				CWYStringW;
 	typedef  CAtlString					CWYString;
-	typedef  int						TaskID;
+	typedef  long long					TaskID;
 }
 using namespace WY;
 #define SHAREED_PTR_DEF(className)	typedef std::shared_ptr<className> className##Ptr

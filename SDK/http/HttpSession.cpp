@@ -66,7 +66,7 @@ int CHttpSession::socket_callback(CURL *easy, curl_socket_t s, int what, CHttpSe
 			sockInfo = ret.get();
 			curl_multi_assign(pThis->hMulti_, s, sockInfo);
 		}
-		assert(ret.get() == sockInfo);
+		WYASSERT(ret.get() == sockInfo);
 		LogDev(LOGFILTER, _T("Changing action from %S to %S"), whatstr[sockInfo->mask], whatstr[what]);
 		pThis->setSocket(ret, s, easy, what & (~sockInfo->mask));// only add new instrest
 	}
@@ -128,7 +128,7 @@ void CHttpSession::setSocket(http::SocketInfoPtr & socketInfo, curl_socket_t s, 
 		LogErrorEx(LOGFILTER,_T( "socket %d is a c-ares socket, ignoring"), s);
 		return;
 	}
-	assert(socketInfo->tcpSocket.native_handle() == s);
+	WYASSERT(socketInfo->tcpSocket.native_handle() == s);
 	auto & tcp_socket = socketInfo->tcpSocket;
 	if (act == CURL_POLL_IN)
 	{
@@ -173,7 +173,7 @@ void CHttpSession::check_multi_info()
 void CHttpSession::event_cb(CHttpSession *pThis, http::SocketInfoPtr& tcp_socket, curl_socket_t s, CURL*e, int action, const boost::system::error_code &err)
 {
 	LogDev(LOGFILTER,_T( "event_cb: action=%d"), action);
-	assert(tcp_socket->tcpSocket.native_handle() == s);
+	WYASSERT(tcp_socket->tcpSocket.native_handle() == s);
 	CURLMcode rc = CURLM_OK;
 	
 	if (err)

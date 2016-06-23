@@ -59,7 +59,7 @@ void http::mcode_or_die(const char *where, int code)
 			/* ignore this error */
 			return;
 		}
-		assert(false);
+		WYASSERT(false);
 		LogErrorEx(HTTPLOG,_T( "ERROR: %S returns %S"), where, s);
 		exit(code);
 	}

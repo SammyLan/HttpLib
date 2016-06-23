@@ -93,6 +93,7 @@ BEGIN_MESSAGE_MAP(CHTTPLibDlg, CDialogEx)
 	ON_WM_PAINT()
 	ON_WM_QUERYDRAGICON()
 	ON_BN_CLICKED(ID_DOWNLOAD, &CHTTPLibDlg::OnBnClickedDownload)
+	ON_BN_CLICKED(IDCANCELDOWNLOAD, &CHTTPLibDlg::OnBnClickedCancelDownload)
 END_MESSAGE_MAP()
 
 
@@ -193,7 +194,7 @@ void CHTTPLibDlg::DownloadBaidu()
 	pRequestBaidu->get(std::string(CW2A(m_strURL)), cpr::Parameters{}, CHttpRequest::RecvData_Body | CHttpRequest::RecvData_Header,
 		[=](cpr::Response const & respond, data::BufferPtr const & body)
 	{
-		assert(respond.error.code == cpr::ErrorCode::OK);
+		WYASSERT(respond.error.code == cpr::ErrorCode::OK);
 		if (respond.error.code == cpr::ErrorCode::OK)
 		{
 			if (body.get() != nullptr)
@@ -220,7 +221,7 @@ void CHTTPLibDlg::DownloadQQ()
 		std::string("www.qq.com"), cpr::Parameters{}, CHttpRequest::RecvData_Body | CHttpRequest::RecvData_Header,
 		[=](cpr::Response const & respond, data::BufferPtr const & body)
 	{
-		assert(respond.error.code == cpr::ErrorCode::OK);
+		WYASSERT(respond.error.code == cpr::ErrorCode::OK);
 		LogFinal(LOGFILTER, _T("End"));
 	},
 		[=](data::byte const * data, size_t size)
@@ -242,7 +243,8 @@ void CHTTPLibDlg::DownloadFile()
 #else
 	wstring strFile = _T("d:\\data") + oss.str() + _T(".zip");
 #endif // DEBUG
-	downloadMgr_.AddDownload(m_uConn, strFile, std::string(CW2A(m_strURL)), std::string(CW2A(m_strCookie)));
+	auto taskID = downloadMgr_.AddTask(m_uConn, strFile, std::string(CW2A(m_strURL)), std::string(CW2A(m_strCookie)));
+	taskList_.push(taskID);
 }
 
 void CHTTPLibDlg::OnBnClickedDownload()
@@ -259,5 +261,16 @@ void CHTTPLibDlg::OnBnClickedDownload()
 	if (m_bBaidu)
 	{
 		DownloadBaidu();
+	}
+}
+
+
+void CHTTPLibDlg::OnBnClickedCancelDownload()
+{
+	// TODO: 在此添加控件通知处理程序代码
+	if (!taskList_.empty())
+	{
+		downloadMgr_.RemoveTask(taskList_.top());
+		taskList_.pop();
 	}
 }

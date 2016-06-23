@@ -31,7 +31,7 @@ TCHAR LOGFILTER_INFO[]= _T("WY_INFO");
 int  g_nLogLevel = LOGL_Info;
 
 #ifdef _DEBUG
-BOOL g_bAssert = FALSE;
+BOOL g_bAssert = true;
 void InitAssertFlag()
 {
 	TCHAR szVar[256];

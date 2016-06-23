@@ -131,6 +131,7 @@ extern BOOL g_bAssert;
 #define LogError(fmt,...) do { TXLog_DoLog(__FILEW__, __LINE__, __FUNCTIONW__, LOGL_Error, LOGFILTER_ERROR, fmt, __VA_ARGS__);WYASSERT(FALSE);}while(0)
 #define LogErrorEx(flt,fmt,...) TXLog_DoLog(__FILEW__, __LINE__, __FUNCTIONW__, LOGL_Error, flt,fmt, __VA_ARGS__)
 #define LogFinal(flt,fmt,...) TXLog_DoLog(__FILEW__, __LINE__, __FUNCTIONW__, LOGL_Info, flt,fmt, __VA_ARGS__)
+#define LogFinalEx(level,flt,fmt,...) TXLog_DoLog(__FILEW__, __LINE__, __FUNCTIONW__, level, flt,fmt, __VA_ARGS__)
 #define LogDev(flt,fmt,...)	  TXLog_DoLog(__FILEW__, __LINE__, __FUNCTIONW__, LOGL_Dev, flt,fmt, __VA_ARGS__)
 
 

@@ -6,9 +6,9 @@
 #include <fstream>
 #include <File/AsyncFile.h>
 
-class CDownloadFile;
-typedef std::shared_ptr<CDownloadFile> CDownloadFilePtr;
-class CDownloadFile:public std::enable_shared_from_this<CDownloadFile>
+class CDownloadTask;
+typedef std::shared_ptr<CDownloadTask> CDownloadTaskPtr;
+class CDownloadTask:public std::enable_shared_from_this<CDownloadTask>
 {
 	typedef std::map<int64_t, CHttpRequestPtr> RequestList;
 public:
@@ -29,28 +29,34 @@ public:
 	
 	 
 public:
-	CDownloadFile(WY::TaskID const taskID, CDownloadFile::IDelegate * pDelegate,
-		ThreadPool & ioThread, ThreadPool & nwThread, CHttpSession& hSession);
-	~CDownloadFile();
-	bool BeginDownload(size_t nThread,std::wstring const & strSavePath, std::string const & strUrl, std::string const &strCookie = std::string(),::string const & strSHA = std::string(), int64_t fileSize = 0);
+	CDownloadTask(WY::TaskID const taskID, CDownloadTask::IDelegate * pDelegate,
+		ThreadPool & ioThread, ThreadPool & nwThread, CHttpSession& hSession,
+		size_t nThread, std::wstring const & strSavePath, std::string const & strUrl,
+		std::string const &strCookie, ::string const & strSHA, int64_t fileSize);
+	~CDownloadTask();
+	bool BeginDownload();
+	void CancelDownload();
 private:
 	void GetFileInfo();
 	void DownloadFile();
-	void OnRespond(cpr::Response const & response, data::BufferPtr const & body, data::SaveDataPtr const& pData,int64_t offset);
+	void OnRespond(cpr::Response const & response, data::BufferPtr const & body, data::SaveDataPtr const& pData,int64_t offset, int64_t fileSize);
 	void OnDataRecv(data::byte const * data, size_t size, data::SaveDataPtr const & pData);
 	void SaveData(data::SaveDataPtr const & pData,bool bDel = false);
 	void OnSaveDataHandler(data::SaveDataPtr const & pData,bool bDel,
 		const boost::system::error_code& error, // Result of operation.
 		std::size_t bytes_transferred ,          // Number of bytes written.
-		CDownloadFilePtr const&
+		CDownloadTaskPtr const&
 		);
 	
-	void OnFinish(bool bSuccess,ResponseInfo const & info);
+	void OnFinish(bool bSuccess);
 	ResponseInfo GetResponseInfo(cpr::Response const & response);
-	bool DownLoadNextRange(int64_t const beg, int64_t const end);
-	void DumpRespond(cpr::Response const & response);
+	bool DownLoadNextRange(int64_t const beg, int64_t const end);	
 	bool CreareFile();
 	void SetFile();
+#pragma region dump info
+	void DumpRespond(cpr::Response const & response);
+	void DumpSelfInfo(LPCTSTR strMsg, int logLevel = LOGL_Info);
+#pragma endregion dump info
 private:
 	WY::TaskID const	taskID_;
 	IDelegate *			pDelegate_;
@@ -58,12 +64,14 @@ private:
 	ThreadPool  &		nwThreadPool_;
 	CHttpSession&		hSession_;
 	std::wstring		strSavePath_;
-	std::string			strUrl_;
-	std::string			strCookie_;	
-	std::string			strSHA_;
+	std::string	const	strUrl_;
+	std::string	const	strCookie_;	
+	std::string	const	strSHA_;
 	int64_t				fileSize_;
 	size_t				nThread_ = 1;
 	RequestList			requestList_;
 	WY::File::AsioFilePtr pSaveFile_;
 	WY::CWYLock			csLock_;
+	ResponseInfo		responseInfo_;
+	bool				bCancel_ = false;
 };

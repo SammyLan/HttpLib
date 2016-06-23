@@ -3,6 +3,7 @@
 #include <sstream>
 #include <http/HttpGlobal.h>
 #include <winioctl.h>
+#include "WYErrorDef.h"
 #ifdef min
 #undef min
 #endif // min
@@ -13,39 +14,43 @@ size_t const s_save_size = 1024 * 64;
 size_t const s_block_size = 1024 * 1024 * 1; //10M
 size_t const s_srv_block_size = 1024 * 512;
 
-CDownloadFile::CDownloadFile(WY::TaskID const taskID, CDownloadFile::IDelegate * pDelegate,ThreadPool & ioThread, ThreadPool & nwThread, CHttpSession& hSession)
+CDownloadTask::CDownloadTask(WY::TaskID const taskID, CDownloadTask::IDelegate * pDelegate,
+	ThreadPool & ioThread, ThreadPool & nwThread, CHttpSession& hSession,
+	size_t nThread, std::wstring const & strSavePath, std::string const & strUrl,
+	std::string const & strCookie, std::string const & strSHA, int64_t fileSize)
 	:taskID_(taskID)
 	,pDelegate_(pDelegate)
 	,ioThreadPool_(ioThread)
 	,nwThreadPool_(nwThread)
 	,hSession_(hSession)
+	,strSavePath_(strSavePath)
+	,strUrl_(strUrl)
+	,strCookie_(strCookie)
+	,strSHA_(strSHA)
+	,fileSize_(fileSize)
+	,nThread_(nThread)
 {
-
+	std::get<HttpCode>(responseInfo_) = 200;
+	DumpSelfInfo(_T("Create download Task"));
 }
 
-CDownloadFile::~CDownloadFile()
+CDownloadTask::~CDownloadTask()
 {
-	LogFinal(LOGFILTER, _T("~CHttpDownload"));
+	DumpSelfInfo(_T("Destory download Task"));
 }
 
-bool CDownloadFile::BeginDownload(size_t nThread,std::wstring const & strSavePath, std::string const & strUrl, std::string const & strCookie, std::string const & strSHA, int64_t fileSize)
+bool CDownloadTask::BeginDownload()
 {
-	strSavePath_ = strSavePath.c_str();
-	strUrl_ = strUrl;
-	strCookie_ = strCookie;
-	strSHA_ = strSHA;
-	fileSize_ = fileSize;
-	nThread_ = nThread;
-	
+	LockGuard gurad(csLock_);
 	if (!CreareFile())
 	{
-		ResponseInfo resp;
-		std::get<UserReturnCode>(resp) = ::GetLastError();
-		OnFinish(false, resp);
+		std::get<UserReturnCode>(responseInfo_) = ::GetLastError();
+		OnFinish(false);
+		DumpSelfInfo(_T("Create file failed"), LOGL_Error);
 		return false;
 	}
 
-	if (nThread > 1)
+	if (nThread_ > 1)
 	{
 		GetFileInfo();
 	}
@@ -56,7 +61,18 @@ bool CDownloadFile::BeginDownload(size_t nThread,std::wstring const & strSavePat
 	return true;
 }
 
-void CDownloadFile::GetFileInfo()
+void CDownloadTask::CancelDownload()
+{
+	LockGuard gurad(csLock_);
+	bCancel_ = true;
+	for (auto it = requestList_.begin(); it != requestList_.end(); it++)
+	{
+		it->second->cancel();
+	}
+	DumpSelfInfo(_T("Cancel task"));
+}
+
+void CDownloadTask::GetFileInfo()
 {
 	auto pHttpRequest = std::make_shared<CHttpRequest>(&hSession_);
 	requestList_.insert(std::make_pair(0, pHttpRequest));
@@ -68,13 +84,20 @@ void CDownloadFile::GetFileInfo()
 	pHttpRequest->headRequest(std::string(strUrl_), cpr::Parameters{},
 		[=](cpr::Response const & response, data::BufferPtr const & body)
 	{
+		LockGuard gurad(csLock_);
+		
 		int64_t end = WYTime::g_watch.Now();
 		LogFinal(LOGFILTER, _T("take time=%llu"), end - beg);
 
 		auto pRequest = *requestList_.begin();
 		requestList_.clear();
-
 		auto && ret = GetResponseInfo(response);
+		if (this->bCancel_)
+		{
+			OnFinish(true);
+			return;
+		}
+
 		auto curlCode = std::get<CurlErrorCode>(ret);
 		auto httpCode = std::get<HttpCode>(ret);
 		auto userReturnCode = std::get<UserReturnCode>(ret);
@@ -89,9 +112,9 @@ void CDownloadFile::GetFileInfo()
 			{
 				if (fileSize_ != std::get<ContentLength>(ret))
 				{
-					assert(false);
-					std::get<UserReturnCode>(ret) = 1;//TODO:
-					OnFinish(false, ret);
+					WYASSERT(false);
+					std::get<UserReturnCode>(responseInfo_) = WYErrorCode::Download_HeadSizeConflict;
+					OnFinish(false);
 					return;
 				}
 			}
@@ -99,14 +122,16 @@ void CDownloadFile::GetFileInfo()
 		}
 		else
 		{
-			assert(false);
-			OnFinish(false, ret);
+			WYASSERT(false);
+			responseInfo_ = ret;
+			OnFinish(false);
 		}
 	});
 }
 
-void CDownloadFile::DownloadFile()
+void CDownloadTask::DownloadFile()
 {
+	DumpSelfInfo(_T("Start download"));
 	SetFile();
 	size_t nThread = (int)std::min((int64_t)nThread_, fileSize_ / s_block_size);
 	if (nThread == 0)
@@ -130,15 +155,16 @@ void CDownloadFile::DownloadFile()
 		beg = fileSize_;
 		blockInfo.push_back(beg);
 	}
-	assert((nThread + 1) == blockInfo.size());
+	WYASSERT((nThread + 1) == blockInfo.size());
 	for (size_t i = 1; i < blockInfo.size(); ++i)
 	{
 		DownLoadNextRange(blockInfo[i - 1], blockInfo[i]);
 	}
 }
 
-void CDownloadFile::OnRespond(cpr::Response const & response, data::BufferPtr const & body, data::SaveDataPtr const& pData, int64_t offset)
+void CDownloadTask::OnRespond(cpr::Response const & response, data::BufferPtr const & body, data::SaveDataPtr const& pData, int64_t offset,int64_t fileSize)
 {
+	LockGuard gurad(csLock_);
 	auto itFind = requestList_.find(offset);
 	auto pRequest = itFind->second;
 	requestList_.erase(itFind);
@@ -149,35 +175,46 @@ void CDownloadFile::OnRespond(cpr::Response const & response, data::BufferPtr co
 	auto userReturnCode = std::get<UserReturnCode>(ret);
 
 	bool bSuccess = ((curlCode == (int)cpr::ErrorCode::OK) && (httpCode == 200 || httpCode == 206) && (userReturnCode == 0));
+
 	if (bSuccess)
 	{
-		auto recvSize = std::get<ContentLength>(ret);
-		if (fileSize_ == 0)//不需要从服务器获取文件大小
+		do
 		{
-			fileSize_ = recvSize;
-		}
-		
-		if (pData->first + pData->second.size() != offset + recvSize)
-		{
-			assert(false);
-			LogErrorEx(LOGFILTER, _T("数据长度不对,文件长度为%ll,接受长度为%ll"), pData->first + pData->second.size(), offset + recvSize);
-			//TODO:
-		}
-		else
-		{
-			SaveData(pData, !requestList_.empty());
-		}
+			auto recvSize = std::get<ContentLength>(ret);
+			if (fileSize == 0)//不需要从服务器获取文件大小
+			{
+				fileSize_ = recvSize;
+			}
+			WYASSERT(fileSize == recvSize);
+			bSuccess = ((fileSize == recvSize) && (pData->first + pData->second.size() == offset + recvSize));
+			if (!bSuccess)
+			{
+				WYASSERT(false);
+				LogErrorEx(LOGFILTER, _T("数据长度不对,文件长度为%llu,接受长度为%llu"), pData->first + pData->second.size(), offset + recvSize);
+				DumpSelfInfo(_T("请求大小跟接收大小不一致"), LOGL_Error);
+				std::get<UserReturnCode>(responseInfo_) = WYErrorCode::Download_RequestSizeConflict;
+				break;
+			}
+			else
+			{
+				SaveData(pData, requestList_.empty());
+			}
+		} while (false);		
 	}
 	else
 	{
+		responseInfo_ = ret;
 		data::Buffer const & headerStr = pRequest->getHeader();
 		LogErrorEx(LOGFILTER, _T("下载出错:%S"), headerStr.data());
-		assert(false);
-		//TODO:Error
+		WYASSERT(false);
+	}
+	if (requestList_.empty())
+	{
+		OnFinish(bSuccess);
 	}
 }
 
-void CDownloadFile::OnDataRecv(data::byte const * data, size_t size, data::SaveDataPtr const& pData)
+void CDownloadTask::OnDataRecv(data::byte const * data, size_t size, data::SaveDataPtr const& pData)
 {
 	auto & pBuff = pData->second;
 	auto curSize = pBuff.size();
@@ -200,44 +237,54 @@ void CDownloadFile::OnDataRecv(data::byte const * data, size_t size, data::SaveD
 	}
 }
 
-void CDownloadFile::SaveData(data::SaveDataPtr const & pData, bool bDel)
+void CDownloadTask::SaveData(data::SaveDataPtr const & pData, bool bDel)
 {
 	auto & pBuff = pData->second;
 	auto size = pBuff.size();
 	pSaveFile_->async_write_some_at(pData->first, boost::asio::buffer(pBuff.data(), size),
-		std::bind(&CDownloadFile::OnSaveDataHandler,this, pData, bDel,std::placeholders::_1, std::placeholders::_2,shared_from_this()));
+		std::bind(&CDownloadTask::OnSaveDataHandler,this, pData, bDel,std::placeholders::_1, std::placeholders::_2,shared_from_this()));
 }
 
-void CDownloadFile::OnSaveDataHandler(
+void CDownloadTask::OnSaveDataHandler(
 	data::SaveDataPtr const & pData,bool bDel,
 	const boost::system::error_code& error, // Result of operation.
 	std::size_t bytes_transferred,           // Number of bytes written.
-	CDownloadFilePtr const&
+	CDownloadTaskPtr const& pTask
 	)
 {
 	if (bDel)
 	{
-		ResponseInfo info;
-		OnFinish(true,info);
+		OnFinish(true);
 	}
 }
 
-void CDownloadFile::OnFinish(bool bSuccess,ResponseInfo const & info)
+void CDownloadTask::OnFinish(bool bSuccess)
 {
+	if (bCancel_)
+	{
+		DumpSelfInfo(_T("OnFinsh: Cancel完成"), LOGL_Error);
+		bSuccess = true;
+	}
 	if (!bSuccess)
 	{
 		LogErrorEx(LOGFILTER, _T("curl_error=%i, curl_error_msg=%S, HttpCode=%i, UserReturnCode=%i\r\nURL=%S"),
-			std::get<CurlErrorCode>(info),
-			std::get<CurlErrorMsg>(info).c_str(),
-			::get<HttpCode>(info),
-			::get<UserReturnCode>(info),
+			std::get<CurlErrorCode>(responseInfo_),
+			std::get<CurlErrorMsg>(responseInfo_).c_str(),
+			::get<HttpCode>(responseInfo_),
+			::get<UserReturnCode>(responseInfo_),
 			strUrl_.c_str());
+		DumpSelfInfo(_T("OnFinsh:下载出错"), LOGL_Error);
 	}
-	pDelegate_->OnFinish(bSuccess,taskID_, info);
+	else
+	{
+		DumpSelfInfo(_T("OnFinsh:下载完成"), LOGL_Error);
+	}
+	
+	pDelegate_->OnFinish(bSuccess,taskID_, responseInfo_);
 	//ioThreadPool_.postTask(std::bind(&IDelegate::OnFinish, pDelegate_,bSuccess, taskID_,info));
 }
 
-CDownloadFile::ResponseInfo CDownloadFile::GetResponseInfo(cpr::Response const & response)
+CDownloadTask::ResponseInfo CDownloadTask::GetResponseInfo(cpr::Response const & response)
 {
 	ResponseInfo res;
 	auto const & header = response.header;
@@ -273,17 +320,18 @@ CDownloadFile::ResponseInfo CDownloadFile::GetResponseInfo(cpr::Response const &
 	return res;
 }
 
-bool CDownloadFile::DownLoadNextRange(int64_t const beg, int64_t const end)
+bool CDownloadTask::DownLoadNextRange(int64_t const beg, int64_t const end)
 {
+	auto fileSize = end - beg;
 	if (end != fileSize_)
 	{
 		if ((end & 0x7FFFF) != 0)
 		{
-			assert(false);
-			//TODO:
+			WYASSERT(false);
+			LogErrorEx(LOGFILTER, _T("分块不对齐"));
 		}
 	}
-	LogDev(LOGFILTER, _T("Request next range:%llu"), beg);
+	LogFinal(LOGFILTER, _T("Request next range:%llu"), beg);
 	
 	auto pHttpRequest = std::make_shared<CHttpRequest>(&hSession_);
 	requestList_.insert(std::make_pair(beg, pHttpRequest));
@@ -301,13 +349,13 @@ bool CDownloadFile::DownLoadNextRange(int64_t const beg, int64_t const end)
 	}
 	
 	pHttpRequest->get(std::string(strUrl_), cpr::Parameters{}, CHttpRequest::RecvData_Body | CHttpRequest::RecvData_Header,
-		std::bind(&CDownloadFile::OnRespond, this, std::placeholders::_1, std::placeholders::_2, pData,beg),
-		std::bind(&CDownloadFile::OnDataRecv, this, std::placeholders::_1, std::placeholders::_2, pData)
+		std::bind(&CDownloadTask::OnRespond, this, std::placeholders::_1, std::placeholders::_2, pData,beg, fileSize),
+		std::bind(&CDownloadTask::OnDataRecv, this, std::placeholders::_1, std::placeholders::_2, pData)
 		);
 	return true;
 }
 
-bool CDownloadFile::CreareFile()
+bool CDownloadTask::CreareFile()
 {
 	bool bRet = false;
 	do
@@ -326,7 +374,7 @@ bool CDownloadFile::CreareFile()
 	return bRet;
 }
 
-void CDownloadFile::SetFile()
+void CDownloadTask::SetFile()
 {
 	auto hFile = pSaveFile_->native_handle();
 	LARGE_INTEGER liOffset;
@@ -340,3 +388,18 @@ void CDownloadFile::SetFile()
 		return;
 	}
 }
+
+#pragma region dump info
+
+void CDownloadTask::DumpRespond(cpr::Response const & response)
+{
+
+}
+
+void CDownloadTask::DumpSelfInfo(LPCTSTR strMsg,int logLevel)
+{
+	LogFinalEx(logLevel,LOGFILTER, _T("%s:taskID=%llu,filePath=%s\r\nURL=%S\r\nCookie=%S\r\nstrSHA=%S\r\nfileSize=%llu"),
+		strMsg, taskID_, strSavePath_.c_str(), strUrl_.c_str(), strCookie_.c_str(), strSHA_.c_str(), fileSize_);
+}
+
+#pragma endregion dump info

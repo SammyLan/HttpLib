@@ -9,6 +9,7 @@
 #include "Thread\ThreadPool.h"
 #include "FileSign\FileSignMgr.h"
 #include <Download/DownloadFileMgr.h>
+#include <stack>
 
 // CHTTPLibDlg ¶Ô»°¿ò
 class CHTTPLibDlg : public CDialogEx
@@ -49,10 +50,12 @@ private:
 	CWYFileSignMgr m_pFileSignMgr;
 public:
 	afx_msg void OnBnClickedDownload();
+	stack<WY::TaskID> taskList_;
 	CString m_strURL;
 	CString m_strCookie;
 	BOOL m_bBaidu;
 	BOOL m_bQQ;
 	BOOL m_bDownFile;
 	UINT m_uConn;
+	afx_msg void OnBnClickedCancelDownload();
 };

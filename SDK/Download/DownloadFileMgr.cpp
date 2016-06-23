@@ -17,33 +17,60 @@ CDownloadFileMgr::~CDownloadFileMgr()
 	LogFinal(LOGFILTER, _T("~CDownloadFileMgr destructor"));
 }
 
-WY::TaskID CDownloadFileMgr::AddDownload(size_t nThread, std::wstring const & strSavePath, std::string const & strUrl, std::string const &strCookie , std::string const & strSHA , int64_t fileSize )
+WY::TaskID CDownloadFileMgr::AddTask(size_t nThread, std::wstring const & strSavePath, std::string const & strUrl, std::string const &strCookie , std::string const & strSHA , int64_t fileSize )
 {
 	static WY::TaskID s_nextTaskID = 0;
 	WY::TaskID taskID = 0;
 	{
 		WY::LockGuard guard(csLock_);
-		auto taskID = ++s_nextTaskID;
-		auto pTask = std::make_shared<CDownloadFile>(taskID,this,ioThreadPool_, nwThreadPool_, hSession_);
+		taskID = ++s_nextTaskID;
+		auto pTask = std::make_shared<CDownloadTask>(taskID,this,ioThreadPool_, nwThreadPool_, hSession_,nThread, strSavePath, strUrl, strCookie, strSHA, fileSize);
 		downLoadList_.insert(std::make_pair(taskID, pTask));
-		pTask->BeginDownload(nThread, strSavePath, strUrl, strCookie, strSHA, fileSize);
+		pTask->BeginDownload();
 	}	
 	return taskID;
 }
 
+bool CDownloadFileMgr::RemoveTask(WY::TaskID const taskID)
+{
+	CDownloadTaskPtr pTask;
+	{
+		WY::LockGuard guard(csLock_);
+		auto it = downLoadList_.find(taskID);
+		if (it != downLoadList_.end())
+		{
+			pTask = it->second;
+			downLoadList_.erase(it);
+		}
+	}
+	
+	if (pTask.get() != nullptr)
+	{
+		pTask->CancelDownload();
+	}
+	else
+	{
+		LogErrorEx(LOGFILTER, _T("找不到task:%llu"), taskID);
+		WYASSERT(false);
+	}
+	return pTask.get() != nullptr;
+}
+
+
 #pragma region delegate
 
-void CDownloadFileMgr::OnFinish(bool bSuccess,WY::TaskID taskID, CDownloadFile::ResponseInfo const & info)
+void CDownloadFileMgr::OnFinish(bool bSuccess,WY::TaskID taskID, CDownloadTask::ResponseInfo const & info)
 {
 	WY::LockGuard guard(csLock_);
 	auto it = downLoadList_.find(taskID);
 	if (it != downLoadList_.end())
 	{
+		auto pTask = it->second;
 		downLoadList_.erase(it);
 	}
 	else
 	{
-		LogErrorEx(LOGFILTER, _T("找不到 taskID:%llu"), taskID);
+		LogErrorEx(LOGFILTER, _T("找不到 task:%llu"), taskID);
 	}
 }
 

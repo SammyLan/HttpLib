@@ -61,7 +61,7 @@ int CAsyncFile::Read(
 	}
 	else
 	{
-		assert(0);
+		ATLASSERT(FALSE);
 	}
 	return iError;
 }
@@ -80,7 +80,7 @@ int CAsyncFile::Write(
 	}
 	else
 	{
-		assert(0);
+		ATLASSERT(FALSE);
 	}
 	return iError;
 }
