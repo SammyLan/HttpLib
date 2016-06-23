@@ -49,7 +49,7 @@ public:
 		OnDataRecv const & onHeaderRecv = OnDataRecv()
 		);
 
-	bool close();
+	bool cancel();
 	void onDone(CURLcode res);
 
 	CURL * getHandle() const { return handle_; }

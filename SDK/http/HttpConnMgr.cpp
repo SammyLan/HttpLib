@@ -2,6 +2,9 @@
 #include "HttpConnMgr.h"
 #include "HttpGlobal.h"
 #include <Winsock2.h>
+
+TCHAR const LOGFILTER[] = _T("CHttpConnMgr");
+
 CHttpConnMgr::CHttpConnMgr(boost::asio::io_service & io_service)
 	:io_service_(io_service)
 {
@@ -16,8 +19,6 @@ CHttpConnMgr::~CHttpConnMgr()
 /* CURLOPT_OPENSOCKETFUNCTION */
 http::SocketInfoPtr CHttpConnMgr::opensocket(curlsocktype purpose, struct curl_sockaddr *address)
 {
-	
-
 	http::SocketInfoPtr newSocket;
 
 	/* restrict to IPv4 */
@@ -33,7 +34,7 @@ http::SocketInfoPtr CHttpConnMgr::opensocket(curlsocktype purpose, struct curl_s
 		if (ec)
 		{
 			/* An error occurred */
-			LogErrorEx(HTTPLOG,_T("ERROR: Returning CURL_SOCKET_BAD to signal error,ec=%S"),ec.message());
+			LogErrorEx(LOGFILTER,_T("ERROR: Returning CURL_SOCKET_BAD to signal error,ec=%S"),ec.message());
 		}
 		else
 		{
@@ -41,12 +42,12 @@ http::SocketInfoPtr CHttpConnMgr::opensocket(curlsocktype purpose, struct curl_s
 			/* save it for monitoring */
 			socketMap_.insert(std::make_pair(newSocket->tcpSocket.native_handle(), tcp_socket));
 			int size =(int) socketMap_.size();
-			LogFinal(HTTPLOG,_T("Opened socket %p,total size = %d"), (SOCKET)newSocket->tcpSocket.native_handle(),size);
+			LogFinal(LOGFILTER,_T("Opened socket %p,total size = %d"), (SOCKET)newSocket->tcpSocket.native_handle(),size);
 		}
 	}
 	else
 	{
-		LogErrorEx(HTTPLOG,_T("unknown  operation :"));
+		LogErrorEx(LOGFILTER,_T("unknown  operation :"));
 	}
 
 	return newSocket;
@@ -55,7 +56,7 @@ http::SocketInfoPtr CHttpConnMgr::opensocket(curlsocktype purpose, struct curl_s
 /* CURLOPT_CLOSESOCKETFUNCTION */
 int CHttpConnMgr::close_socket( curl_socket_t item)
 {
-	LogFinal(HTTPLOG,_T("close_socket : %d"), item);
+	LogFinal(LOGFILTER,_T("close_socket : %d"), item);
 
 	auto it = socketMap_.find(item);
 

@@ -13,6 +13,7 @@ bool	CHttpRequest::s_debugMode = true;
 #else
 bool	CHttpRequest::s_debugMode = false;
 #endif
+TCHAR const LOGFILTER[] = _T("CHttpRequest");
 
 void CHttpRequest::setDebugMode(bool debugMode)
 {
@@ -38,7 +39,7 @@ CHttpRequest::CHttpRequest(CHttpSession *pSession)
 	handle_ = curl_easy_init();
 	if (!handle_)
 	{
-		LogErrorEx(HTTPLOG,_T("curl_easy_init() failed, exiting!"));
+		LogErrorEx(LOGFILTER,_T("curl_easy_init() failed, exiting!"));
 		exit(2);
 	}
 
@@ -200,8 +201,11 @@ int CHttpRequest::postMultiForm(std::string const & url,
 	return rc;
 }
 
-bool CHttpRequest::close()
+bool CHttpRequest::cancel()
 {
+	LogFinal(LOGFILTER, _T("cancle\r\nurl=%S"),url_.c_str());
+	pSession_->removeHandle(this);
+	//TODO::是否需要调用onDone?
 	return true;
 }
 
@@ -230,7 +234,7 @@ void CHttpRequest::onDone(CURLcode res)
 	auto header = cpr::util::parseHeader(header_);
 	//auto && response_string = cpr::util::parseResponse(*body_);
 	cpr::Response response{ response_code, "", header, raw_url, elapsed, cookies, error };
-	LogFinal(HTTPLOG, _T("DONE: %S => (%d) %S"), raw_url, res, error_);
+	LogFinal(LOGFILTER, _T("DONE: %S => (%d) %S"), raw_url, res, error_);
 	onRespond_(response, body_);
 }
 

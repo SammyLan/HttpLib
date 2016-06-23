@@ -7,6 +7,7 @@
 #pragma comment(lib,"libcurl_a.lib")
 #endif // _DEBUG
 
+#define HTTPLOG _T("http")
 namespace http
 {
 	CurGlobalInit::CurGlobalInit()
@@ -59,7 +60,7 @@ void http::mcode_or_die(const char *where, int code)
 			return;
 		}
 		assert(false);
-		LogFinal(HTTPLOG,_T( "ERROR: %S returns %S"), where, s);
+		LogErrorEx(HTTPLOG,_T( "ERROR: %S returns %S"), where, s);
 		exit(code);
 	}
 }
