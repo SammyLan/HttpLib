@@ -24,7 +24,8 @@ public:
 	typedef std::tuple<int, std::string, int,int64_t,int> ResponseInfo;
 	struct IDelegate
 	{
-		virtual void OnFinish(bool bSuccess, WY::TaskID taskID, ResponseInfo const & info) = 0;
+		virtual void OnProgress(WY::TaskID taskID,int64_t totalSize, int64_t recvSize, size_t speed) = 0;
+		virtual void OnFinish(WY::TaskID taskID,bool bSuccess, CDownloadTask::ResponseInfo const & info) = 0;
 	};
 	
 	 
@@ -42,9 +43,10 @@ private:
 	void OnRespond(cpr::Response const & response, data::BufferPtr const & body, data::SaveDataPtr const& pData,int64_t offset, int64_t fileSize);
 	void OnDataRecv(data::byte const * data, size_t size, data::SaveDataPtr const & pData);
 	void SaveData(data::SaveDataPtr const & pData,bool bDel = false);
-	void OnSaveDataHandler(data::SaveDataPtr const & pData,bool bDel,
+	void OnDataSaveHandler(data::SaveDataPtr const & pData,bool bDel,
 		const boost::system::error_code& error, // Result of operation.
 		std::size_t bytes_transferred ,          // Number of bytes written.
+		std::size_t nBlockIndex,
 		CDownloadTaskPtr const&
 		);
 	
@@ -53,6 +55,7 @@ private:
 	bool DownLoadNextRange(int64_t const beg, int64_t const end);	
 	bool CreareFile();
 	void SetFile();
+	void Cancel();
 #pragma region dump info
 	void DumpRespond(cpr::Response const & response);
 	void DumpSelfInfo(LPCTSTR strMsg, int logLevel = LOGL_Info);
@@ -68,6 +71,10 @@ private:
 	std::string	const	strCookie_;	
 	std::string	const	strSHA_;
 	int64_t				fileSize_;
+	int64_t				preRecvSize = 0;
+	int64_t				recvSize = 0;
+	int64_t				lastReportTime = 0;
+	size_t				reportInterval = 1200;//1.2s
 	size_t				nThread_ = 1;
 	RequestList			requestList_;
 	WY::File::AsioFilePtr pSaveFile_;

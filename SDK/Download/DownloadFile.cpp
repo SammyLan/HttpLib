@@ -13,6 +13,7 @@ static TCHAR LOGFILTER[] = _T("CHttpDownload");
 size_t const s_save_size = 1024 * 64;
 size_t const s_block_size = 1024 * 1024 * 1; //10M
 size_t const s_srv_block_size = 1024 * 512;
+size_t const s_srv_block_size_and = ~(s_srv_block_size - 1);
 
 CDownloadTask::CDownloadTask(WY::TaskID const taskID, CDownloadTask::IDelegate * pDelegate,
 	ThreadPool & ioThread, ThreadPool & nwThread, CHttpSession& hSession,
@@ -65,11 +66,17 @@ void CDownloadTask::CancelDownload()
 {
 	LockGuard gurad(csLock_);
 	bCancel_ = true;
+	pDelegate_ = nullptr;
+	Cancel();
+	DumpSelfInfo(_T("Cancel task"));
+}
+
+void CDownloadTask::Cancel()
+{
 	for (auto it = requestList_.begin(); it != requestList_.end(); it++)
 	{
 		it->second->cancel();
 	}
-	DumpSelfInfo(_T("Cancel task"));
 }
 
 void CDownloadTask::GetFileInfo()
@@ -146,7 +153,7 @@ void CDownloadTask::DownloadFile()
 	beg += block_size;
 	while (beg < fileSize_)
 	{
-		beg = (beg + s_srv_block_size - 1) / s_srv_block_size * s_srv_block_size;
+		beg = ((beg + s_srv_block_size - 1) & s_srv_block_size_and);
 		blockInfo.push_back(beg);
 		beg += block_size;
 	}
@@ -156,6 +163,7 @@ void CDownloadTask::DownloadFile()
 		blockInfo.push_back(beg);
 	}
 	WYASSERT((nThread + 1) == blockInfo.size());
+	lastReportTime = ::GetTickCount();
 	for (size_t i = 1; i < blockInfo.size(); ++i)
 	{
 		DownLoadNextRange(blockInfo[i - 1], blockInfo[i]);
@@ -185,8 +193,8 @@ void CDownloadTask::OnRespond(cpr::Response const & response, data::BufferPtr co
 			{
 				fileSize_ = recvSize;
 			}
-			WYASSERT(fileSize == recvSize);
-			bSuccess = ((fileSize == recvSize) && (pData->first + pData->second.size() == offset + recvSize));
+			WYASSERT(fileSize_ == recvSize);
+			bSuccess = ((fileSize_ == recvSize) && (pData->first + pData->second.size() == offset + recvSize));
 			if (!bSuccess)
 			{
 				WYASSERT(false);
@@ -207,15 +215,14 @@ void CDownloadTask::OnRespond(cpr::Response const & response, data::BufferPtr co
 		data::Buffer const & headerStr = pRequest->getHeader();
 		LogErrorEx(LOGFILTER, _T("下载出错:%S"), headerStr.data());
 		WYASSERT(false);
-	}
-	if (requestList_.empty())
-	{
-		OnFinish(bSuccess);
+		Cancel();
+		OnFinish(false);
 	}
 }
 
 void CDownloadTask::OnDataRecv(data::byte const * data, size_t size, data::SaveDataPtr const& pData)
 {
+	recvSize += size;
 	auto & pBuff = pData->second;
 	auto curSize = pBuff.size();
 	auto newSize = curSize + size;
@@ -235,6 +242,18 @@ void CDownloadTask::OnDataRecv(data::byte const * data, size_t size, data::SaveD
 	{
 		pBuff.append(data, size);
 	}
+	int64_t cur = ::GetTickCount();
+	if ((cur - lastReportTime) > reportInterval)
+	{
+		auto speed = (recvSize - preRecvSize)* 1000/(cur - lastReportTime);
+		lastReportTime = cur;
+		preRecvSize = recvSize;
+		auto pDelegate = pDelegate_;
+		if (pDelegate)
+		{
+			pDelegate_->OnProgress(taskID_, fileSize_, recvSize, (size_t)speed);
+		}
+	}
 }
 
 void CDownloadTask::SaveData(data::SaveDataPtr const & pData, bool bDel)
@@ -242,13 +261,14 @@ void CDownloadTask::SaveData(data::SaveDataPtr const & pData, bool bDel)
 	auto & pBuff = pData->second;
 	auto size = pBuff.size();
 	pSaveFile_->async_write_some_at(pData->first, boost::asio::buffer(pBuff.data(), size),
-		std::bind(&CDownloadTask::OnSaveDataHandler,this, pData, bDel,std::placeholders::_1, std::placeholders::_2,shared_from_this()));
+		std::bind(&CDownloadTask::OnDataSaveHandler,this, pData, bDel,std::placeholders::_1, std::placeholders::_2,size,shared_from_this()));
 }
 
-void CDownloadTask::OnSaveDataHandler(
+void CDownloadTask::OnDataSaveHandler(
 	data::SaveDataPtr const & pData,bool bDel,
 	const boost::system::error_code& error, // Result of operation.
 	std::size_t bytes_transferred,           // Number of bytes written.
+	std::size_t nBlockIndex,
 	CDownloadTaskPtr const& pTask
 	)
 {
@@ -279,8 +299,11 @@ void CDownloadTask::OnFinish(bool bSuccess)
 	{
 		DumpSelfInfo(_T("OnFinsh:下载完成"), LOGL_Error);
 	}
+	if (pDelegate_ != nullptr)
+	{
+		pDelegate_->OnFinish(taskID_,bSuccess, responseInfo_);
+	}
 	
-	pDelegate_->OnFinish(bSuccess,taskID_, responseInfo_);
 	//ioThreadPool_.postTask(std::bind(&IDelegate::OnFinish, pDelegate_,bSuccess, taskID_,info));
 }
 
@@ -325,7 +348,7 @@ bool CDownloadTask::DownLoadNextRange(int64_t const beg, int64_t const end)
 	auto fileSize = end - beg;
 	if (end != fileSize_)
 	{
-		if ((end & 0x7FFFF) != 0)
+		if ((end & ~s_srv_block_size_and) != 0)
 		{
 			WYASSERT(false);
 			LogErrorEx(LOGFILTER, _T("分块不对齐"));

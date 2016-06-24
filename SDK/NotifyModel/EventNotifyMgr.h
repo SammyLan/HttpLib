@@ -11,7 +11,7 @@ class EventNotifyMgr:public WYUtil::Instance<EventNotifyMgr>
 public:
 	EventNotifyMgr();
 	~EventNotifyMgr();
-	BOOL PostEvent(CTask * pTask);
+	BOOL PostEvent(CTask * pTask) const;
 	BOOL UnInitialize();
 #ifdef MAIN_THREAD_CHECK
 	inline static bool MainThreadCheck()

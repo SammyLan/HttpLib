@@ -79,7 +79,7 @@ EventNotifyMgr::~EventNotifyMgr()
 	}
 }
 
-BOOL EventNotifyMgr::PostEvent(CTask * pTask)
+BOOL EventNotifyMgr::PostEvent(CTask * pTask) const
 {
 	return ::PostMessage(m_hWnd,WM_EVENT_NOTIFY,NULL,(LPARAM)pTask);
 }

@@ -12,7 +12,7 @@
 #include <stack>
 
 // CHTTPLibDlg 对话框
-class CHTTPLibDlg : public CDialogEx
+class CHTTPLibDlg : public CDialogEx,public CDownloadTask::IDelegate
 {
 	// 构造
 public:
@@ -41,9 +41,13 @@ protected:
 	void DownloadQQ();
 	void DownloadFile();
 private:
+	virtual void OnProgress(WY::TaskID taskID, int64_t totalSize, int64_t recvSize, size_t speed) override;
+	virtual void OnFinish(WY::TaskID taskID, bool bSuccess, CDownloadTask::ResponseInfo const & info) override;
+private:
 	ThreadPool nwThreadPool_;
 	ThreadPool ioThreadPool_;
 	http::CurGlobalInit init_;
+	EventNotifyMgr eventNotifyMgr_;
 	CHttpConnMgr connMgr_;
 	CHttpSession hSession_;
 	CDownloadFileMgr downloadMgr_;
@@ -58,4 +62,6 @@ public:
 	BOOL m_bDownFile;
 	UINT m_uConn;
 	afx_msg void OnBnClickedCancelDownload();
+	CString m_strProgress;
+	CString m_strSpeed;
 };

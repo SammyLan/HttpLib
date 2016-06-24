@@ -59,14 +59,16 @@ CHTTPLibDlg::CHTTPLibDlg(CWnd* pParent /*=NULL*/)
 	, ioThreadPool_(1,"IOThread")
 	, connMgr_(nwThreadPool_.io_service())
 	, hSession_(nwThreadPool_.io_service(), &connMgr_)
-	, downloadMgr_(ioThreadPool_,nwThreadPool_,hSession_)
+	, downloadMgr_(ioThreadPool_,nwThreadPool_,hSession_, eventNotifyMgr_)
 	, m_pFileSignMgr(ioThreadPool_.io_service())
-	, m_strURL(_T("http://sh-btfs.yun.ftn.qq.com:80/ftn_handler/1b2fe022e2374e9f4e9c5996707240455f565dbd130423b7a779cc1b75de39661e025df63f1c00cc2427b60ab81e4055f164f801acdcd4c1ea5ff55e1e551d3b/?fname=%E4%BE%8F%E7%BD%97%E7%BA%AA%E4%B8%96%E7%95%8C.%E9%9F%A9%E7%89%88.Jurassic.World.2015.HD1080P.X264.AAC.English.CHS.Mp4Ba.mp4&from=30322&version=3.5.0.1700&uin=240201454"))
-	, m_strCookie(_T("FTN5K=a5416bb3"))
+	, m_strURL(_T("http://101.226.129.202:80/ftn_handler/425e9304990eb609535a54bd3b99c51affe8b49236bb0b5999caebc1a35da57d1d2ef0f27d09e62d557ecf2d006809357d2324a0d2eb63e797f35e9282cba4bc/%E5%A4%AA%E5%AD%90%E5%A6%83%E5%8D%87%E8%81%8C%E8%AE%B0.EP35.2015.HD720P.X264.AAC.Mandarin.CHS.mp4?fname=%E5%A4%AA%E5%AD%90%E5%A6%83%E5%8D%87%E8%81%8C%E8%AE%B0.EP35.2015.HD720P.X264.AAC.Mandarin.CHS.mp4&from=30235&version=3.5.0.1700&uin=240201454"))
+	, m_strCookie(_T("FTN5K=d6bdeb3a"))
 	, m_bBaidu(FALSE)
 	, m_bQQ(FALSE)
 	, m_bDownFile(TRUE)
 	, m_uConn(1)
+	, m_strProgress(_T(""))
+	, m_strSpeed(_T(""))
 {
 	m_hIcon = AfxGetApp()->LoadIcon(IDR_MAINFRAME);
 }
@@ -75,6 +77,7 @@ CHTTPLibDlg::~CHTTPLibDlg()
 {
 	nwThreadPool_.stop();
 	ioThreadPool_.stop();
+	//eventNotifyMgr_
 }
 void CHTTPLibDlg::DoDataExchange(CDataExchange* pDX)
 {
@@ -86,6 +89,8 @@ void CHTTPLibDlg::DoDataExchange(CDataExchange* pDX)
 	DDX_Check(pDX, IDC_DOWNFILE, m_bDownFile);
 	DDX_Text(pDX, IDC_CONN, m_uConn);
 	DDV_MinMaxUInt(pDX, m_uConn, 1, 5);
+	DDX_Text(pDX, IDC_EDT_PROGRESS, m_strProgress);
+	DDX_Text(pDX, IDC_EDT_SPEED, m_strSpeed);
 }
 
 BEGIN_MESSAGE_MAP(CHTTPLibDlg, CDialogEx)
@@ -239,11 +244,11 @@ void CHTTPLibDlg::DownloadFile()
 	std::wostringstream oss;
 	oss << s_count;
 #ifdef DEBUG
-	wstring strFile = _T("d:\\download\\data") + oss.str() + _T(".zip");
+	wstring strFile = _T("d:\\download\\data") + oss.str() + _T(".mp4");
 #else
-	wstring strFile = _T("d:\\data") + oss.str() + _T(".zip");
+	wstring strFile = _T("d:\\data") + oss.str() + _T(".mp4");
 #endif // DEBUG
-	auto taskID = downloadMgr_.AddTask(m_uConn, strFile, std::string(CW2A(m_strURL)), std::string(CW2A(m_strCookie)));
+	auto taskID = downloadMgr_.AddTask(this,m_uConn, strFile, std::string(CW2A(m_strURL)), std::string(CW2A(m_strCookie)));
 	taskList_.push(taskID);
 }
 
@@ -273,4 +278,30 @@ void CHTTPLibDlg::OnBnClickedCancelDownload()
 		downloadMgr_.RemoveTask(taskList_.top());
 		taskList_.pop();
 	}
+}
+
+void CHTTPLibDlg::OnProgress(WY::TaskID taskID, int64_t totalSize, int64_t recvSize, size_t speed)
+{
+	if (totalSize != 0)
+	{
+		int progress = int(recvSize * 100 / totalSize);
+		m_strProgress.Format(_T("%u"),progress);
+	}
+	float fSpeed = (float)speed / 1024;
+	if (fSpeed >= 100)
+	{
+		fSpeed /= 1024;
+		m_strSpeed.Format(_T("%.2fM"), fSpeed);
+	}
+	else
+	{
+		m_strSpeed.Format(_T("%.2fKB"), fSpeed);
+	}
+	UpdateData(FALSE);
+}
+
+
+void CHTTPLibDlg::OnFinish(WY::TaskID taskID, bool bSuccess, CDownloadTask::ResponseInfo const & info)
+{
+
 }

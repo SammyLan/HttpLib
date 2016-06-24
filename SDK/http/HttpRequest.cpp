@@ -74,7 +74,7 @@ CHttpRequest::CHttpRequest(CHttpSession *pSession)
 		}
 	}
 	//setTimeout(1000000);
-	setConnTimeout(1000*30);
+	setConnTimeout(1000*60);
 	/* call this function to get a socket */
 	curl_easy_setopt(handle_, CURLOPT_OPENSOCKETFUNCTION, &CHttpRequest::opensocket);
 	curl_easy_setopt(handle_, CURLOPT_OPENSOCKETDATA, this->pSession_);
@@ -413,11 +413,11 @@ int CHttpRequest::close_socket(CHttpSession *pThis, curl_socket_t item)
 
 int CHttpRequest::sockopt_callback(CHttpSession * pThis, curl_socket_t curlfd, curlsocktype purpose)
 {
-	int buf = 0;
-	int len = sizeof(buf);
-	::getsockopt((SOCKET)curlfd, SOL_SOCKET, SO_RCVBUF, (char *)&buf,&len);
-	buf = 1024*1024 * 20;
-	//::setsockopt((SOCKET)curlfd, SOL_SOCKET, SO_RCVBUF, (char const*)&buf,sizeof(buf));
+	int bufLen = 0;
+	int len = sizeof(bufLen);
+	::getsockopt((SOCKET)curlfd, SOL_SOCKET, SO_RCVBUF, (char *)&bufLen,&len);
+	bufLen = 1024*8;
+	//::setsockopt((SOCKET)curlfd, SOL_SOCKET, SO_RCVBUF, (char const*)&bufLen,sizeof(bufLen));
 	return CURL_SOCKOPT_OK;
 }
 
