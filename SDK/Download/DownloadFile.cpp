@@ -191,10 +191,10 @@ void CDownloadTask::OnRespond(cpr::Response const & response, data::BufferPtr co
 			auto recvSize = std::get<ContentLength>(ret);
 			if (fileSize == 0)//不需要从服务器获取文件大小
 			{
-				fileSize_ = recvSize;
+				fileSize = fileSize_ = recvSize;
 			}
-			WYASSERT(fileSize_ == recvSize);
-			bSuccess = ((fileSize_ == recvSize) && (pData->first + pData->second.size() == offset + recvSize));
+			WYASSERT(fileSize == recvSize);
+			bSuccess = ((fileSize == recvSize) && (pData->first + pData->second.size() == offset + recvSize));
 			if (!bSuccess)
 			{
 				WYASSERT(false);

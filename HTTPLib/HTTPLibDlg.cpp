@@ -69,6 +69,7 @@ CHTTPLibDlg::CHTTPLibDlg(CWnd* pParent /*=NULL*/)
 	, m_uConn(1)
 	, m_strProgress(_T(""))
 	, m_strSpeed(_T(""))
+	, m_uCurConn(0)
 {
 	m_hIcon = AfxGetApp()->LoadIcon(IDR_MAINFRAME);
 }
@@ -88,9 +89,10 @@ void CHTTPLibDlg::DoDataExchange(CDataExchange* pDX)
 	DDX_Check(pDX, IDC_QQ, m_bQQ);
 	DDX_Check(pDX, IDC_DOWNFILE, m_bDownFile);
 	DDX_Text(pDX, IDC_CONN, m_uConn);
-	DDV_MinMaxUInt(pDX, m_uConn, 1, 5);
+	DDV_MinMaxUInt(pDX, m_uConn, 1, 10);
 	DDX_Text(pDX, IDC_EDT_PROGRESS, m_strProgress);
 	DDX_Text(pDX, IDC_EDT_SPEED, m_strSpeed);
+	DDX_Text(pDX, IDC_EDT_CONN, m_uCurConn);
 }
 
 BEGIN_MESSAGE_MAP(CHTTPLibDlg, CDialogEx)
@@ -297,6 +299,7 @@ void CHTTPLibDlg::OnProgress(WY::TaskID taskID, int64_t totalSize, int64_t recvS
 	{
 		m_strSpeed.Format(_T("%.2fKB"), fSpeed);
 	}
+	m_uCurConn = connMgr_.getSockCount();
 	UpdateData(FALSE);
 }
 

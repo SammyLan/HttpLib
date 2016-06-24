@@ -16,6 +16,7 @@ public:
 	http::SocketInfoPtr opensocket(curlsocktype purpose, struct curl_sockaddr *address);
 	int close_socket(curl_socket_t item);
 	http::SocketInfoPtr getSock(curl_socket_t s);
+	size_t getSockCount() { return socketMap_.size(); }
 private:
 	boost::asio::io_service & io_service_;
 	SocketPool socketMap_;

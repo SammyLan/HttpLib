@@ -64,4 +64,5 @@ public:
 	afx_msg void OnBnClickedCancelDownload();
 	CString m_strProgress;
 	CString m_strSpeed;
+	UINT m_uCurConn;
 };
