@@ -70,7 +70,7 @@ private:
 	std::string	const	strUrl_;
 	std::string	const	strCookie_;	
 	std::string	const	strSHA_;
-	int64_t				fileSize_;
+	int64_t				fileSize_ = 0;
 	int64_t				preRecvSize = 0;
 	int64_t				recvSize = 0;
 	int64_t				lastReportTime = 0;
