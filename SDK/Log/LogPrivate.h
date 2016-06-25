@@ -1,6 +1,7 @@
 ﻿#pragma  once
 
 #include "Log.h"
+#include <memory>
 
 /// 最长支持显示的模块名长度
 #define MOD_NAME_LEN   20
@@ -47,6 +48,37 @@
 #define LOGGER_COPYDATA_DWDATA_VIEWLOG  1
 //#define LOGGER_COPYDATA_DWDATA_GETINFO  2
 
+///base: log base,不含指针的类。
+/**
+@ingroup ov_TXLog
+*/
+typedef struct tagLogObjBase
+{
+	UINT  uSize;
+	INT    nLogLevel;
+	INT    nLineNumber;
+	DWORD  dwProcessId;
+	DWORD  dwThreadId;
+	DWORD  dwTick;
+	DWORD  dwExtraDataLen;
+	time_t tmTime;
+	INT64  perfc;
+	//w: source filename
+	//w: function name
+	//w: filter
+	//w: text
+	//module name:fixed 16 bytes
+}tagLogObjBase;
+
+typedef struct tagLogObj
+{
+	tagLogObjBase base;
+	PVOID  pExtraData;
+	CWYString pszSourceFileName;
+	CWYString pszFuncName;
+	PVOID  pRetAddr;
+}tagLogObj;
+
 struct tagLogObjExt : tagLogObjBase
 {
 	DWORD dwCookie;
@@ -67,3 +99,11 @@ struct tagLogLevelParam
 
 extern TCHAR chLogKeys[64];
 #define LOGKEY(i) (chLogKeys[((unsigned long)i) % 64])
+
+struct LogData
+{
+	CString strFilter;
+	CString strLog;
+};
+typedef std::pair<tagLogObj, LogData> LogInfo;
+typedef std::shared_ptr<LogInfo> LogInfoPtr;

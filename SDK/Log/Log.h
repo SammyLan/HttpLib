@@ -39,43 +39,6 @@ extern int g_nLogLevel;
 extc void * _ReturnAddress(void);
 #pragma intrinsic(_ReturnAddress)
 
-///base: log base,不含指针的类。
-/**
-@ingroup ov_TXLog
-*/
-typedef struct tagLogObjBase
-{
-	UINT  uSize;
-	INT    nLogLevel;
-	INT    nLineNumber;
-	DWORD  dwProcessId;
-	DWORD  dwThreadId;
-	DWORD  dwTick;
-	DWORD  dwExtraDataLen;
-	time_t tmTime;
-	INT64  perfc;
-	//w: source filename
-	//w: function name
-	//w: filter
-	//w: text
-	//module name:fixed 16 bytes
-}tagLogObjBase;
-
-typedef struct tagLogObj
-{
-	tagLogObjBase base;
-	PVOID  pExtraData;
-	LPCWSTR pszSourceFileName;
-	LPCWSTR pszFuncName;
-	PVOID  pRetAddr;
-}tagLogObj;
-
-// 改为C-style导出
-//EXTERN_C 
-// 因为外部门对底层的使用方法问题，此处不宜改动，还是改回C++调用方式
-void TXLog_DoTXLogVW(tagLogObj* pLogObj, LPCWSTR pszFilter, LPCWSTR pszFmt, va_list vg);
-
-
 void TXLog_DoLogV(LPCWSTR pszSourceFileName,
 						   INT nLineNumber, LPCWSTR pszFuncName, int nLogLevel,LPCWSTR pszFilter, LPCWSTR pszFmt, va_list vg);
 

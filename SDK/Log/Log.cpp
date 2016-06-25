@@ -11,7 +11,7 @@
 #include "UtilCoreConvert.h"
 #include "TXPerfLogTime.h"
 #include <ShlObj.h>
-
+#include <Thread/ThreadPool.h>
 #define WRITEFILE_TIMEOUT	100
 
 ////单次登录日志文件最大的size，从50M变成100M，当部分人开启log3的时候，能记录更长时间的信息
@@ -70,6 +70,10 @@ TCHAR chLogKeys[64] =
 };
 
 HMODULE g_hCurModule = NULL;
+// 改为C-style导出
+//EXTERN_C 
+// 因为外部门对底层的使用方法问题，此处不宜改动，还是改回C++调用方式
+void TXLog_DoTXLogVW(tagLogObj* pLogObj, LPCWSTR pszFilter, LPCWSTR pszFmt, va_list vg);
 namespace 
 {
 	class CTXLoger
@@ -142,6 +146,7 @@ namespace
 		bool  m_bBuffer;
 		bool  m_bWriteOpt;
 		bool  m_bDisable;
+		ThreadPool m_ioThread;
 	public:
 		typedef struct {
 			enum{SIZE=32*1024-sizeof(size_t)-sizeof(int)};
@@ -339,6 +344,7 @@ namespace
 
 
 		CTXLoger()
+			:m_ioThread(1,"LogThread")
 		{
 			InitAssertFlag();
 			m_bBuffer   = 1;
@@ -558,6 +564,13 @@ namespace
 			return 0;
 		}
 
+		void InternalLog(LogInfoPtr & pLogInfo)
+		{
+			m_ioThread.postTask([=]()
+			{
+				InternalLog(&pLogInfo->first, pLogInfo->second.strFilter, pLogInfo->second.strLog);
+			});
+		}
 		void InternalLog(tagLogObj* LogObj, LPCWSTR pwszFilter, LPCWSTR pwszText)
 		{
 			while( iswspace( *pwszText) ) ++ pwszText;
@@ -697,9 +710,9 @@ namespace
 		}
 	};
 
-	void InternalLog(tagLogObj* LogObj, LPCWSTR pwszFilter, LPCWSTR pwszText)
+	void InternalLog(LogInfoPtr & pLogInfo)
 	{
-		CTXLoger::GetLoger().InternalLog(LogObj, pwszFilter, pwszText);
+		CTXLoger::GetLoger().InternalLog(pLogInfo);
 	}
 
 	CTXLoger * g_pLoger = NULL;
@@ -765,9 +778,9 @@ namespace TXLog
 }
 
 
-void TXLog_DoTXLogVW(tagLogObj* pLogObj, LPCWSTR pszFilter, LPCWSTR pszFmt, va_list vg)
+void TXLog_DoTXLogVW(LogInfoPtr & pLogIngfo, LPCWSTR pszFilter, LPCWSTR pszFmt, va_list vg)
 {
-	if (pLogObj==NULL || pszFilter==NULL || pszFmt==NULL || vg==NULL)
+	if (pLogIngfo.get()==NULL || pszFilter==NULL || pszFmt==NULL || vg==NULL)
 	{
 		return;
 	}
@@ -776,7 +789,7 @@ void TXLog_DoTXLogVW(tagLogObj* pLogObj, LPCWSTR pszFilter, LPCWSTR pszFmt, va_l
 	{
 		return ;
 	}
-
+	tagLogObj* pLogObj = &pLogIngfo->first;
 	pLogObj->pRetAddr = _ReturnAddress();
 	
 	int nLogLevel = g_nLogLevel;
@@ -784,7 +797,7 @@ void TXLog_DoTXLogVW(tagLogObj* pLogObj, LPCWSTR pszFilter, LPCWSTR pszFmt, va_l
 	if( nLogLevel < 0 || pLogObj->base.nLogLevel > nLogLevel ) return;
 	
 
-#ifdef VER_FINAL_RELESE
+#ifdef VER_FINAL_RELEASE
     pLogObj->pszSourceFileName = L"file";
     pLogObj->pszFuncName = L"func";
 #endif
@@ -799,13 +812,14 @@ void TXLog_DoTXLogVW(tagLogObj* pLogObj, LPCWSTR pszFilter, LPCWSTR pszFmt, va_l
 		LogFinal(L"PerfBenchmark",_T("%I64d"),lpFrequency.QuadPart);
 	}
 
-	CWYString str;
-	str.FormatV(pszFmt, vg);
-	if(str.GetLength() >= 200 *1024 )
+	LogData & logData = pLogIngfo->second;
+	logData.strLog.FormatV(pszFmt, vg);
+	if(logData.strLog.GetLength() >= 200 *1024 )
 	{
 		return ;
 	}
-	return InternalLog(pLogObj, pszFilter, str);
+	logData.strFilter = pszFilter;
+	return InternalLog(pLogIngfo);
 }
 
 
@@ -891,7 +905,9 @@ void TXLog_DoLogV(LPCWSTR pszSourceFileName,
 	{
 		return;
 	}
-	tagLogObj logobj;
+	LogInfoPtr pLogInfo = std::make_shared<LogInfo>();
+
+	tagLogObj & logobj = pLogInfo->first;
 	logobj.pszSourceFileName = pszSourceFileName;
 	logobj.pszFuncName = pszFuncName;
 	logobj.pExtraData = 0;
@@ -914,7 +930,7 @@ void TXLog_DoLogV(LPCWSTR pszSourceFileName,
 	{
 		logobj.base.perfc = 0;
 	}
-	TXLog_DoTXLogVW(&logobj,pszFilter,pszFmt,vg);
+	TXLog_DoTXLogVW(pLogInfo,pszFilter,pszFmt,vg);
 }
 
 void TXLog_DoLog(LPCWSTR pszSourceFileName,INT nLineNumber, LPCWSTR pszFuncName, int nLogLevel,
