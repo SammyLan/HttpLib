@@ -10,6 +10,7 @@
 #include "FileSign\FileSignMgr.h"
 #include <Download/DownloadFileMgr.h>
 #include <stack>
+#include "afxwin.h"
 
 // CHTTPLibDlg ¶Ô»°¿ò
 class CHTTPLibDlg : public CDialogEx,public CDownloadTask::IDelegate
@@ -65,4 +66,8 @@ public:
 	CString m_strProgress;
 	CString m_strSpeed;
 	UINT m_uCurConn;
+	CButton m_cBaidu;
+	CButton m_cQQ;
+	CButton m_cFile;
+	CStatic m_sOpt;
 };

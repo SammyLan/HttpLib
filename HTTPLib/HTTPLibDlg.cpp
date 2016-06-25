@@ -61,17 +61,19 @@ CHTTPLibDlg::CHTTPLibDlg(CWnd* pParent /*=NULL*/)
 	, hSession_(nwThreadPool_.io_service(), &connMgr_)
 	, downloadMgr_(ioThreadPool_,nwThreadPool_,hSession_, eventNotifyMgr_)
 	, m_pFileSignMgr(ioThreadPool_.io_service())
-	, m_strURL(_T("http://101.226.129.202:80/ftn_handler/425e9304990eb609535a54bd3b99c51affe8b49236bb0b5999caebc1a35da57d1d2ef0f27d09e62d557ecf2d006809357d2324a0d2eb63e797f35e9282cba4bc/%E5%A4%AA%E5%AD%90%E5%A6%83%E5%8D%87%E8%81%8C%E8%AE%B0.EP35.2015.HD720P.X264.AAC.Mandarin.CHS.mp4?fname=%E5%A4%AA%E5%AD%90%E5%A6%83%E5%8D%87%E8%81%8C%E8%AE%B0.EP35.2015.HD720P.X264.AAC.Mandarin.CHS.mp4&from=30235&version=3.5.0.1700&uin=240201454"))
-	, m_strCookie(_T("FTN5K=d6bdeb3a"))
+	, m_strURL(_T(""))
+	, m_strCookie(_T(""))
 	, m_bBaidu(FALSE)
 	, m_bQQ(FALSE)
 	, m_bDownFile(TRUE)
-	, m_uConn(1)
+	, m_uConn(5)
 	, m_strProgress(_T(""))
 	, m_strSpeed(_T(""))
 	, m_uCurConn(0)
 {
 	m_hIcon = AfxGetApp()->LoadIcon(IDR_MAINFRAME);
+	m_strURL = _T("http://101.226.129.202:80/ftn_handler/d88cd248b91ee75ec1354d31c5d60b2399cd03e92dd5c89860a59f17bafa3cecad9ec25693d01dc7d69a116d0690847462d9f1c81795e473425137f734e4bc09/%E5%A4%AA%E5%AD%90%E5%A6%83%E5%8D%87%E8%81%8C%E8%AE%B0.EP35.2015.HD720P.X264.AAC.Mandarin.CHS.mp4?fname=%E5%A4%AA%E5%AD%90%E5%A6%83%E5%8D%87%E8%81%8C%E8%AE%B0.EP35.2015.HD720P.X264.AAC.Mandarin.CHS.mp4&from=30235&version=3.5.0.1700&uin=240201454");
+	m_strCookie = _T("FTN5K=d6bdeb3a");
 }
 
 CHTTPLibDlg::~CHTTPLibDlg()
@@ -93,6 +95,10 @@ void CHTTPLibDlg::DoDataExchange(CDataExchange* pDX)
 	DDX_Text(pDX, IDC_EDT_PROGRESS, m_strProgress);
 	DDX_Text(pDX, IDC_EDT_SPEED, m_strSpeed);
 	DDX_Text(pDX, IDC_EDT_CONN, m_uCurConn);
+	DDX_Control(pDX, IDC_BAIDU, m_cBaidu);
+	DDX_Control(pDX, IDC_QQ, m_cQQ);
+	DDX_Control(pDX, IDC_DOWNFILE, m_cFile);
+	DDX_Control(pDX, IDC_STATIC_OPT, m_sOpt);
 }
 
 BEGIN_MESSAGE_MAP(CHTTPLibDlg, CDialogEx)
@@ -136,7 +142,12 @@ BOOL CHTTPLibDlg::OnInitDialog()
 	SetIcon(m_hIcon, FALSE);		// 设置小图标
 
 	// TODO: 在此添加额外的初始化代码
-
+#ifdef _DEBUG
+	m_cBaidu.ShowWindow(SW_SHOW);
+	m_cQQ.ShowWindow(SW_SHOW);
+	m_cFile.ShowWindow(SW_SHOW);
+	m_sOpt.ShowWindow(SW_SHOW);
+#endif
 	return TRUE;  // 除非将焦点设置到控件，否则返回 TRUE
 }
 
