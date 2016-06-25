@@ -1,5 +1,5 @@
 #include "stdafx.h"
-#include "DownloadFile.h"
+#include "DownloadTask.h"
 #include <sstream>
 #include <http/HttpGlobal.h>
 #include <winioctl.h>
@@ -8,7 +8,7 @@
 #undef min
 #endif // min
 
-static TCHAR LOGFILTER[] = _T("CHttpDownload");
+static TCHAR LOGFILTER[] = _T("CDownloadTask");
 
 size_t const s_save_size = 1024 * 64;
 size_t const s_block_size = 1024 * 1024 * 1; //10M

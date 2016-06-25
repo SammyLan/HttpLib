@@ -169,10 +169,13 @@
     <ClInclude Include="..\SDK\external\cpr\include\cpr\util.h">
       <Filter>Lib3rd\cpr</Filter>
     </ClInclude>
-    <ClInclude Include="..\SDK\Download\DownloadFile.h">
+    <ClInclude Include="..\SDK\Download\DownloadFileMgr.h">
       <Filter>base\Download</Filter>
     </ClInclude>
-    <ClInclude Include="..\SDK\Download\DownloadFileMgr.h">
+    <ClInclude Include="..\SDK\Download\WYErrorDef.h">
+      <Filter>base\Download</Filter>
+    </ClInclude>
+    <ClInclude Include="..\SDK\Download\DownloadTask.h">
       <Filter>base\Download</Filter>
     </ClInclude>
   </ItemGroup>
@@ -264,10 +267,10 @@
     <ClCompile Include="..\SDK\external\cpr\cpr\util.cpp">
       <Filter>Lib3rd\cpr</Filter>
     </ClCompile>
-    <ClCompile Include="..\SDK\Download\DownloadFile.cpp">
+    <ClCompile Include="..\SDK\Download\DownloadFileMgr.cpp">
       <Filter>base\Download</Filter>
     </ClCompile>
-    <ClCompile Include="..\SDK\Download\DownloadFileMgr.cpp">
+    <ClCompile Include="..\SDK\Download\DownloadTask.cpp">
       <Filter>base\Download</Filter>
     </ClCompile>
   </ItemGroup>

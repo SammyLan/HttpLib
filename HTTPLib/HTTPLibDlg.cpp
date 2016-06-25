@@ -9,7 +9,6 @@
 #include <fstream>
 #include <sstream>
 #include <cpr/util.h>
-#include <Download/DownloadFile.h>
 
 #ifdef _DEBUG
 #define new DEBUG_NEW

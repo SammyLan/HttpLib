@@ -1,5 +1,5 @@
 #pragma once
-#include "DownloadFile.h"
+#include "DownloadTask.h"
 #include <Thread/ThreadPool.h>
 #include <http/HttpSession.h>
 #include <map>
