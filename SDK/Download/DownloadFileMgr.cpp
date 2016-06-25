@@ -87,6 +87,7 @@ void CDownloadFileMgr::OnFinishInner(WY::TaskID taskID, bool bSuccess, CDownload
 	if (it != downLoadList_.end())
 	{
 		it->second.second->OnFinish(taskID, bSuccess, info);
+		downLoadList_.erase(it);
 	}
 	else
 	{
