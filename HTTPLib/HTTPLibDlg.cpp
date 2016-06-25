@@ -70,9 +70,10 @@ CHTTPLibDlg::CHTTPLibDlg(CWnd* pParent /*=NULL*/)
 	, m_strProgress(_T(""))
 	, m_strSpeed(_T(""))
 	, m_uCurConn(0)
+	, m_uPipeline(0)
 {
 	m_hIcon = AfxGetApp()->LoadIcon(IDR_MAINFRAME);
-	m_strURL = _T("http://101.226.129.202:80/ftn_handler/d88cd248b91ee75ec1354d31c5d60b2399cd03e92dd5c89860a59f17bafa3cecad9ec25693d01dc7d69a116d0690847462d9f1c81795e473425137f734e4bc09/%E5%A4%AA%E5%AD%90%E5%A6%83%E5%8D%87%E8%81%8C%E8%AE%B0.EP35.2015.HD720P.X264.AAC.Mandarin.CHS.mp4?fname=%E5%A4%AA%E5%AD%90%E5%A6%83%E5%8D%87%E8%81%8C%E8%AE%B0.EP35.2015.HD720P.X264.AAC.Mandarin.CHS.mp4&from=30235&version=3.5.0.1700&uin=240201454");
+	m_strURL = _T("http://sh.yun.ftn.qq.com:80/ftn_handler/0d355f81c2087136ab208c5d8fa58d509530dcf8df48177f6e948547123036dc0deaad223fe3eafb640d7ecaad93133256a846bcb411870b1884fdac023f0598/?fname=%E5%A4%AA%E5%AD%90%E5%A6%83%E5%8D%87%E8%81%8C%E8%AE%B0.EP35.2015.HD720P.X264.AAC.Mandarin.CHS.mp4&from=30322&version=3.5.0.1700&uin=240201454");
 	m_strCookie = _T("FTN5K=d6bdeb3a");
 }
 
@@ -99,6 +100,7 @@ void CHTTPLibDlg::DoDataExchange(CDataExchange* pDX)
 	DDX_Control(pDX, IDC_QQ, m_cQQ);
 	DDX_Control(pDX, IDC_DOWNFILE, m_cFile);
 	DDX_Control(pDX, IDC_STATIC_OPT, m_sOpt);
+	DDX_Text(pDX, IDC_EDT_PIPELINE, m_uPipeline);
 }
 
 BEGIN_MESSAGE_MAP(CHTTPLibDlg, CDialogEx)
@@ -252,6 +254,10 @@ void CHTTPLibDlg::DownloadQQ()
 
 void CHTTPLibDlg::DownloadFile()
 {
+	if (m_uPipeline > 1)
+	{
+		//hSession_.enablePipeline(m_uPipeline);
+	}
 	static int s_count = 0;
 	++s_count;
 	std::wostringstream oss;

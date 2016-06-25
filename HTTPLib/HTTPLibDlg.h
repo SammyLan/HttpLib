@@ -70,4 +70,5 @@ public:
 	CButton m_cQQ;
 	CButton m_cFile;
 	CStatic m_sOpt;
+	UINT m_uPipeline;
 };
