@@ -256,11 +256,11 @@ void CHTTPLibDlg::DownloadFile()
 	++s_count;
 	std::wostringstream oss;
 	oss << s_count;
-#ifdef DEBUG
+#ifdef _DEBUG
 	wstring strFile = _T("d:\\download\\data") + oss.str() + _T(".mp4");
 #else
 	wstring strFile = _T("d:\\data") + oss.str() + _T(".mp4");
-#endif // DEBUG
+#endif // _DEBUG
 	auto taskID = downloadMgr_.AddTask(this,m_uConn, strFile, std::string(CW2A(m_strURL)), std::string(CW2A(m_strCookie)));
 	taskList_.push(taskID);
 }
