@@ -74,8 +74,6 @@ CHttpRequest::CHttpRequest(CHttpSession *pSession)
 			curl_easy_setopt(handle_, CURLOPT_PROXYUSERPWD, strProxyUsrPwd.c_str());
 		}
 	}
-	//setTimeout(1000000);
-	setConnTimeout(1000*60);
 	/* call this function to get a socket */
 	curl_easy_setopt(handle_, CURLOPT_OPENSOCKETFUNCTION, &CHttpRequest::opensocket);
 	curl_easy_setopt(handle_, CURLOPT_OPENSOCKETDATA, this->pSession_);
@@ -87,6 +85,8 @@ CHttpRequest::CHttpRequest(CHttpSession *pSession)
 	curl_easy_setopt(this->handle_, CURLOPT_SOCKOPTFUNCTION, &CHttpRequest::sockopt_callback);
 	curl_easy_setopt(this->handle_, CURLOPT_SOCKOPTDATA, this);
 	setReadDelegate();
+	//setTimeout(1000 * 60);
+	setConnTimeout(1000 * 60);
 }
 
 CHttpRequest::~CHttpRequest()
@@ -422,8 +422,8 @@ int CHttpRequest::sockopt_callback(CHttpSession * pThis, curl_socket_t curlfd, c
 	int bufLen = 0;
 	int len = sizeof(bufLen);
 	::getsockopt((SOCKET)curlfd, SOL_SOCKET, SO_RCVBUF, (char *)&bufLen, &len);
-	bufLen = 1024 * 1024;
-	//::setsockopt((SOCKET)curlfd, SOL_SOCKET, SO_RCVBUF, (char const*)&bufLen, sizeof(bufLen));
+	bufLen =2 * 1024 * 60;
+	::setsockopt((SOCKET)curlfd, SOL_SOCKET, SO_RCVBUF, (char const*)&bufLen, sizeof(bufLen));
 	unsigned long ul = true;
 	if (ioctlsocket(curlfd, FIONBIO, &ul) == SOCKET_ERROR)
 	{
