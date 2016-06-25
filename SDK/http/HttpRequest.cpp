@@ -66,8 +66,6 @@ CHttpRequest::CHttpRequest(CHttpSession *pSession)
 	curl_easy_setopt(this->handle_, CURLOPT_TCP_KEEPINTVL, 60L);
 	curl_easy_setopt(this->handle_, CURLOPT_NOSIGNAL, 1);
 
-	//curl_easy_setopt(this->handle_, CURLOPT_PIPEWAIT, 1);
-
 	if (!strProxyHost.empty())
 	{
 		curl_easy_setopt(handle_, CURLOPT_PROXY, strProxyHost.c_str());
@@ -95,6 +93,11 @@ CHttpRequest::~CHttpRequest()
 {
 	clearData();
 	curl_easy_cleanup(handle_);
+}
+
+void CHttpRequest::enablePipeWait()
+{
+	curl_easy_setopt(this->handle_, CURLOPT_PIPEWAIT, 1);
 }
 
 void CHttpRequest::setUrl(const std::string&url, const cpr::Parameters & para)

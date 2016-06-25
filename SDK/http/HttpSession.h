@@ -11,6 +11,7 @@ class CHttpSession
 public:
 	CHttpSession(boost::asio::io_service & io_service, CHttpConnMgr * pConnMgr);
 	~CHttpSession();
+	void enablePipeline(size_t maxRequestPerConn = 5);
 	CURLMcode addHandle(CHttpRequest * pHandle);
 	CURLMcode removeHandle(CHttpRequest * pHandle);
 	CURLM * getHandle() const { return hMulti_; }

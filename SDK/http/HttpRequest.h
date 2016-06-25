@@ -28,6 +28,7 @@ public:
 
 	void setCookie(std::string const & cookie);
 	void setRange(int64_t beg,int64_t end);
+	void enablePipeWait();
 	int headRequest(std::string const & url,
 		const cpr::Parameters & para = cpr::Parameters{},
 		OnRespond const &  onRespond = OnRespond());
