@@ -65,6 +65,9 @@ CHttpRequest::CHttpRequest(CHttpSession *pSession)
 	curl_easy_setopt(this->handle_, CURLOPT_TCP_KEEPIDLE, 120L);
 	curl_easy_setopt(this->handle_, CURLOPT_TCP_KEEPINTVL, 60L);
 	curl_easy_setopt(this->handle_, CURLOPT_NOSIGNAL, 1);
+
+	//curl_easy_setopt(this->handle_, CURLOPT_PIPEWAIT, 1);
+
 	if (!strProxyHost.empty())
 	{
 		curl_easy_setopt(handle_, CURLOPT_PROXY, strProxyHost.c_str());
@@ -416,7 +419,7 @@ int CHttpRequest::sockopt_callback(CHttpSession * pThis, curl_socket_t curlfd, c
 	int bufLen = 0;
 	int len = sizeof(bufLen);
 	::getsockopt((SOCKET)curlfd, SOL_SOCKET, SO_RCVBUF, (char *)&bufLen, &len);
-	bufLen = 1024 * 8;
+	bufLen = 1024 * 1024;
 	//::setsockopt((SOCKET)curlfd, SOL_SOCKET, SO_RCVBUF, (char const*)&bufLen, sizeof(bufLen));
 	unsigned long ul = true;
 	if (ioctlsocket(curlfd, FIONBIO, &ul) == SOCKET_ERROR)

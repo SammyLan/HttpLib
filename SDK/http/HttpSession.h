@@ -16,6 +16,7 @@ public:
 	CURLM * getHandle() const { return hMulti_; }
 	http::SocketInfoPtr  openSocket(curlsocktype purpose, struct curl_sockaddr *address);
 	int closeSocket(curl_socket_t item);
+	CHttpConnMgr * getConnMgr() { return pConnMgr_; }
 private:
 	static int socket_callback(CURL *easy, curl_socket_t s, int what, CHttpSession *pThis, http::SocketInfo * sockInfo);
 	static int timer_callback(CURLM *multi, long timeout_ms, CHttpSession *pThis);

@@ -18,6 +18,10 @@ CHttpSession::CHttpSession(boost::asio::io_service & io_service, CHttpConnMgr * 
 	curl_multi_setopt(hMulti_, CURLMOPT_SOCKETDATA, this);
 	curl_multi_setopt(hMulti_, CURLMOPT_TIMERFUNCTION, timer_callback);
 	curl_multi_setopt(hMulti_, CURLMOPT_TIMERDATA, this);
+
+	//pipeline
+	//auto rc = curl_multi_setopt(hMulti_, CURLMOPT_PIPELINING, CURLPIPE_HTTP1);
+	//rc = curl_multi_setopt(hMulti_, CURLMOPT_MAX_PIPELINE_LENGTH, 2);
 }
 
 
