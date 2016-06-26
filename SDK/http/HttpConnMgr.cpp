@@ -42,7 +42,7 @@ http::SocketInfoPtr CHttpConnMgr::opensocket(curlsocktype purpose, struct curl_s
 			/* save it for monitoring */
 			socketMap_.insert(std::make_pair(newSocket->tcpSocket.native_handle(), tcp_socket));
 			int size =(int) socketMap_.size();
-			LogFinal(LOGFILTER,_T("Opened socket %p,total size = %d"), (SOCKET)newSocket->tcpSocket.native_handle(),size);
+			LogFinal(LOGFILTER,_T("socket [%u]: Opened,total size = %d"), (SOCKET)newSocket->tcpSocket.native_handle(),size);
 		}
 	}
 	else
@@ -56,7 +56,7 @@ http::SocketInfoPtr CHttpConnMgr::opensocket(curlsocktype purpose, struct curl_s
 /* CURLOPT_CLOSESOCKETFUNCTION */
 int CHttpConnMgr::close_socket( curl_socket_t item)
 {
-	LogFinal(LOGFILTER,_T("close_socket : %d"), item);
+	LogFinal(LOGFILTER,_T("socket [%u]: close"), item);
 
 	auto it = socketMap_.find(item);
 
