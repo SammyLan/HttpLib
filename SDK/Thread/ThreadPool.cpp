@@ -38,7 +38,7 @@ ThreadPool::ThreadPool(size_t threads, std::string const & threadName)
 	for (size_t i = 0; i < threads; i++)
 	{
 		auto && thread = std::make_shared<std::thread>(
-			[=]()
+			[threadName,this]()
 		{
 			SetThreadNameInternal(threadName.empty()?"iothread":threadName);
 			io_service_.run();
