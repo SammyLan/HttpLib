@@ -54,7 +54,7 @@ private:
 	ResponseInfo GetResponseInfo(cpr::Response const & response);
 	bool DownLoadNextRange(int64_t const beg, int64_t const end);	
 	bool CreareFile();
-	void SetFile();
+	bool SetFile();
 	void Cancel();
 #pragma region dump info
 	void DumpRespond(cpr::Response const & response);

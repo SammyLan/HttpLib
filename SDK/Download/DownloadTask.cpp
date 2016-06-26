@@ -46,8 +46,8 @@ bool CDownloadTask::BeginDownload()
 	if (!CreareFile())
 	{
 		std::get<UserReturnCode>(responseInfo_) = ::GetLastError();
-		OnFinish(false);
 		DumpSelfInfo(_T("Create file failed"), LOGL_Error);
+		OnFinish(false);
 		return false;
 	}
 
@@ -94,7 +94,7 @@ void CDownloadTask::GetFileInfo()
 		LockGuard gurad(csLock_);
 		
 		int64_t end = WYTime::g_watch.Now();
-		LogFinal(LOGFILTER, _T("take time=%llu"), end - beg);
+		LogFinal(LOGFILTER, _T("[%llu]  take time=%llu"),taskID_, end - beg);
 
 		auto pRequest = *requestList_.begin();
 		requestList_.clear();
@@ -139,7 +139,13 @@ void CDownloadTask::GetFileInfo()
 void CDownloadTask::DownloadFile()
 {
 	DumpSelfInfo(_T("Start download"));
-	SetFile();
+	if (!SetFile())
+	{
+		std::get<UserReturnCode>(responseInfo_) = ::GetLastError();
+		DumpSelfInfo(_T("Set file failed"), LOGL_Error);
+		OnFinish(false);
+	}
+
 	size_t nThread = (int)std::min((int64_t)nThread_, fileSize_ / s_block_size);
 	if (nThread == 0)
 	{
@@ -198,7 +204,7 @@ void CDownloadTask::OnRespond(cpr::Response const & response, data::BufferPtr co
 			if (!bSuccess)
 			{
 				WYASSERT(false);
-				LogErrorEx(LOGFILTER, _T("数据长度不对,文件长度为%llu,接受长度为%llu"), pData->first + pData->second.size(), offset + recvSize);
+				LogErrorEx(LOGFILTER, _T("[%llu]  数据长度不对,文件长度为%llu,接受长度为%llu"),taskID_, pData->first + pData->second.size(), offset + recvSize);
 				DumpSelfInfo(_T("请求大小跟接收大小不一致"), LOGL_Error);
 				std::get<UserReturnCode>(responseInfo_) = WYErrorCode::Download_RequestSizeConflict;
 				break;
@@ -213,7 +219,7 @@ void CDownloadTask::OnRespond(cpr::Response const & response, data::BufferPtr co
 	{
 		responseInfo_ = ret;
 		data::Buffer const & headerStr = pRequest->getHeader();
-		LogErrorEx(LOGFILTER, _T("下载出错:%S"), headerStr.data());
+		LogErrorEx(LOGFILTER, _T("[%llu]  下载出错:%S"),taskID_, headerStr.data());
 		WYASSERT(false);
 		Cancel();
 		OnFinish(false);
@@ -287,7 +293,7 @@ void CDownloadTask::OnFinish(bool bSuccess)
 	}
 	if (!bSuccess)
 	{
-		LogErrorEx(LOGFILTER, _T("curl_error=%i, curl_error_msg=%S, HttpCode=%i, UserReturnCode=%i\r\nURL=%S"),
+		LogErrorEx(LOGFILTER, _T("[%llu]  curl_error=%i, curl_error_msg=%S, HttpCode=%i, UserReturnCode=%i\r\nURL=%S"),taskID_,
 			std::get<CurlErrorCode>(responseInfo_),
 			std::get<CurlErrorMsg>(responseInfo_).c_str(),
 			::get<HttpCode>(responseInfo_),
@@ -323,7 +329,7 @@ CDownloadTask::ResponseInfo CDownloadTask::GetResponseInfo(cpr::Response const &
 		}
 		else
 		{
-			LogErrorEx(LOGFILTER, _T("can't find the value of Content-Length"));
+			LogErrorEx(LOGFILTER, _T("[%llu]  can't find the value of Content-Length"),taskID_);
 		}
 
 		auto itRet = header.find("User-ReturnCode");
@@ -333,7 +339,7 @@ CDownloadTask::ResponseInfo CDownloadTask::GetResponseInfo(cpr::Response const &
 		}
 		else
 		{
-			LogErrorEx(LOGFILTER, _T("can't find the value of ser-ReturnCode"));
+			LogErrorEx(LOGFILTER, _T("[%llu]  can't find the value of User-ReturnCode"),taskID_);
 		}
 	}
 	else
@@ -351,10 +357,10 @@ bool CDownloadTask::DownLoadNextRange(int64_t const beg, int64_t const end)
 		if ((end & ~s_srv_block_size_and) != 0)
 		{
 			WYASSERT(false);
-			LogErrorEx(LOGFILTER, _T("分块不对齐"));
+			LogErrorEx(LOGFILTER, _T("[%llu]  分块不对齐"),taskID_);
 		}
 	}
-	LogFinal(LOGFILTER, _T("Request next range:%llu"), beg);
+	LogFinal(LOGFILTER, _T("[%llu]  Request next range:%llu"), taskID_,beg);
 	
 	auto pHttpRequest = std::make_shared<CHttpRequest>(&hSession_);
 	requestList_.insert(std::make_pair(beg, pHttpRequest));
@@ -390,26 +396,30 @@ bool CDownloadTask::CreareFile()
 		}
 		auto hFile = pSaveFile_->native_handle();
 		DWORD dwTemp = 0;
-		DeviceIoControl(hFile, FSCTL_SET_SPARSE, NULL, 0, NULL, 0, &dwTemp, NULL);
+		if (!DeviceIoControl(hFile, FSCTL_SET_SPARSE, NULL, 0, NULL, 0, &dwTemp, NULL))
+		{
+			break;
+		}
 
 		bRet = true;
 	} while (false);
 	return bRet;
 }
 
-void CDownloadTask::SetFile()
+bool CDownloadTask::SetFile()
 {
 	auto hFile = pSaveFile_->native_handle();
 	LARGE_INTEGER liOffset;
 	liOffset.QuadPart = fileSize_;
 	if (!SetFilePointerEx(hFile, liOffset, NULL, FILE_BEGIN))
 	{
-		return;
+		return false;
 	}
 	if (!SetEndOfFile(hFile))
 	{
-		return;
+		return false;
 	}
+	return true;
 }
 
 #pragma region dump info
@@ -421,7 +431,7 @@ void CDownloadTask::DumpRespond(cpr::Response const & response)
 
 void CDownloadTask::DumpSelfInfo(LPCTSTR strMsg,int logLevel)
 {
-	LogFinalEx(logLevel,LOGFILTER, _T("%s:taskID=%llu,filePath=%s\r\nURL=%S\r\nCookie=%S\r\nstrSHA=%S\r\nfileSize=%llu"),
+	LogFinalEx(logLevel,LOGFILTER, _T("%s:[%llu]  filePath=%s\r\nURL=%S\r\nCookie=%S\r\nstrSHA=%S\r\nfileSize=%llu"),
 		strMsg, taskID_, strSavePath_.c_str(), strUrl_.c_str(), strCookie_.c_str(), strSHA_.c_str(), fileSize_);
 }
 
