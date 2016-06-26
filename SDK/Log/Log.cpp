@@ -566,7 +566,7 @@ namespace
 
 		void InternalLog(LogInfoPtr & pLogInfo)
 		{
-			m_ioThread.postTask([=]()
+			m_ioThread.postTask([pLogInfo,this]()
 			{
 				InternalLog(&pLogInfo->first, pLogInfo->second.strFilter, pLogInfo->second.strLog);
 			});
@@ -798,8 +798,8 @@ void TXLog_DoTXLogVW(LogInfoPtr & pLogIngfo, LPCWSTR pszFilter, LPCWSTR pszFmt, 
 	
 
 #ifdef VER_FINAL_RELEASE
-    pLogObj->pszSourceFileName = L"file";
-    pLogObj->pszFuncName = L"func";
+    //pLogObj->pszSourceFileName = L"file";
+    //pLogObj->pszFuncName = L"func";
 #endif
 
 	static int once = 0;
