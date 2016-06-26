@@ -35,7 +35,7 @@ void CHttpSession::enablePipeline(size_t maxRequestPerConn)
 
 CURLMcode CHttpSession::addHandle(CHttpRequest * pHandle)
 {
-	LogFinal(LOGFILTER,_T("Adding easy %p to multi %p (%S)"), pHandle->handle_, hMulti_, pHandle->url_.c_str());
+	LogFinal(LOGFILTER,_T("Adding easy [%p] to multi [%p] (%S)"), pHandle->handle_, hMulti_, pHandle->url_.c_str());
 	auto rc = curl_multi_add_handle(hMulti_, pHandle->getHandle());
 	http::mcode_or_die("new_conn: curl_multi_add_handle", rc);
 	return rc;
@@ -44,14 +44,15 @@ CURLMcode CHttpSession::addHandle(CHttpRequest * pHandle)
 CURLMcode CHttpSession::removeHandle(CHttpRequest * pHandle)
 {
 	auto rc = curl_multi_remove_handle(hMulti_, pHandle->getHandle());
-	LogFinal(LOGFILTER, _T("Remove easy %p from multi %p (%S)"), pHandle->handle_, hMulti_, pHandle->url_.c_str());
+	http::mcode_or_die("new_conn: curl_multi_add_handle", rc);
+	LogFinal(LOGFILTER, _T("Remove easy [%p] from multi [%p] (%S)"), pHandle->handle_, hMulti_, pHandle->url_.c_str());
 	return rc;
 }
 
 int CHttpSession::socket_callback(CURL *easy, curl_socket_t s, int what, CHttpSession *pThis, http::SocketInfo * sockInfo)
 {
 	const char *whatstr[] = { "none", "IN", "OUT", "INOUT", "REMOVE" };
-	LogDev(LOGFILTER,_T("sock_cb: socket=%p,easy=%p what=%d(%S), sockp=%p"), s, easy, what, whatstr[what], sockInfo);
+	LogDev(LOGFILTER,_T("sock_cb: socket=[%p],easy=[%p] what=%d(%S), sockp=%p"), s, easy, what, whatstr[what], sockInfo);
 	auto ret = pThis->pConnMgr_->getSock(s);
 
 	if (ret.get() == nullptr)
@@ -62,7 +63,8 @@ int CHttpSession::socket_callback(CURL *easy, curl_socket_t s, int what, CHttpSe
 
 	if (what == CURL_POLL_REMOVE)
 	{
-		LogFinal(LOGFILTER,_T( "CURL_POLL_REMOVE"));
+		LogFinal(LOGFILTER,_T( "[%p] CURL_POLL_REMOVE"),s);
+
 		curl_multi_assign(pThis->hMulti_, s, NULL);
 	}
 	else
@@ -71,6 +73,7 @@ int CHttpSession::socket_callback(CURL *easy, curl_socket_t s, int what, CHttpSe
 		{			
 			sockInfo = ret.get();
 			curl_multi_assign(pThis->hMulti_, s, sockInfo);
+			LogFinal(LOGFILTER, _T("[%p] CURL_POLL_Add"), s);
 		}
 		WYASSERT(ret.get() == sockInfo);
 		LogDev(LOGFILTER, _T("Changing action from %S to %S"), whatstr[sockInfo->mask], whatstr[what]);
