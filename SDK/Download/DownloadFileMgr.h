@@ -5,7 +5,7 @@
 #include <map>
 #include <string>
 #include <NotifyModel/EventNotifyMgr.h>
-class CDownloadFileMgr:public CDownloadTask::IDelegate
+class CDownloadFileMgr:public CDownloadTask::IDelegate,boost::noncopyable
 {
 	typedef std::map<int64_t, std::pair<CDownloadTaskPtr, CDownloadTask::IDelegate*>> DownloadList;
 public:

@@ -8,7 +8,7 @@
 
 class CDownloadTask;
 typedef std::shared_ptr<CDownloadTask> CDownloadTaskPtr;
-class CDownloadTask:public std::enable_shared_from_this<CDownloadTask>
+class CDownloadTask:public std::enable_shared_from_this<CDownloadTask>,public boost::noncopyable
 {
 	typedef std::map<int64_t, CHttpRequestPtr> RequestList;
 public:
@@ -46,8 +46,7 @@ private:
 	void OnDataSaveHandler(data::SaveDataPtr const & pData,bool bDel,
 		const boost::system::error_code& error, // Result of operation.
 		std::size_t bytes_transferred ,          // Number of bytes written.
-		std::size_t nBlockIndex,
-		CDownloadTaskPtr const&
+		std::size_t nBlockIndex
 		);
 	
 	void OnFinish(bool bSuccess);

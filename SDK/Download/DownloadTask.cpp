@@ -10,7 +10,7 @@
 
 static TCHAR LOGFILTER[] = _T("CDownloadTask");
 
-size_t const s_save_size = 1024 * 64;
+size_t const s_save_size = 1024 * 128;
 size_t const s_block_size = 1024 * 1024 * 1; //10M
 size_t const s_srv_block_size = 1024 * 512;
 size_t const s_srv_block_size_and = ~(s_srv_block_size - 1);
@@ -87,9 +87,9 @@ void CDownloadTask::GetFileInfo()
 	{
 		pHttpRequest->setCookie(strCookie_);
 	}
-	int64_t beg = WYTime::g_watch.Now();
+
 	pHttpRequest->headRequest(std::string(strUrl_), cpr::Parameters{},
-		[=](cpr::Response const & response, data::BufferPtr const & body)
+		[beg = WYTime::g_watch.Now(),this](cpr::Response const & response, data::BufferPtr const & body)
 	{
 		LockGuard gurad(csLock_);
 		
@@ -99,7 +99,7 @@ void CDownloadTask::GetFileInfo()
 		auto pRequest = *requestList_.begin();
 		requestList_.clear();
 		auto && ret = GetResponseInfo(response);
-		if (this->bCancel_)
+		if (bCancel_)
 		{
 			OnFinish(true);
 			return;
@@ -239,6 +239,7 @@ void CDownloadTask::OnDataRecv(data::byte const * data, size_t size, data::SaveD
 
 		data::SaveDataPtr  pTmp = std::make_shared<data::RecvData>();
 		pTmp->first = pData->first;
+		pTmp->second.reserve(s_save_size);
 		pData->first += pBuff.size();
 		pTmp->second.swap(pBuff);
 		pBuff.assign(data + appSize, size - appSize);
@@ -264,18 +265,24 @@ void CDownloadTask::OnDataRecv(data::byte const * data, size_t size, data::SaveD
 
 void CDownloadTask::SaveData(data::SaveDataPtr const & pData, bool bDel)
 {
-	auto & pBuff = pData->second;
-	auto size = pBuff.size();
-	pSaveFile_->async_write_some_at(pData->first, boost::asio::buffer(pBuff.data(), size),
-		std::bind(&CDownloadTask::OnDataSaveHandler,this, pData, bDel,std::placeholders::_1, std::placeholders::_2,size,shared_from_this()));
+	
+	auto beg = WYTime::g_watch.NowInMicro();
+	ioThreadPool_.postTask(
+		[pData,bDel, pThis = shared_from_this()]()
+	{
+		auto & pBuff = pData->second;
+		auto size = pBuff.size();
+		pThis->pSaveFile_->async_write_some_at(pData->first, boost::asio::buffer(pBuff.data(), size),
+			std::bind(&CDownloadTask::OnDataSaveHandler, pThis, pData, bDel, std::placeholders::_1, std::placeholders::_2, size));
+	}
+	);
 }
 
 void CDownloadTask::OnDataSaveHandler(
 	data::SaveDataPtr const & pData,bool bDel,
 	const boost::system::error_code& error, // Result of operation.
 	std::size_t bytes_transferred,           // Number of bytes written.
-	std::size_t nBlockIndex,
-	CDownloadTaskPtr const& pTask
+	std::size_t nBlockIndex
 	)
 {
 	if (bDel)
@@ -367,6 +374,7 @@ bool CDownloadTask::DownLoadNextRange(int64_t const beg, int64_t const end)
 
 	data::SaveDataPtr pData = std::make_shared<data::RecvData>();
 	pData->first = beg;	
+	pData->second.reserve(s_save_size);
 	pHttpRequest->setCookie(strCookie_);
 	if (end != 0)
 	{
@@ -431,8 +439,8 @@ void CDownloadTask::DumpRespond(cpr::Response const & response)
 
 void CDownloadTask::DumpSelfInfo(LPCTSTR strMsg,int logLevel)
 {
-	LogFinalEx(logLevel,LOGFILTER, _T("%s:[%llu]  filePath=%s\r\nURL=%S\r\nCookie=%S\r\nstrSHA=%S\r\nfileSize=%llu"),
-		strMsg, taskID_, strSavePath_.c_str(), strUrl_.c_str(), strCookie_.c_str(), strSHA_.c_str(), fileSize_);
+	LogFinalEx(logLevel,LOGFILTER, _T("[%llu]  %s:filePath=%s\r\nURL=%S\r\nCookie=%S\r\nstrSHA=%S\r\nfileSize=%llu"),
+		taskID_, strMsg, strSavePath_.c_str(), strUrl_.c_str(), strCookie_.c_str(), strSHA_.c_str(), fileSize_);
 }
 
 #pragma endregion dump info
