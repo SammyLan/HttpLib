@@ -18,10 +18,11 @@ public:
 		CurlErrorMsg = 1,	//curl_error_msg
 		HttpCode = 2,		//http - code
 		ContentLength = 3,	//Content - Length		
-		UserReturnCode = 4	//User - ReturnCode
+		UserReturnCode = 4,	//User - ReturnCode
+		DownloadSpeed = 5	//平均速度
 	};
 
-	typedef std::tuple<int, std::string, int,int64_t,int> ResponseInfo;
+	typedef std::tuple<int, std::string, int,int64_t,int,size_t> ResponseInfo;
 	struct IDelegate
 	{
 		virtual void OnProgress(WY::TaskID taskID,int64_t totalSize, int64_t recvSize, size_t speed) = 0;
@@ -73,8 +74,9 @@ private:
 	int64_t				preRecvSize = 0;
 	int64_t				recvSize = 0;
 	int64_t				lastReportTime = 0;
-	size_t				reportInterval = 1200;//1.2s
+	size_t const		reportInterval = 1200;//1.2s
 	size_t				nThread_ = 1;
+	size_t				nBeginDownload_ = 0;
 	RequestList			requestList_;
 	WY::File::AsioFilePtr pSaveFile_;
 	WY::CWYLock			csLock_;

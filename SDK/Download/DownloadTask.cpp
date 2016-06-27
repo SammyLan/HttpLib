@@ -169,7 +169,7 @@ void CDownloadTask::DownloadFile()
 		blockInfo.push_back(beg);
 	}
 	WYASSERT((nThread + 1) == blockInfo.size());
-	lastReportTime = ::GetTickCount();
+	lastReportTime = nBeginDownload_ = ::GetTickCount();
 	for (size_t i = 1; i < blockInfo.size(); ++i)
 	{
 		DownLoadNextRange(blockInfo[i - 1], blockInfo[i]);
@@ -303,14 +303,21 @@ void CDownloadTask::OnFinish(bool bSuccess)
 		LogErrorEx(LOGFILTER, _T("[%llu]  curl_error=%i, curl_error_msg=%S, HttpCode=%i, UserReturnCode=%i\r\nURL=%S"),taskID_,
 			std::get<CurlErrorCode>(responseInfo_),
 			std::get<CurlErrorMsg>(responseInfo_).c_str(),
-			::get<HttpCode>(responseInfo_),
-			::get<UserReturnCode>(responseInfo_),
+			std::get<HttpCode>(responseInfo_),
+			std::get<UserReturnCode>(responseInfo_),
 			strUrl_.c_str());
 		DumpSelfInfo(_T("OnFinsh:下载出错"), LOGL_Error);
 	}
 	else
 	{
 		DumpSelfInfo(_T("OnFinsh:下载完成"), LOGL_Error);
+		auto end = ::GetTickCount();
+		auto time = end - nBeginDownload_;
+		if (time == 0)
+		{
+			time = 1;
+		}
+		std::get<DownloadSpeed>(responseInfo_) = (size_t)(fileSize_ * 1000 / time);
 	}
 	if (pDelegate_ != nullptr)
 	{
