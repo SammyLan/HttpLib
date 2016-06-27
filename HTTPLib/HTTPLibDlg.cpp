@@ -303,7 +303,7 @@ void CHTTPLibDlg::OnProgress(WY::TaskID taskID, int64_t totalSize, int64_t recvS
 	if (totalSize != 0)
 	{
 		int progress = int(recvSize * 100 / totalSize);
-		m_strProgress.Format(_T("%u%"),progress);
+		m_strProgress.Format(_T("%u%%"),progress);
 	}
 	float fSpeed = (float)speed / 1024;
 	if (fSpeed >= 100)
@@ -332,6 +332,6 @@ void CHTTPLibDlg::OnFinish(WY::TaskID taskID, bool bSuccess, CDownloadTask::Resp
 	{
 		m_strSpeed.Format(_T("%.2fKB"), fSpeed);
 	}
-	m_strProgress.Format(_T("100%"));
+	m_strProgress.Format(_T("100%%"));
 	m_uCurConn = connMgr_.getSockCount();
 }
