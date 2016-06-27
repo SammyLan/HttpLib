@@ -3,10 +3,11 @@
 #include <boost/asio.hpp>
 #include <boost/bind.hpp>
 #include "HttpGlobal.h"
+#include <boost/noncopyable.hpp>
 
 class CHttpRequest;
 class CHttpConnMgr;
-class CHttpSession
+class CHttpSession:public boost::noncopyable
 {
 public:
 	CHttpSession(boost::asio::io_service & io_service, CHttpConnMgr * pConnMgr);

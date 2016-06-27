@@ -4,8 +4,9 @@
 #include <string>
 #include <functional>
 #include "HttpGlobal.h"
+#include <boost/noncopyable.hpp>
 class CHttpSession;
-class CHttpRequest
+class CHttpRequest:public boost::noncopyable
 {
 	friend class CHttpSession;
 public:

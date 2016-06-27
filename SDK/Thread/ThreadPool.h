@@ -3,7 +3,7 @@
 #include <boost/asio.hpp>
 #include <memory>
 #include <vector>
-class ThreadPool
+class ThreadPool:boost::noncopyable
 {
 public:
 	typedef std::shared_ptr<std::thread> ThreadPtr;

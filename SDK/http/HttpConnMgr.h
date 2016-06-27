@@ -2,10 +2,11 @@
 #include <curl/curl.h>
 #include <boost/asio.hpp>
 #include <boost/bind.hpp>
+#include <boost/noncopyable.hpp>
 #include <map>
 #include <memory>
 #include "HttpGlobal.h"
-class CHttpConnMgr
+class CHttpConnMgr:public boost ::noncopyable
 {
 public:
 	typedef std::map<curl_socket_t, http::SocketInfoPtr>	SocketPool;
