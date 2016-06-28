@@ -334,4 +334,5 @@ void CHTTPLibDlg::OnFinish(WY::TaskID taskID, bool bSuccess, CDownloadTask::Resp
 	}
 	m_strProgress.Format(_T("100%%"));
 	m_uCurConn = connMgr_.getSockCount();
+	UpdateData(FALSE);
 }
