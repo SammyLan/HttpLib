@@ -4,7 +4,7 @@
 #include <http/HttpSession.h>
 #include <memory>
 #include <fstream>
-#include <File/AsyncFile.h>
+#include <File/WYFile.h>
 
 class CDownloadTask;
 typedef std::shared_ptr<CDownloadTask> CDownloadTaskPtr;

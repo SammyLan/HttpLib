@@ -1,5 +1,5 @@
 #include "StdAfx.h"
-#include "AsyncFile.h"
+#include "WYFile.h"
 #include <cassert>
 
 typedef BOOL(WINAPI * TCancelIoEx)(HANDLE, LPOVERLAPPED);

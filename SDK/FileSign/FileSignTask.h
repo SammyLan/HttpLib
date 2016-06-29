@@ -1,7 +1,7 @@
 #pragma once
 #include <Include\WYTypeDef.h>
 #include <WYSDK\IWYUploadSDK.h>
-#include <File\AsyncFile.h>
+#include <File\WYFile.h>
 #include <vector>
 #include <string>
 #include <sha1\sha1.h>
