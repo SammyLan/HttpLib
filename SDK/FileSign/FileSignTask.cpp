@@ -29,14 +29,15 @@ void CFileSignTask::BeginTask(boost::asio::io_service& io_service)
 {
 	m_bRunning = TRUE;
 	m_dwBeginTime = ::GetTickCount();
-	if (!m_hFile.Create(io_service, m_strFile, GENERIC_READ, FILE_SHARE_READ, OPEN_EXISTING))
+	m_pFile = WY::File::CreateAsioFile(io_service,m_strFile, GENERIC_READ, FILE_SHARE_READ, OPEN_EXISTING);
+	if (m_pFile.get() == nullptr)
 	{
 		int iError = GetLastError();
 		LogErrorEx(LOGFILTER, _T("创建文件失败,错误码:%i,文件名:%s"), iError, (LPCTSTR)m_strFile);
 		OnFinish(iError);
 		return;
 	}
-	m_uFileSize = m_hFile.GetSize();
+	WY::File::GetFileSize(m_pFile->native_handle(), m_uFileSize);
 	if (m_uFileSize == 0)
 	{
 		LogFinal(LOGFILTER, _T("文件大小为0,文件名:%s"), (LPCTSTR)m_strFile);
@@ -52,14 +53,13 @@ void CFileSignTask::BeginTask(boost::asio::io_service& io_service)
 
 void CFileSignTask::CancelTask()
 {
-	m_hFile.CancelIO();
+	WY::File::CancelIo(m_pFile->native_handle(), NULL);
 	m_pCallback = nullptr;
 }
 
 void CFileSignTask::readAt(uint64_t const offset, BYTE * pBuff, size_t const size)
 {
-	auto & asioFile = m_hFile.getAsioFile();
-	return asioFile.async_read_some_at(offset, boost::asio::buffer((void*)pBuff, size), std::bind(&CFileSignTask::handler, shared_from_this(), std::placeholders::_1, std::placeholders::_2));
+	return m_pFile->async_read_some_at(offset, boost::asio::buffer((void*)pBuff, size), std::bind(&CFileSignTask::handler, shared_from_this(), std::placeholders::_1, std::placeholders::_2));
 }
 
 void CFileSignTask::handler(

@@ -31,7 +31,7 @@ private:
 	CWYFileSignMgr *		m_pMgr;
 	IFileSignDelegate*		m_pCallback;
 	BOOL					m_bRunning = FALSE;
-	CAsyncFile				m_hFile;
+	WY::File::AsioFilePtr	m_pFile;
 	uint64_t				m_uFileSize = 0;
 	uint64_t				m_i64CompleteSize = 0;
 	uint64_t				m_i64PreCompleteSize;
