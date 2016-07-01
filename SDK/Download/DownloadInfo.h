@@ -33,6 +33,7 @@ public:
 	};
 public:
 	CDownloadInfo(std::wstring const & filePath, uint64_t fileSize, size_t threadCount, std::string const & sha);
+	~CDownloadInfo();
 
 	bool CalcPiceInfo();
 	std::wstring  GetDataFileName() const;
@@ -42,7 +43,7 @@ public:
 	uint64_t GetCompletedSize() const;
 	uint16_t GetThreadCount() const { return info_.threadCount; }
 	void Save();
-	FileInfo & GetFileInfo() { return info_; }
+	FileInfo * GetFileInfo() { return &info_; }
 private:
 	void TryToDelTmpFile();
 	std::wstring  GetDescFileName() const;

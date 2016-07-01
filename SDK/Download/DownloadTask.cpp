@@ -108,10 +108,10 @@ void CDownloadTask::GetFileInfo()
 		bool bSuccess = ((curlCode == (int)cpr::ErrorCode::OK) && (httpCode == 200) && (userReturnCode == 0));
 		if (bSuccess)
 		{
-			auto & info = descFile_.GetFileInfo();
+			auto  pInfo = descFile_.GetFileInfo();
 			if (descFile_.GetFileSize() == 0)
 			{
-				info.fileSize = std::get<ContentLength>(ret);
+				pInfo->fileSize = std::get<ContentLength>(ret);
 			}
 			else
 			{
@@ -148,15 +148,15 @@ void CDownloadTask::DownloadFile()
 	}
 
 	lastReportTime = nBeginDownload_ = ::GetTickCount();
-	auto const & info = descFile_.GetFileInfo();
-	auto const & piceInfo = info.pieceInfo;
-	for (size_t i = 0; i < info.threadCount; ++i)
+	auto  pInfo = descFile_.GetFileInfo();
+	auto & piceInfo = pInfo->pieceInfo;
+	for (size_t i = 0; i < pInfo->threadCount; ++i)
 	{
 		DownLoadNextRange(piceInfo[i]);
 	}
 }
 
-void CDownloadTask::OnRespond(cpr::Response const & response, data::BufferPtr const & body, CDownloadTask::SaveDataPtr const& pData, uint64_t offset, uint64_t fileSize)
+void CDownloadTask::OnRespond(cpr::Response const & response, data::BufferPtr const & body, CDownloadTask::SaveDataPtr const& pData, uint64_t offset)
 {
 	LockGuard gurad(csLock_);
 	auto itFind = requestList_.find(offset);
@@ -175,16 +175,18 @@ void CDownloadTask::OnRespond(cpr::Response const & response, data::BufferPtr co
 		do
 		{
 			auto recvSize = std::get<ContentLength>(ret);
-			if (fileSize == 0)//不需要从服务器获取文件大小
+			if (descFile_.GetFileSize() == 0)//不需要从服务器获取文件大小
 			{
-				fileSize = descFile_.GetFileInfo().fileSize = recvSize;
+				descFile_.GetFileInfo()->fileSize = recvSize;
+				pData->pInfo_->rangeSize = recvSize;
 			}
-			WYASSERT(fileSize == recvSize);
-			bSuccess = ((fileSize == recvSize) && (pData->first + pData->second.size() == offset + recvSize));
+			auto requestSize = pData->pInfo_->offset + pData->pInfo_->rangeSize - pData->beg_;
+			WYASSERT(requestSize == recvSize);
+			bSuccess = ((requestSize == recvSize) && (pData->curPos_ + pData->data_.size() ==  pData->pInfo_->offset + pData->pInfo_->rangeSize));
 			if (!bSuccess)
 			{
 				WYASSERT(false);
-				LogErrorEx(LOGFILTER, _T("[%llu]  数据长度不对,文件长度为%llu,接受长度为%llu"),taskID_, pData->first + pData->second.size(), offset + recvSize);
+				LogErrorEx(LOGFILTER, _T("[%llu]  数据长度不对,文件长度为%llu,接受长度为%llu"),taskID_, requestSize, recvSize);
 				DumpSelfInfo(_T("请求大小跟接收大小不一致"), LOGL_Error);
 				std::get<UserReturnCode>(responseInfo_) = WYErrorCode::Download_RequestSizeConflict;
 				break;
@@ -209,7 +211,7 @@ void CDownloadTask::OnRespond(cpr::Response const & response, data::BufferPtr co
 void CDownloadTask::OnDataRecv(data::byte const * data, size_t size, CDownloadTask::SaveDataPtr const& pData)
 {
 	recvSize += size;
-	auto & pBuff = pData->second;
+	auto & pBuff = pData->data_;
 	auto curSize = pBuff.size();
 	auto newSize = curSize + size;
 	if (newSize >= s_save_size)
@@ -217,11 +219,10 @@ void CDownloadTask::OnDataRecv(data::byte const * data, size_t size, CDownloadTa
 		size_t appSize = size - (newSize%s_save_size);
 		pBuff.append(data, appSize);
 
-		SaveDataPtr  pTmp = std::make_shared<RecvData>();
-		pTmp->first = pData->first;
-		pTmp->second.reserve(s_save_size);
-		pData->first += pBuff.size();
-		pTmp->second.swap(pBuff);
+		SaveDataPtr  pTmp = std::make_shared<RecvData>(pData->pInfo_);
+		pTmp->data_.reserve(s_save_size);
+		pData->curPos_ += pBuff.size();
+		pTmp->data_.swap(pBuff);
 		pBuff.assign(data + appSize, size - appSize);
 		SaveData(pTmp);
 	}
@@ -245,14 +246,13 @@ void CDownloadTask::OnDataRecv(data::byte const * data, size_t size, CDownloadTa
 
 void CDownloadTask::SaveData(CDownloadTask::SaveDataPtr const & pData, bool bDel)
 {
-	
 	auto beg = WYTime::g_watch.NowInMicro();
 	ioThreadPool_.postTask(
 		[pData,bDel, pThis = shared_from_this()]()
 	{
-		auto & pBuff = pData->second;
+		auto & pBuff = pData->data_;
 		auto size = pBuff.size();
-		pThis->pSaveFile_->async_write_some_at(pData->first, boost::asio::buffer(pBuff.data(), size),
+		pThis->pSaveFile_->async_write_some_at(pData->curPos_, boost::asio::buffer(pBuff.data(), size),
 			std::bind(&CDownloadTask::OnDataSaveHandler, pThis, pData, bDel, std::placeholders::_1, std::placeholders::_2, size));
 	}
 	);
@@ -265,6 +265,10 @@ void CDownloadTask::OnDataSaveHandler(
 	std::size_t nBlockIndex
 	)
 {
+	WYASSERT(pData->curPos_ == pData->pInfo_->offset + pData->pInfo_->complectSize);
+	WYASSERT(bytes_transferred == pData->data_.size());
+	pData->pInfo_->complectSize += bytes_transferred;
+	descFile_.Save();
 	if (bDel)
 	{
 		OnFinish(true);
@@ -343,31 +347,33 @@ CDownloadTask::ResponseInfo CDownloadTask::GetResponseInfo(cpr::Response const &
 	return res;
 }
 
-bool CDownloadTask::DownLoadNextRange(CDownloadInfo::PieceInfo const & info)
+bool CDownloadTask::DownLoadNextRange(CDownloadInfo::PieceInfo & info)
 {
-	auto beg = info.offset + info.complectSize;
-	auto end = info.offset + info.rangeSize;
+	if (info.complectSize >= info.rangeSize)
+	{
+		WYASSERT(info.complectSize == info.rangeSize);
+		return true;
+	}
 	if ((info.offset & ~s_srv_block_size_and) != 0)
 	{
 		WYASSERT(false);
 		LogErrorEx(LOGFILTER, _T("[%llu]  分块不对齐"), taskID_);
 	}
-	
 
-	LogFinal(LOGFILTER, _T("[%llu]  Request next range:%llu"), taskID_, beg);
+	
 	
 	auto pHttpRequest = std::make_shared<CHttpRequest>(&hSession_);
 	requestList_.insert(std::make_pair(info.offset, pHttpRequest));
 
-	SaveDataPtr pData = std::make_shared<RecvData>();
-	pData->first = beg;	
-	pData->second.reserve(s_save_size);
+	SaveDataPtr pData = std::make_shared<RecvData>(&info);
+	pData->data_.reserve(s_save_size);	
 	pHttpRequest->setCookie(strCookie_);
-	pHttpRequest->setRange(beg, end - 1);
-	
+	auto end = pData->beg_ + pData->pInfo_->rangeSize - pData->pInfo_->complectSize;
+	pHttpRequest->setRange(pData->beg_, end);
+	LogFinal(LOGFILTER, _T("[%llu]  Request next range:%llu"), taskID_, pData->beg_);
 	
 	pHttpRequest->get(std::string(strUrl_), cpr::Parameters{}, CHttpRequest::RecvData_Body | CHttpRequest::RecvData_Header,
-		std::bind(&CDownloadTask::OnRespond, this, std::placeholders::_1, std::placeholders::_2, pData,info.offset, end - beg),
+		std::bind(&CDownloadTask::OnRespond, this, std::placeholders::_1, std::placeholders::_2, pData,info.offset),
 		std::bind(&CDownloadTask::OnDataRecv, this, std::placeholders::_1, std::placeholders::_2, pData)
 		);
 	return true;
@@ -421,7 +427,7 @@ void CDownloadTask::DumpRespond(cpr::Response const & response)
 void CDownloadTask::DumpSelfInfo(LPCTSTR strMsg,int logLevel)
 {
 	LogFinalEx(logLevel,LOGFILTER, _T("[%llu]  %s:filePath=%s\r\nURL=%S\r\nCookie=%S\r\nstrSHA=%S\r\nfileSize=%llu"),
-		taskID_, strMsg, descFile_.GetFileName().c_str(), strUrl_.c_str(), strCookie_.c_str(), descFile_.GetDataFileName().c_str(), descFile_.GetFileInfo().fileSize);
+		taskID_, strMsg, descFile_.GetFileName().c_str(), strUrl_.c_str(), strCookie_.c_str(), descFile_.GetDataFileName().c_str(), descFile_.GetFileInfo()->fileSize);
 }
 
 #pragma endregion dump info

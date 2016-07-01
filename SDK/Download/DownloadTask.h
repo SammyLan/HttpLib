@@ -11,8 +11,16 @@ class CDownloadTask;
 typedef std::shared_ptr<CDownloadTask> CDownloadTaskPtr;
 class CDownloadTask:public std::enable_shared_from_this<CDownloadTask>,public boost::noncopyable
 {
-	typedef std::map<uint64_t, CHttpRequestPtr> RequestList;
-	typedef std::pair<int64_t, data::Buffer> RecvData;	//offset-data
+	typedef std::map<uint64_t, CHttpRequestPtr> RequestList; //offset-httpRequest
+	struct RecvData
+	{
+		typedef CDownloadInfo::PieceInfo PieceInfo;
+		RecvData(PieceInfo * pInfo) : pInfo_(pInfo),beg_(pInfo->offset + pInfo->complectSize),curPos_(beg_) {}
+		PieceInfo * pInfo_;
+		uint64_t const beg_;
+		uint64_t curPos_;
+		data::Buffer data_;
+	};
 	typedef std::shared_ptr<RecvData> SaveDataPtr;
 public:
 	enum ResponseInfoPos
@@ -44,7 +52,7 @@ public:
 private:
 	void GetFileInfo();
 	void DownloadFile();
-	void OnRespond(cpr::Response const & response, data::BufferPtr const & body, CDownloadTask::SaveDataPtr const& pData, uint64_t offset, uint64_t fileSize);
+	void OnRespond(cpr::Response const & response, data::BufferPtr const & body, CDownloadTask::SaveDataPtr const& pData, uint64_t offset);
 	void OnDataRecv(data::byte const * data, size_t size, CDownloadTask::SaveDataPtr const & pData);
 	void SaveData(CDownloadTask::SaveDataPtr const & pData,bool bDel = false);
 	void OnDataSaveHandler(CDownloadTask::SaveDataPtr const & pData,bool bDel,
@@ -55,7 +63,7 @@ private:
 	
 	void OnFinish(bool bSuccess);
 	ResponseInfo GetResponseInfo(cpr::Response const & response);
-	bool DownLoadNextRange(CDownloadInfo::PieceInfo const & info);
+	bool DownLoadNextRange(CDownloadInfo::PieceInfo & info);
 	bool CreareFile();
 	bool SetFile();
 	void Cancel();

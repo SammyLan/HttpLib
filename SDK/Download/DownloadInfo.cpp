@@ -46,6 +46,15 @@ CDownloadInfo::CDownloadInfo(std::wstring const & filePath, uint64_t fileSize, s
 	info_.threadCount = (uint16_t)threadCount;
 }
 
+CDownloadInfo::~CDownloadInfo()
+{
+	if (this->GetCompletedSize() != info_.fileSize)
+	{
+		Save();
+		LogFinal(LOGFILTER, _T("保存分片信息"));
+	}
+}
+
 bool CDownloadInfo::CalcPiceInfo()
 {
 	boost::filesystem::path desc( GetDescFileName());
@@ -62,13 +71,10 @@ bool CDownloadInfo::CalcPiceInfo()
 		if (tmpInfo.threadCount < MaxThreadCount
 			&& (tmpInfo.infoSize == sizeof(FileInfo))
 			&& (tmpInfo.dwFlag == s_dwFlag)
-			&& (tmpInfo.fileSize != info_.fileSize)
-			&& (memcmp(&tmpInfo.sha, info_.sha, SHASize) != 0))
+			&& (tmpInfo.fileSize == info_.fileSize)
+			&& (memcmp(&tmpInfo.sha, info_.sha, SHASize) == 0))
 		{
 			needReset = false;
-		}
-		else
-		{
 			info_ = tmpInfo;
 		}
 	}
@@ -146,9 +152,10 @@ void CDownloadInfo::TryToDelTmpFile()
 			boost::filesystem::remove(data);
 		}
 	}
-	catch (const std::exception&)
+	catch (const std::exception& e)
 	{
-
+		CWYString error = CA2W(e.what());
+		LogErrorEx(LOGFILTER, _T("error:%s"), (LPCTSTR)error);
 	}
 	
 }
