@@ -2,7 +2,6 @@
 #include "DownloadTask.h"
 #include <sstream>
 #include <http/HttpGlobal.h>
-#include <winioctl.h>
 #include "WYErrorDef.h"
 #ifdef min
 #undef min
@@ -40,14 +39,6 @@ CDownloadTask::~CDownloadTask()
 bool CDownloadTask::BeginDownload()
 {
 	LockGuard gurad(csLock_);
-	if (!CreareFile())
-	{
-		std::get<UserReturnCode>(responseInfo_) = ::GetLastError();
-		DumpSelfInfo(_T("Create file failed"), LOGL_Error);
-		OnFinish(false);
-		return false;
-	}
-
 	if (descFile_.GetThreadCount() > 1)
 	{
 		GetFileInfo();
@@ -136,16 +127,16 @@ void CDownloadTask::GetFileInfo()
 
 void CDownloadTask::DownloadFile()
 {
-	descFile_.CalcPiceInfo();
+	if (!descFile_.InitDownload(ioThreadPool_.io_service()))
+	{
+		std::get<UserReturnCode>(responseInfo_) = descFile_.GetLastError();
+		DumpSelfInfo(_T("InitDownload failed"), LOGL_Error);
+		OnFinish(false);
+	}
+
 	recvSize = preRecvSize = descFile_.GetCompletedSize();
 
 	DumpSelfInfo(_T("Start download"));
-	if (!SetFile())
-	{
-		std::get<UserReturnCode>(responseInfo_) = ::GetLastError();
-		DumpSelfInfo(_T("Set file failed"), LOGL_Error);
-		OnFinish(false);
-	}
 
 	lastReportTime = nBeginDownload_ = ::GetTickCount();
 	auto  pInfo = descFile_.GetFileInfo();
@@ -252,7 +243,7 @@ void CDownloadTask::SaveData(CDownloadTask::SaveDataPtr const & pData, bool bDel
 	{
 		auto & pBuff = pData->data_;
 		auto size = pBuff.size();
-		pThis->pSaveFile_->async_write_some_at(pData->curPos_, boost::asio::buffer(pBuff.data(), size),
+		pThis->descFile_.GetFile()->async_write_some_at(pData->curPos_, boost::asio::buffer(pBuff.data(), size),
 			std::bind(&CDownloadTask::OnDataSaveHandler, pThis, pData, bDel, std::placeholders::_1, std::placeholders::_2, size));
 	}
 	);
@@ -307,8 +298,6 @@ void CDownloadTask::OnFinish(bool bSuccess)
 	{
 		pDelegate_->OnFinish(taskID_,bSuccess, responseInfo_);
 	}
-	
-	//ioThreadPool_.postTask(std::bind(&IDelegate::OnFinish, pDelegate_,bSuccess, taskID_,info));
 }
 
 CDownloadTask::ResponseInfo CDownloadTask::GetResponseInfo(cpr::Response const & response)
@@ -376,44 +365,6 @@ bool CDownloadTask::DownLoadNextRange(CDownloadInfo::PieceInfo & info)
 		std::bind(&CDownloadTask::OnRespond, this, std::placeholders::_1, std::placeholders::_2, pData,info.offset),
 		std::bind(&CDownloadTask::OnDataRecv, this, std::placeholders::_1, std::placeholders::_2, pData)
 		);
-	return true;
-}
-
-bool CDownloadTask::CreareFile()
-{
-	bool bRet = false;
-	do
-	{
-		pSaveFile_ = WY::File::CreateAsioFile(ioThreadPool_.io_service(), descFile_.GetDataFileName().c_str(), GENERIC_WRITE, FILE_SHARE_READ, CREATE_ALWAYS, FILE_FLAG_RANDOM_ACCESS | FILE_FLAG_OVERLAPPED);
-		if (pSaveFile_.get() ==nullptr)
-		{
-			break;
-		}
-		auto hFile = pSaveFile_->native_handle();
-		DWORD dwTemp = 0;
-		if (!DeviceIoControl(hFile, FSCTL_SET_SPARSE, NULL, 0, NULL, 0, &dwTemp, NULL))
-		{
-			break;
-		}
-
-		bRet = true;
-	} while (false);
-	return bRet;
-}
-
-bool CDownloadTask::SetFile()
-{
-	auto hFile = pSaveFile_->native_handle();
-	LARGE_INTEGER liOffset;
-	liOffset.QuadPart = descFile_.GetFileSize();
-	if (!SetFilePointerEx(hFile, liOffset, NULL, FILE_BEGIN))
-	{
-		return false;
-	}
-	if (!SetEndOfFile(hFile))
-	{
-		return false;
-	}
 	return true;
 }
 

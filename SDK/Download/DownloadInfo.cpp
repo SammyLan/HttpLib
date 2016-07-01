@@ -4,6 +4,7 @@
 #include <boost/interprocess/file_mapping.hpp>  
 #include <boost/interprocess/mapped_region.hpp> 
 #include <Include/WYUtil.h>
+#include <winioctl.h>
 
 #ifdef min
 #undef min
@@ -55,8 +56,14 @@ CDownloadInfo::~CDownloadInfo()
 	}
 }
 
-bool CDownloadInfo::CalcPiceInfo()
+bool CDownloadInfo::InitDownload(boost::asio::io_service& io_service)
 {
+	if (!CreareFile(io_service))
+	{
+		lastError_ = ::GetLastError();
+		return false;
+	}
+
 	boost::filesystem::path desc( GetDescFileName());
 	boost::filesystem::path data( GetDataFileName() );
 
@@ -133,7 +140,6 @@ bool CDownloadInfo::CalcPiceInfo()
 		CWYString error = CA2W(e.what());
 		LogErrorEx(LOGFILTER, _T("error:%s"), (LPCTSTR)error);
 	}
-
 	return true;
 	
 }
@@ -194,4 +200,36 @@ void CDownloadInfo::Save()
 		file.seekp(0, ios_base::beg);
 		file.write((char *)&info_, sizeof(info_));
 	}
+}
+
+bool CDownloadInfo::CreareFile(boost::asio::io_service& io_service)
+{
+	bool bRet = false;
+	do
+	{
+		pSaveFile_ = WY::File::CreateAsioFile(io_service, GetDataFileName().c_str(), GENERIC_WRITE, FILE_SHARE_READ, CREATE_ALWAYS, FILE_FLAG_RANDOM_ACCESS | FILE_FLAG_OVERLAPPED);
+		if (pSaveFile_.get() == nullptr)
+		{
+			break;
+		}
+		auto hFile = pSaveFile_->native_handle();
+		DWORD dwTemp = 0;
+		if (!DeviceIoControl(hFile, FSCTL_SET_SPARSE, NULL, 0, NULL, 0, &dwTemp, NULL))
+		{
+			break;
+		}
+
+		LARGE_INTEGER liOffset;
+		liOffset.QuadPart = GetFileSize();
+		if (!SetFilePointerEx(hFile, liOffset, NULL, FILE_BEGIN))
+		{
+			break;
+		}
+		if (!SetEndOfFile(hFile))
+		{
+			break;
+		}
+		bRet = true;
+	} while (false);
+	return bRet;
 }

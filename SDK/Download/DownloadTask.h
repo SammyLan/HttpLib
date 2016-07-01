@@ -4,7 +4,6 @@
 #include <http/HttpSession.h>
 #include <memory>
 #include <fstream>
-#include <File/WYFile.h>
 #include "DownloadInfo.h"
 
 class CDownloadTask;
@@ -64,8 +63,6 @@ private:
 	void OnFinish(bool bSuccess);
 	ResponseInfo GetResponseInfo(cpr::Response const & response);
 	bool DownLoadNextRange(CDownloadInfo::PieceInfo & info);
-	bool CreareFile();
-	bool SetFile();
 	void Cancel();
 #pragma region dump info
 	void DumpRespond(cpr::Response const & response);
@@ -85,10 +82,8 @@ private:
 	size_t const		reportInterval = 1200;//1.2s
 	size_t				nBeginDownload_ = 0;
 	RequestList			requestList_;
-	WY::File::AsioFilePtr pSaveFile_;
 	CDownloadInfo		descFile_;
 	WY::CWYLock			csLock_;
 	ResponseInfo		responseInfo_;
 	bool				bCancel_ = false;
-	
 };
