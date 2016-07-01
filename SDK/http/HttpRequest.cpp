@@ -155,7 +155,7 @@ void CHttpRequest::setCookie(std::string const & cookie)
 void CHttpRequest::setRange(int64_t beg, int64_t end)
 {
 	std::ostringstream ofs;
-	if (end != 0)
+	if (end != 0 && end != beg)
 	{
 		ofs << beg << '-' << end;
 	}
