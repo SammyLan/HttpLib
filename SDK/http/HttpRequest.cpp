@@ -422,8 +422,8 @@ int CHttpRequest::sockopt_callback(CHttpSession * pThis, curl_socket_t curlfd, c
 	int bufLen = 0;
 	int len = sizeof(bufLen);
 	::getsockopt((SOCKET)curlfd, SOL_SOCKET, SO_RCVBUF, (char *)&bufLen, &len);
-	bufLen =2 * 1024 * 60;
-	::setsockopt((SOCKET)curlfd, SOL_SOCKET, SO_RCVBUF, (char const*)&bufLen, sizeof(bufLen));
+	bufLen =1024 * 8;
+	//::setsockopt((SOCKET)curlfd, SOL_SOCKET, SO_RCVBUF, (char const*)&bufLen, sizeof(bufLen));
 	unsigned long ul = true;
 	if (ioctlsocket(curlfd, FIONBIO, &ul) == SOCKET_ERROR)
 	{

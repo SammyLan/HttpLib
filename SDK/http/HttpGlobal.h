@@ -5,7 +5,6 @@
 #include <memory>
 #include <tuple>
 #include <boost/asio.hpp>
-#include <codecvt>
 
 namespace http
 {
@@ -35,11 +34,6 @@ namespace data
 	typedef std::shared_ptr<RecvData> SaveDataPtr;
 	typedef std::pair<std::string, BufferPtr> FormItem;
 	typedef std::vector<FormItem> FormList;
-}
-
-namespace convert
-{
-	extern std::wstring_convert<std::codecvt_utf8<wchar_t>> utf8ToUnicode;
 }
 
 namespace WYTime

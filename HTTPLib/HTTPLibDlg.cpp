@@ -9,6 +9,7 @@
 #include <fstream>
 #include <sstream>
 #include <cpr/util.h>
+#include <boost/filesystem.hpp> 
 
 #ifdef _DEBUG
 #define new DEBUG_NEW
@@ -70,10 +71,15 @@ CHTTPLibDlg::CHTTPLibDlg(CWnd* pParent /*=NULL*/)
 	, m_strSpeed(_T(""))
 	, m_uCurConn(0)
 	, m_uPipeline(0)
+	, m_strSHA(_T(""))
+	, m_uFileSize(0)
+	, m_strDir(_T("D:\\download"))
 {
 	m_hIcon = AfxGetApp()->LoadIcon(IDR_MAINFRAME);
-	m_strURL = _T("http://sh.yun.ftn.qq.com:80/ftn_handler/0d355f81c2087136ab208c5d8fa58d509530dcf8df48177f6e948547123036dc0deaad223fe3eafb640d7ecaad93133256a846bcb411870b1884fdac023f0598/?fname=%E5%A4%AA%E5%AD%90%E5%A6%83%E5%8D%87%E8%81%8C%E8%AE%B0.EP35.2015.HD720P.X264.AAC.Mandarin.CHS.mp4&from=30322&version=3.5.0.1700&uin=240201454");
+	m_strURL = _T("http://101.227.143.18:80/ftn_handler/6402ad3a3f1742890c7615695531da71646a757bb5ae82b0b2c7f4b2525937aa731df8777fa25fbe81c0bd49f43d65c27f5dc57c3ffd13e8938fb7ecbd9baf02/%E5%A4%AA%E5%AD%90%E5%A6%83%E5%8D%87%E8%81%8C%E8%AE%B0.EP35.2015.HD720P.X264.AAC.Mandarin.CHS.mp4?fname=%E5%A4%AA%E5%AD%90%E5%A6%83%E5%8D%87%E8%81%8C%E8%AE%B0.EP35.2015.HD720P.X264.AAC.Mandarin.CHS.mp4&from=30235&version=3.5.0.1700&uin=240201454");
 	m_strCookie = _T("FTN5K=d6bdeb3a");
+	m_strSHA = _T("a107ef301247cfabf881f582201a4da4d6bdeb3a");
+	m_uFileSize = 782070112;
 }
 
 CHTTPLibDlg::~CHTTPLibDlg()
@@ -100,6 +106,9 @@ void CHTTPLibDlg::DoDataExchange(CDataExchange* pDX)
 	DDX_Control(pDX, IDC_DOWNFILE, m_cFile);
 	DDX_Control(pDX, IDC_STATIC_OPT, m_sOpt);
 	DDX_Text(pDX, IDC_EDT_PIPELINE, m_uPipeline);
+	DDX_Text(pDX, IDC_SHA, m_strSHA);
+	DDX_Text(pDX, IDC_FILESIZE, m_uFileSize);
+	DDX_Text(pDX, IDC_DIR, m_strDir);
 }
 
 BEGIN_MESSAGE_MAP(CHTTPLibDlg, CDialogEx)
@@ -261,12 +270,14 @@ void CHTTPLibDlg::DownloadFile()
 	++s_count;
 	std::wostringstream oss;
 	oss << s_count;
-#ifdef _DEBUG
-	wstring strFile = _T("d:\\download\\data") + oss.str() + _T(".mp4");
-#else
-	wstring strFile = _T("d:\\data") + oss.str() + _T(".mp4");
-#endif // _DEBUG
-	auto taskID = downloadMgr_.AddTask(this,m_uConn, strFile, std::string(CW2A(m_strURL)), std::string(CW2A(m_strCookie)));
+	wstring strFile = std::wstring(m_strDir) + _T("\\") + oss.str() + _T(".mp4");
+	boost::filesystem::path dir(m_strDir);
+	if (!boost::filesystem::exists(dir))
+	{
+		boost::filesystem::create_directory(dir);
+	}
+
+	auto taskID = downloadMgr_.AddTask(this,m_uConn, strFile, std::string(CW2A(m_strURL)), std::string(CW2A(m_strCookie)),std::string(CW2A(m_strSHA)),m_uFileSize);
 	taskList_.push(taskID);
 }
 
@@ -298,7 +309,7 @@ void CHTTPLibDlg::OnBnClickedCancelDownload()
 	}
 }
 
-void CHTTPLibDlg::OnProgress(WY::TaskID taskID, int64_t totalSize, int64_t recvSize, size_t speed)
+void CHTTPLibDlg::OnProgress(WY::TaskID taskID, uint64_t totalSize, uint64_t recvSize, size_t speed)
 {
 	if (totalSize != 0)
 	{

@@ -1,6 +1,8 @@
 #pragma once
 #include <atlfile.h>
 #include <boost\asio.hpp>
+#include <boost/interprocess/file_mapping.hpp>  
+#include <boost/interprocess/mapped_region.hpp>  
 #include <memory>
 
 namespace WY

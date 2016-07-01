@@ -60,7 +60,7 @@ bool CDownloadFileMgr::RemoveTask(WY::TaskID const taskID)
 
 #pragma region delegate
 
-void CDownloadFileMgr::OnProgress(WY::TaskID taskID, int64_t totalSize, int64_t recvSize, size_t speed)
+void CDownloadFileMgr::OnProgress(WY::TaskID taskID, uint64_t totalSize, uint64_t recvSize, size_t speed)
 {
 	eventNotifyMgr_.PostEvent(NewTask(&CDownloadFileMgr::OnProgressInner, this, taskID, totalSize, recvSize, speed));
 }
@@ -70,7 +70,7 @@ void CDownloadFileMgr::OnFinish(WY::TaskID taskID, bool bSuccess,CDownloadTask::
 	eventNotifyMgr_.PostEvent(NewTask(&CDownloadFileMgr::OnFinishInner, this, taskID, bSuccess, info));
 }
 
-void CDownloadFileMgr::OnProgressInner(WY::TaskID taskID, int64_t totalSize, int64_t recvSize, size_t speed)
+void CDownloadFileMgr::OnProgressInner(WY::TaskID taskID, uint64_t totalSize, uint64_t recvSize, size_t speed)
 {
 	WY::LockGuard guard(csLock_);
 	auto it = downLoadList_.find(taskID);

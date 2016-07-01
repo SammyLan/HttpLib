@@ -15,9 +15,9 @@ public:
 	bool RemoveTask(WY::TaskID const taskID);
 private:
 #pragma region  delegate
-	virtual void OnProgress(WY::TaskID taskID, int64_t totalSize, int64_t recvSize, size_t speed) override;
+	virtual void OnProgress(WY::TaskID taskID, uint64_t totalSize, uint64_t recvSize, size_t speed) override;
 	virtual void OnFinish(WY::TaskID taskID, bool bSuccess, CDownloadTask::ResponseInfo const & info) override;
-	void OnProgressInner(WY::TaskID taskID, int64_t totalSize, int64_t recvSize, size_t speed);
+	void OnProgressInner(WY::TaskID taskID, uint64_t totalSize, uint64_t recvSize, size_t speed);
 	void OnFinishInner(WY::TaskID taskID, bool bSuccess, CDownloadTask::ResponseInfo const & info);
 #pragma endregion delegate
 private:
