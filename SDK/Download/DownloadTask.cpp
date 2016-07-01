@@ -156,7 +156,7 @@ void CDownloadTask::DownloadFile()
 	}
 }
 
-void CDownloadTask::OnRespond(cpr::Response const & response, data::BufferPtr const & body, data::SaveDataPtr const& pData, uint64_t offset, uint64_t fileSize)
+void CDownloadTask::OnRespond(cpr::Response const & response, data::BufferPtr const & body, CDownloadTask::SaveDataPtr const& pData, uint64_t offset, uint64_t fileSize)
 {
 	LockGuard gurad(csLock_);
 	auto itFind = requestList_.find(offset);
@@ -206,7 +206,7 @@ void CDownloadTask::OnRespond(cpr::Response const & response, data::BufferPtr co
 	}
 }
 
-void CDownloadTask::OnDataRecv(data::byte const * data, size_t size, data::SaveDataPtr const& pData)
+void CDownloadTask::OnDataRecv(data::byte const * data, size_t size, CDownloadTask::SaveDataPtr const& pData)
 {
 	recvSize += size;
 	auto & pBuff = pData->second;
@@ -217,7 +217,7 @@ void CDownloadTask::OnDataRecv(data::byte const * data, size_t size, data::SaveD
 		size_t appSize = size - (newSize%s_save_size);
 		pBuff.append(data, appSize);
 
-		data::SaveDataPtr  pTmp = std::make_shared<data::RecvData>();
+		SaveDataPtr  pTmp = std::make_shared<RecvData>();
 		pTmp->first = pData->first;
 		pTmp->second.reserve(s_save_size);
 		pData->first += pBuff.size();
@@ -243,7 +243,7 @@ void CDownloadTask::OnDataRecv(data::byte const * data, size_t size, data::SaveD
 	}
 }
 
-void CDownloadTask::SaveData(data::SaveDataPtr const & pData, bool bDel)
+void CDownloadTask::SaveData(CDownloadTask::SaveDataPtr const & pData, bool bDel)
 {
 	
 	auto beg = WYTime::g_watch.NowInMicro();
@@ -259,7 +259,7 @@ void CDownloadTask::SaveData(data::SaveDataPtr const & pData, bool bDel)
 }
 
 void CDownloadTask::OnDataSaveHandler(
-	data::SaveDataPtr const & pData,bool bDel,
+	CDownloadTask::SaveDataPtr const & pData,bool bDel,
 	const boost::system::error_code& error, // Result of operation.
 	std::size_t bytes_transferred,           // Number of bytes written.
 	std::size_t nBlockIndex
@@ -359,7 +359,7 @@ bool CDownloadTask::DownLoadNextRange(CDownloadInfo::PieceInfo const & info)
 	auto pHttpRequest = std::make_shared<CHttpRequest>(&hSession_);
 	requestList_.insert(std::make_pair(info.offset, pHttpRequest));
 
-	data::SaveDataPtr pData = std::make_shared<data::RecvData>();
+	SaveDataPtr pData = std::make_shared<RecvData>();
 	pData->first = beg;	
 	pData->second.reserve(s_save_size);
 	pHttpRequest->setCookie(strCookie_);

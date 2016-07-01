@@ -41,7 +41,7 @@ public:
 private:
 	void GetFileInfo();
 	void UploadFile();
-	void OnRespond(cpr::Response const & response, data::BufferPtr const & body, data::SaveDataPtr const& pData,int64_t offset, int64_t fileSize);
+	void OnRespond(cpr::Response const & response, data::BufferPtr const & body, CDownloadTask::SaveDataPtr const& pData,int64_t offset, int64_t fileSize);
 	void OnDataRecv(data::byte const * data, size_t size, data::SaveDataPtr const & pData);
 	void SaveData(data::SaveDataPtr const & pData,bool bDel = false);
 	void OnDataSaveHandler(data::SaveDataPtr const & pData,bool bDel,
