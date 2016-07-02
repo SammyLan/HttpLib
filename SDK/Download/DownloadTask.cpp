@@ -384,7 +384,7 @@ void CDownloadTask::DumpRespond(cpr::Response const & response)
 void CDownloadTask::DumpSelfInfo(LPCTSTR strMsg,int logLevel)
 {
 	LogFinalEx(logLevel,LOGFILTER, _T("[%llu]  %s:filePath=%s\r\nURL=%S\r\nCookie=%S\r\nstrSHA=%S\r\nfileSize=%llu"),
-		taskID_, strMsg, descFile_.GetFileName().c_str(), strUrl_.c_str(), strCookie_.c_str(), descFile_.GetDataFileName().c_str(), descFile_.GetFileInfo()->fileSize);
+		taskID_, strMsg, descFile_.GetFileName().c_str(), strUrl_.c_str(), strCookie_.c_str(), descFile_.GeSHA().c_str(), descFile_.GetFileInfo()->fileSize);
 }
 
 #pragma endregion dump info

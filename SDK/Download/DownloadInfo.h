@@ -12,7 +12,6 @@ public:
 	~CDownloadInfo();
 
 	bool InitDownload(boost::asio::io_service& io_service);
-	std::wstring  GetDataFileName() const;
 	std::wstring  const & GetFileName() const;
 	std::string  const & GeSHA() const { return strSHA_; }
 	uint64_t GetFileSize() const { return info_.fileSize; }
@@ -24,6 +23,7 @@ public:
 	int GetLastError() const { return lastError_; }
 private:
 	void TryToDelTmpFile();
+	std::wstring  GetDataFileName() const;
 	std::wstring  GetDescFileName() const;
 	bool CreareFile(boost::asio::io_service& io_service);
 private:
