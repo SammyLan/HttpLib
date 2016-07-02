@@ -29,7 +29,7 @@ void CFileSignTask::BeginTask(boost::asio::io_service& io_service)
 {
 	m_bRunning = TRUE;
 	m_dwBeginTime = ::GetTickCount();
-	m_pFile = WY::File::CreateAsioFile(io_service,m_strFile, GENERIC_READ, FILE_SHARE_READ, OPEN_EXISTING);
+	m_pFile = WY::File::CreateAsioFile(io_service,m_strFile, GENERIC_READ, FILE_SHARE_READ, OPEN_EXISTING).first;
 	if (m_pFile.get() == nullptr)
 	{
 		int iError = GetLastError();

@@ -17,7 +17,7 @@ TCancelIoEx  GetCancelIoExProc()
 TCancelIoEx S_CancelIoEx = GetCancelIoExProc();
 
 
-WY::File::AsioFilePtr WY::File::CreateAsioFile(
+std::pair<WY::File::AsioFilePtr,int> WY::File::CreateAsioFile(
 	boost::asio::io_service& io_service,
 	_In_z_ LPCTSTR szFilename,
 	_In_ DWORD dwDesiredAccess,
@@ -33,11 +33,12 @@ WY::File::AsioFilePtr WY::File::CreateAsioFile(
 		, dwShareMode, dwCreationDisposition, dwFlagsAndAttributes | FILE_FLAG_OVERLAPPED
 		, lpsa, hTemplateFile);
 	BOOL bRet = (hr == S_OK);
+	int iLastError = ::GetLastError();
 	if (bRet)
 	{
 		pFile = std::make_shared<AsioFile>(io_service, file.Detach());
 	}
-	return pFile;
+	return std::make_pair(pFile,iLastError);
 }
 
 

@@ -44,9 +44,6 @@
     <Filter Include="base\Download">
       <UniqueIdentifier>{26eed977-4f9f-46b1-9370-9d4a4cb964a6}</UniqueIdentifier>
     </Filter>
-    <Filter Include="base\Upload">
-      <UniqueIdentifier>{bcb8aeb0-7ee1-4c73-ba80-c6d7dfccf57d}</UniqueIdentifier>
-    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="targetver.h">
@@ -172,23 +169,20 @@
     <ClInclude Include="..\SDK\Download\DownloadFileMgr.h">
       <Filter>base\Download</Filter>
     </ClInclude>
-    <ClInclude Include="..\SDK\Download\WYErrorDef.h">
-      <Filter>base\Download</Filter>
-    </ClInclude>
     <ClInclude Include="..\SDK\Download\DownloadTask.h">
       <Filter>base\Download</Filter>
-    </ClInclude>
-    <ClInclude Include="..\SDK\Upload\UploadFileMgr.h">
-      <Filter>base\Upload</Filter>
-    </ClInclude>
-    <ClInclude Include="..\SDK\Upload\UploadTask.h">
-      <Filter>base\Upload</Filter>
     </ClInclude>
     <ClInclude Include="..\SDK\File\WYFile.h">
       <Filter>base\File</Filter>
     </ClInclude>
     <ClInclude Include="..\SDK\Download\DownloadInfo.h">
       <Filter>base\Download</Filter>
+    </ClInclude>
+    <ClInclude Include="..\SDK\Download\PieceInfo.h">
+      <Filter>base\Download</Filter>
+    </ClInclude>
+    <ClInclude Include="..\SDK\Include\WYErrorDef.h">
+      <Filter>base\Include</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -281,12 +275,6 @@
     </ClCompile>
     <ClCompile Include="..\SDK\Download\DownloadTask.cpp">
       <Filter>base\Download</Filter>
-    </ClCompile>
-    <ClCompile Include="..\SDK\Upload\UploadFileMgr.cpp">
-      <Filter>base\Upload</Filter>
-    </ClCompile>
-    <ClCompile Include="..\SDK\Upload\UploadTask.cpp">
-      <Filter>base\Upload</Filter>
     </ClCompile>
     <ClCompile Include="..\SDK\File\WYFile.cpp">
       <Filter>base\File</Filter>

@@ -4,10 +4,11 @@ namespace DownloadInfo
 {
 	enum 
 	{ 
-		SHASize = 40,
-		PieceInfoSize = 32,
-		FileInfoSize = 384,
-		MaxThreadCount = 10
+		SHASize			= 40,
+		PieceInfoSize	= 32,
+		FileInfoSize	= 384,
+		FileFlag		= 1258169257,
+		MaxThreadCount	= 10
 	};
 
 	struct PieceInfo

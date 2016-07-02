@@ -41,7 +41,7 @@ bool CDownloadTask::BeginDownload()
 	LockGuard gurad(csLock_);
 	if (descFile_.GetThreadCount() > 1)
 	{
-		GetFileInfo();
+		RequestFileInfo();
 	}
 	else
 	{
@@ -67,7 +67,7 @@ void CDownloadTask::Cancel()
 	}
 }
 
-void CDownloadTask::GetFileInfo()
+void CDownloadTask::RequestFileInfo()
 {
 	auto pHttpRequest = std::make_shared<CHttpRequest>(&hSession_);
 	requestList_.insert(std::make_pair(0, pHttpRequest));
@@ -99,7 +99,7 @@ void CDownloadTask::GetFileInfo()
 		bool bSuccess = ((curlCode == (int)cpr::ErrorCode::OK) && (httpCode == 200) && (userReturnCode == 0));
 		if (bSuccess)
 		{
-			auto  pInfo = descFile_.GetFileInfo();
+			auto  pInfo = descFile_.GeDownloadInfo();
 			if (descFile_.GetFileSize() == 0)
 			{
 				pInfo->fileSize = std::get<ContentLength>(ret);
@@ -109,7 +109,7 @@ void CDownloadTask::GetFileInfo()
 				if (descFile_.GetFileSize() != std::get<ContentLength>(ret))
 				{
 					WYASSERT(false);
-					std::get<UserReturnCode>(responseInfo_) = WYErrorCode::Download_HeadSizeConflict;
+					std::get<UserReturnCode>(responseInfo_) = WYErrorCode::DOWNERR_SIZE_CONFLICT;
 					OnFinish(false);
 					return;
 				}
@@ -132,18 +132,30 @@ void CDownloadTask::DownloadFile()
 		std::get<UserReturnCode>(responseInfo_) = descFile_.GetLastError();
 		DumpSelfInfo(_T("InitDownload failed"), LOGL_Error);
 		OnFinish(false);
+		return;
 	}
 
 	recvSize = preRecvSize = descFile_.GetCompletedSize();
+	if (recvSize == descFile_.GetFileSize())
+	{
+		OnFinish(true);
+		return;
+	}
 
 	DumpSelfInfo(_T("Start download"));
 
 	lastReportTime = nBeginDownload_ = ::GetTickCount();
-	auto  pInfo = descFile_.GetFileInfo();
+	auto  pInfo = descFile_.GeDownloadInfo();
 	auto & piceInfo = pInfo->pieceInfo;
 	for (size_t i = 0; i < pInfo->threadCount; ++i)
 	{
-		DownLoadNextRange(i,piceInfo[i]);
+		auto & task = piceInfo[i];
+		if (task.rangeSize == task.complectSize)
+		{
+			continue;
+		}
+		WYASSERT(task.rangeSize > task.complectSize);
+		DownLoadNextRange(i,task);
 	}
 }
 
@@ -165,11 +177,11 @@ void CDownloadTask::OnRespond(cpr::Response const & response, data::BufferPtr co
 	{
 		do
 		{
-			auto & pInfo = descFile_.GetFileInfo()->pieceInfo[pData->iThread_];
+			auto & pInfo = descFile_.GeDownloadInfo()->pieceInfo[pData->iThread_];
 			auto recvSize = std::get<ContentLength>(ret);
 			if (descFile_.GetFileSize() == 0)//不需要从服务器获取文件大小
 			{
-				descFile_.GetFileInfo()->fileSize = recvSize;
+				descFile_.GeDownloadInfo()->fileSize = recvSize;
 				pInfo.rangeSize = recvSize;
 			}
 			auto requestSize =pInfo.offset +pInfo.rangeSize - pData->beg_;
@@ -180,7 +192,7 @@ void CDownloadTask::OnRespond(cpr::Response const & response, data::BufferPtr co
 				WYASSERT(false);
 				LogErrorEx(LOGFILTER, _T("[%llu]  数据长度不对,文件长度为%llu,接受长度为%llu"),taskID_, requestSize, recvSize);
 				DumpSelfInfo(_T("请求大小跟接收大小不一致"), LOGL_Error);
-				std::get<UserReturnCode>(responseInfo_) = WYErrorCode::Download_RequestSizeConflict;
+				std::get<UserReturnCode>(responseInfo_) = WYErrorCode::DOWNERR_RECV_SIZE_CONFLICT;
 				break;
 			}
 			else
@@ -258,11 +270,11 @@ void CDownloadTask::OnDataSaveHandler(
 	std::size_t nBlockIndex
 	)
 {
-	auto & pInfo = descFile_.GetFileInfo()->pieceInfo[pData->iThread_];
+	auto & pInfo = descFile_.GeDownloadInfo()->pieceInfo[pData->iThread_];
 	WYASSERT(bytes_transferred == pData->data_.size());
 	WYASSERT(pData->curPos_ == pInfo.offset + pInfo.complectSize);
 	pInfo.complectSize += bytes_transferred;
-	descFile_.Save();
+	descFile_.Flush();
 	if (bDel)
 	{
 		OnFinish(true);
@@ -296,6 +308,13 @@ void CDownloadTask::OnFinish(bool bSuccess)
 			time = 1;
 		}
 		std::get<DownloadSpeed>(responseInfo_) = (size_t)(descFile_.GetFileSize() * 1000 / time);
+		if (!bCancel_)
+		{
+			if (!descFile_.OnDownloadFin())
+			{
+				//TODO:
+			}
+		}
 	}
 	if (pDelegate_ != nullptr)
 	{
@@ -384,7 +403,7 @@ void CDownloadTask::DumpRespond(cpr::Response const & response)
 void CDownloadTask::DumpSelfInfo(LPCTSTR strMsg,int logLevel)
 {
 	LogFinalEx(logLevel,LOGFILTER, _T("[%llu]  %s:filePath=%s\r\nURL=%S\r\nCookie=%S\r\nstrSHA=%S\r\nfileSize=%llu"),
-		taskID_, strMsg, descFile_.GetFileName().c_str(), strUrl_.c_str(), strCookie_.c_str(), descFile_.GeSHA().c_str(), descFile_.GetFileInfo()->fileSize);
+		taskID_, strMsg, descFile_.GetFileName().c_str(), strUrl_.c_str(), strCookie_.c_str(), descFile_.GeSHA().c_str(), descFile_.GetFileSize());
 }
 
 #pragma endregion dump info

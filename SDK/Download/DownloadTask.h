@@ -49,7 +49,7 @@ public:
 	bool BeginDownload();
 	void CancelDownload();
 private:
-	void GetFileInfo();
+	void RequestFileInfo();
 	void DownloadFile();
 	void OnRespond(cpr::Response const & response, data::BufferPtr const & body, CDownloadTask::SaveDataPtr const& pData, uint64_t offset);
 	void OnDataRecv(data::byte const * data, size_t size, CDownloadTask::SaveDataPtr const & pData);

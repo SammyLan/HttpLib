@@ -12,7 +12,7 @@ namespace WY
 		typedef boost::asio::windows::random_access_handle AsioFile;
 		typedef std::shared_ptr<AsioFile> AsioFilePtr;
 
-		AsioFilePtr  CreateAsioFile(
+		std::pair<AsioFilePtr,int>  CreateAsioFile(
 			boost::asio::io_service& io_service,
 			_In_z_ LPCTSTR szFilename,
 			_In_ DWORD dwDesiredAccess = GENERIC_READ,

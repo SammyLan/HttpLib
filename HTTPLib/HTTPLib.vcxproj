@@ -199,7 +199,7 @@
     <ClInclude Include="..\SDK\Download\DownloadInfo.h" />
     <ClInclude Include="..\SDK\Download\DownloadTask.h" />
     <ClInclude Include="..\SDK\Download\DownloadFileMgr.h" />
-    <ClInclude Include="..\SDK\Download\WYErrorDef.h" />
+    <ClInclude Include="..\SDK\Download\PieceInfo.h" />
     <ClInclude Include="..\SDK\external\cpr\include\cpr\api.h" />
     <ClInclude Include="..\SDK\external\cpr\include\cpr\auth.h" />
     <ClInclude Include="..\SDK\external\cpr\include\cpr\body.h" />
@@ -228,6 +228,7 @@
     <ClInclude Include="..\SDK\http\HttpGlobal.h" />
     <ClInclude Include="..\SDK\http\HttpRequest.h" />
     <ClInclude Include="..\SDK\http\HttpSession.h" />
+    <ClInclude Include="..\SDK\Include\WYErrorDef.h" />
     <ClInclude Include="..\SDK\Include\WYTypeDef.h" />
     <ClInclude Include="..\SDK\Include\WYUtil.h" />
     <ClInclude Include="..\SDK\Log\Log.h" />
@@ -236,8 +237,6 @@
     <ClInclude Include="..\SDK\Log\UtilCoreConvert.h" />
     <ClInclude Include="..\SDK\NotifyModel\EventNotifyMgr.h" />
     <ClInclude Include="..\SDK\Thread\ThreadPool.h" />
-    <ClInclude Include="..\SDK\Upload\UploadFileMgr.h" />
-    <ClInclude Include="..\SDK\Upload\UploadTask.h" />
     <ClInclude Include="HTTPLib.h" />
     <ClInclude Include="HTTPLibDlg.h" />
     <ClInclude Include="Resource.h" />
@@ -310,8 +309,6 @@
     <ClCompile Include="..\SDK\Log\UtilCoreConvert.cpp" />
     <ClCompile Include="..\SDK\NotifyModel\EventNotifyMgr.cpp" />
     <ClCompile Include="..\SDK\Thread\ThreadPool.cpp" />
-    <ClCompile Include="..\SDK\Upload\UploadFileMgr.cpp" />
-    <ClCompile Include="..\SDK\Upload\UploadTask.cpp" />
     <ClCompile Include="HTTPLib.cpp" />
     <ClCompile Include="HTTPLibDlg.cpp" />
     <ClCompile Include="stdafx.cpp">
