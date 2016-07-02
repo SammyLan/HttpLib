@@ -10,8 +10,6 @@
 #undef min
 #endif // min
 
-static_assert(sizeof(CDownloadInfo::PieceInfo) == CDownloadInfo::PieceInfoSize,"size of PieceInfo must be 32");
-static_assert(sizeof(CDownloadInfo::FileInfo) == CDownloadInfo::FileInfoSize, "size of FileInfo must be 384");
 static const uint32_t s_dwFlag = 1258169257;
 
 uint64_t const s_block_size = 1024 * 1024 * 1; //10M

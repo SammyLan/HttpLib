@@ -13,9 +13,9 @@ class CDownloadTask:public std::enable_shared_from_this<CDownloadTask>,public bo
 	typedef std::map<uint64_t, CHttpRequestPtr> RequestList; //offset-httpRequest
 	struct RecvData
 	{
-		typedef CDownloadInfo::PieceInfo PieceInfo;
-		RecvData(PieceInfo * pInfo) : pInfo_(pInfo),beg_(pInfo->offset + pInfo->complectSize),curPos_(beg_) {}
-		PieceInfo * pInfo_;
+		typedef DownloadInfo::PieceInfo PieceInfo;
+		RecvData(size_t const iThread, uint64_t beg) : iThread_(iThread) ,beg_(beg),curPos_(beg) {}
+		size_t const iThread_;
 		uint64_t const beg_;
 		uint64_t curPos_;
 		data::Buffer data_;
@@ -62,7 +62,7 @@ private:
 	
 	void OnFinish(bool bSuccess);
 	ResponseInfo GetResponseInfo(cpr::Response const & response);
-	bool DownLoadNextRange(CDownloadInfo::PieceInfo & info);
+	bool DownLoadNextRange(size_t const iThread, DownloadInfo::PieceInfo & info);
 	void Cancel();
 #pragma region dump info
 	void DumpRespond(cpr::Response const & response);
